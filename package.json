@@ -1,0 +1,24 @@
+{
+  "name": "versus",
+  "version": "0.1.0",
+  "main": "app/app.js",
+  "private": true,
+  "scripts": {
+    "start": "node app/bin/www",
+    "test": "mocha --recursive app/tests/ --reporter nyan"
+  },
+  "dependencies": {
+    "body-parser": "~1.15.1",
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.2.0",
+    "express": "~4.13.4",
+    "morgan": "~1.7.0",
+    "pug": "^2.0.0-beta5",
+    "serve-favicon": "~2.3.0"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.11.4",
+    "chai": "^3.5.0",
+    "mocha": "^3.0.2"
+  }
+}
