@@ -1,0 +1,25 @@
+extends layout
+
+block content
+  h1= title
+
+  if name
+    p Welcome !{name}
+  else
+    p Welcome to #{title}
+    a(href="/register") Register
+
+  .login
+
+    if errors
+      p= val
+
+    form(action="/" method="post")
+      h1 Login
+      h2 Email
+      input(type='email' name='email')
+      h2 Password
+      input(type='password' name='password')
+      br
+      br
+      input(type='submit')
