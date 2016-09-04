@@ -22,8 +22,12 @@ module.exports = (app) => {
 
         //In Case of Error
         if(err) {
-          console.log("Get Email Error");
-          throw err;
+
+          //Render Error Page
+          res.render('error', {
+            msg: "Could Not Check Email"
+          });
+
         }
 
         //Check if email exists
@@ -35,8 +39,12 @@ module.exports = (app) => {
         User.comparePassword(password, user.password, (err, isMatch) => {
 
           if(err) {
-            console.log("Compare Password Error")
-            throw err;
+
+            //Render Error Page
+            res.render('error', {
+              msg: "Could Not Check Password"
+            });
+
           }
 
           if(isMatch){

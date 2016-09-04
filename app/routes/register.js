@@ -63,12 +63,8 @@ module.exports = (app) => {
 
               //Render Error Page
               res.render('error', {
-                message: "Internal Error, Could Not Create User",
-                error: err
+                msg: "Could Not Create User"
               });
-
-              console.log("Create User error");
-              throw err;
 
             } else {
 
