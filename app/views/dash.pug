@@ -1,25 +1,143 @@
-extends layout
+doctype html
+html
+  head
+    //meta
+    title='Versus'
+    meta(name="viewport", content="width = device-width, initial-scale=1")
 
-block content
-  h1= title
+    //bootstrap
+    link(
+      rel='stylesheet',
+      href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css',
+      integrity='sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u',
+      crossorigin='anonymous')
 
-  if name
-    p Welcome !{name}
-  else
-    p Welcome to #{title}
-    a(href="/register") Register
+  body
 
-  .login
+    //-var name = "Russel"
+    -var experiments = ['Genome', 'DNA', 'Physcological', 'Sociological']
 
-    if errors
-      p= val
+    .container
+      nav(class='navbar')
+        .container-fluid
 
-    form(action="/" method="post")
-      h1 Login
-      h2 Email
-      input(type='email' name='email')
-      h2 Password
-      input(type='password' name='password')
-      br
-      br
-      input(type='submit')
+          if name
+            //logged in
+            a(class="navbar-brand" href="#") Dashboard
+            ul(class='nav navbar-nav')
+
+              li(class='dropdown')
+                a(href='#' class='dropdown-toggle' data-toggle='dropdown') Experiments
+                  span(class='caret')
+                ul(class='dropdown-menu')
+                  if experiments
+                    each val in experiments
+                      li
+                        a(href='#') #{val}
+
+          ul(class="nav navbar-nav navbar-right")
+
+            if !name
+              //register
+              li(class='dropdown')
+                a(href='#' class='dropdown-toggle' data-toggle='dropdown')
+                  span(class='glyphicon glyphicon-user')  Register
+                ul(class='dropdown-menu')
+                  .col-sm-12
+                    form(name="registerForm" method="post" action="/register")
+                      .col-sm-12
+                        br
+                        p(class='text-center') Name
+                        input(type='text' name='reg_name')
+                      .col-sm-12
+                        br
+                        p(class='text-center') Email
+                        input(type='email' name='reg_email')
+                      .col-sm-12
+                        br
+                        p(class='text-center') Password
+                        input(type='password' name='reg_password')
+                      .col-sm-12
+                        br
+                        p(class='text-center') Verify Password
+                        input(type='password' name='reg_passwordv')
+                      .col-sm-12
+                        br
+                        button(type='submit' class="btn btn-primary btn-block") Register
+                        br
+
+              //login
+              li(class='dropdown')
+                a(href='#' class='dropdown-toggle' data-toggle='dropdown')
+                  span(class='glyphicon glyphicon-log-in')  Login
+                ul(class='dropdown-menu')
+                  .col-sm-12
+                    form(name="loginForm" method="post" action="/login")
+                      .col-sm-12
+                        br
+                        p(class='text-center') Email
+                        input(type='email' name='username')
+                      .col-sm-12
+                        br
+                        p(class='text-center') Password
+                        input(type='password' name='password')
+                      .col-sm-12
+                        br
+                        button(type='submit' class="btn btn-primary btn-block") Login
+                        br
+
+            else
+              li(class='dropdown')
+                a(href='#' class='dropdown-toggle' data-toggle='dropdown') #{name}
+                  span(class='caret')
+                ul(class='dropdown-menu')
+                  .col-sm-12
+                      .col-sm-12
+                        br
+                        a(href='#' class='text-center') Account Settings
+                      .col-sm-12
+                        br
+                        a(href='#' class='text-center') Change Password
+                      .col-sm-12
+                        br
+                        form(action="/logout" method="get")
+                          button(type="submit" class="btn btn-primary btn-block") Logout
+                        br
+
+      .page-header
+        h1(class="text-center") Versus
+
+      //event response handling
+      if errors
+        each val in errors
+          -var last
+          if val != last
+            .div(class="alert alert-danger")
+              a(href="#" class="close" data-dismiss="alert" aria-label="close") &times;
+              p #{val}
+          - last = val
+      if warnings
+        each val in warnings
+          -var last
+          if val != last
+            .div(class="alert alert-warning")
+              a(href="#" class="close" data-dismiss="alert" aria-label="close") &times;
+              p #{val}
+          - last = val
+      if success
+        each val in success
+          -var last
+          if val != last
+            .div(class="alert alert-success")
+              a(href="#" class="close" data-dismiss="alert" aria-label="close") &times;
+              p #{val}
+          - last = val
+
+    //jquery
+    script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js")
+
+    //bootstrap
+    script(
+      src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js',
+      integrity='sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa',
+      crossorigin='anonymous')

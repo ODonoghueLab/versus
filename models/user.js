@@ -41,8 +41,6 @@ module.exports.getById = (id, callback) => {
 module.exports.comparePassword = (password, hash, callback) => {
   bcrypt.compare(password, hash, (err,isMatch) => {
 
-    console.log("testing");
-
     if(err) {
       console.log("Password Compare error");
       throw err;
