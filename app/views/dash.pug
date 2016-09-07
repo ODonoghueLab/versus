@@ -17,6 +17,9 @@ html
     //Example Variable Use
     //-var name = "Russel"
     //-var experiments = ['Genome', 'DNA', 'Physcological', 'Sociological']
+    //-var retryLogEmail = "test@email.com"
+    //-var retryRegName = "Tylor"
+    //-var retryRegEmail = "test@email.com"
 
     .container
       nav(class='navbar')
@@ -49,11 +52,17 @@ html
                       .col-sm-12
                         br
                         p(class='text-center') Name
-                        input(type='text' name='reg_name')
+                        if !retryRegName
+                          input(type='text' name='reg_name')
+                        else
+                          input(type='text' name='reg_name' value=retryRegName )
                       .col-sm-12
                         br
                         p(class='text-center') Email
-                        input(type='email' name='reg_email')
+                        if !retryRegEmail
+                          input(type='email' name='reg_email')
+                        else
+                          input(type='email' name='reg_email' value=retryRegEmail)
                       .col-sm-12
                         br
                         p(class='text-center') Password
@@ -77,7 +86,10 @@ html
                       .col-sm-12
                         br
                         p(class='text-center') Email
-                        input(type='email' name='username')
+                        if !retryLogEmail
+                          input(type='email' name='username')
+                        else
+                          input(type='email' name='username' value=retryLogEmail)
                       .col-sm-12
                         br
                         p(class='text-center') Password

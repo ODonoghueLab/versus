@@ -29,7 +29,9 @@ module.exports = (app) => {
       res.render('dash',{
         warnings: errors.map((obj) => {
           return obj.msg;
-        })
+        }),
+        retryRegName: req.body.reg_name,
+        retryRegEmail: req.body.reg_email
       });
 
     } else {
@@ -43,7 +45,9 @@ module.exports = (app) => {
 
           //Duplicate Email
           res.render('dash',{
-            errors: ["Email already in use"]
+            errors: ["Email already in use"],
+            retryRegName: req.body.reg_name,
+            retryRegEmail: req.body.reg_email
           });
 
         } else {
@@ -63,7 +67,7 @@ module.exports = (app) => {
 
               //Render Error Page
               res.render('error', {
-                msg: "Could Not Create User"
+                msg: "Could Not Create User",
               });
 
             } else {
