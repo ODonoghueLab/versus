@@ -12,10 +12,12 @@
     "body-parser": "~1.15.1",
     "cookie-parser": "~1.4.3",
     "debug": "~2.2.0",
+    "del": "*",
     "express": "~4.13.4",
     "express-session": "*",
     "express-validator": "*",
     "morgan": "~1.7.0",
+    "multer": "*",
     "passport": "*",
     "passport-http": "*",
     "passport-local": "*",
@@ -23,7 +25,8 @@
     "pg-hstore": "^2.3.2",
     "pug": "^2.0.0-beta5",
     "sequelize": "^3.24.3",
-    "serve-favicon": "~2.3.0"
+    "serve-favicon": "~2.3.0",
+    "s3": "*"
   },
   "devDependencies": {
     "babel-cli": "^6.11.4",
