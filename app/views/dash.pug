@@ -146,6 +146,15 @@ html
               p #{val}
           - last = val
 
+      //Experiment Images
+      if(!images)
+        form(method="post" action="/sendFile" enctype="multipart/form-data" name="upload")
+          input(input="input-1" type="file" name="files" multiple)
+          input(type="submit" value="Upload Pics!")
+      else
+        each pic in images
+          img(src=pic width="400")
+
     //jquery
     script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js")
 

@@ -19,6 +19,11 @@ const mongoose = require('mongoose');
 mongoose.connect('mongodb://localhost/versus');
 const db = mongoose.connection;
 
+//S3 Integration
+const s3File = path.join(__dirname, "config", "s3.js");
+const s3 = require(s3File).s3;
+const client = require(s3File).client;
+
 //Begin Application
 const app = express();
 
@@ -47,6 +52,10 @@ app.use(session({
   saveUninitialized: true,
   resave: true
 }));
+
+//S3 Initialisation
+app.set('s3', s3);
+app.set('client', client);
 
 //Passport Initialisation
 app.use(passport.initialize());
