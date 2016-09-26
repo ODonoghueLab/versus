@@ -23,3 +23,8 @@ cd versus/
 npm install
 npm start
 ```
+
+##Git Issue Codes
+* FN - Fix Now - Issues That Halt Progress
+* CBT - Come Back To - Issues That Need Fixing But Not Urgent
+* WLT - Would Like To - More Feature Idea/s Than Needed Fix
