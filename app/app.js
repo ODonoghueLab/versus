@@ -13,11 +13,14 @@ const session = require('express-session');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 
-//DB
-const mongo = require('mongodb');
-const mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost/versus');
-const db = mongoose.connection;
+// Import and Configure and Sync Sequelize Models.
+const models = require('./models');
+models.sequelize.sync({ force: false })
+  .then(function() {
+    console.log('Database Synchronised Successfully!');
+  }, function (err) {
+    console.log('Unable to Synchronise Database:', err);
+  });
 
 //S3 Integration
 const s3File = path.join(__dirname, "config", "s3.js");

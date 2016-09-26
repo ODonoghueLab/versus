@@ -15,13 +15,14 @@
     "express": "~4.13.4",
     "express-session": "*",
     "express-validator": "*",
-    "mongodb": "*",
-    "mongoose": "*",
     "morgan": "~1.7.0",
     "passport": "*",
     "passport-http": "*",
     "passport-local": "*",
+    "pg": "^6.1.0",
+    "pg-hstore": "^2.3.2",
     "pug": "^2.0.0-beta5",
+    "sequelize": "^3.24.3",
     "serve-favicon": "~2.3.0"
   },
   "devDependencies": {

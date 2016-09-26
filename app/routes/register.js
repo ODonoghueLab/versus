@@ -1,13 +1,11 @@
+const models = require('../models');
+
 module.exports = (app) => {
-
-  //Includes
-  var User = require('../../models/user');
-
   //Register Form Post
   app.post('/register', (req, res) => {
 
     //Sanitization
-    form = ['name', 'email', 'password', 'passwordv'];
+    var form = ['name', 'email', 'password', 'passwordv'];
     for(i = 0; i < form.length; i++){
       req.sanitize("reg_" + form[i]).escape();
       req.sanitize("reg_" + form[i]).trim();
@@ -35,57 +33,26 @@ module.exports = (app) => {
       });
 
     } else {
-
-      //Query if email already in use
-      var queryTest = User.findOne({email:req.body.reg_email});
-
-      queryTest.then((doc) => {
-
-        if(doc){
-
-          //Duplicate Email
-          res.render('dash',{
-            errors: ["Email already in use"],
-            retryRegName: req.body.reg_name,
-            retryRegEmail: req.body.reg_email
+      models.User.create({
+        name: req.body.reg_name,
+        email: req.body.reg_email,
+        password: req.body.reg_password,
+      })
+        .then((user) => {
+          res.render('dash', {
+            name: user.name,
+            success: ["You Have Been Registered!"]
           });
-
-        } else {
-
-          //Create New User Model
-          var newUser = new User({
-            name: req.body.reg_name,
-            email: req.body.reg_email,
-            password: req.body.reg_password
-          });
-
-          //Save to database
-          User.createUser(newUser, (err, user) => {
-
-            //In Case of Error
-            if(err){
-
-              //Render Error Page
-              res.render('error', {
-                msg: "Could Not Create User",
-              });
-
-            } else {
-
-              //Render the home page with user's name
-              res.render('dash', {
-                name: user.name,
-                success: ["You Have Been Registered!"]
-              });
-
-            }
-
-          }); //end create user
-
-        } //end email query test
-
-      }); //end synch query
-
+        })
+        .catch(error => {
+          if (error.original.code == 23505) {
+            res.render('dash',{
+              errors: ["Email already in use"],
+              retryRegName: req.body.reg_name,
+              retryRegEmail: req.body.reg_email,
+            });
+          } else res.render('dash');
+        });
     }//end validation errors
 
   }); //end post request
