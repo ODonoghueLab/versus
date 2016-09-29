@@ -152,11 +152,28 @@ html
               p #{val}
           - last = val
 
-      //Experiment Images
-      if(!images)
-        form(method="post" action="/sendFile" enctype="multipart/form-data" name="upload")
-          input(input="input-1" type="file" name="files" multiple)
-          input(type="submit" value="Upload Pics!")
-      else
-        each pic in images
-          img(src=pic width="400")
+      //edit account
+      div(class="form-group")
+        form(method="post" action="/account/details")
+          label(for="name") New Name
+          br
+          input(type="text" name="name")
+          br
+          label(for="email") New Email
+          br
+          input(type="email" name="email")
+          br
+          label(for="passwordOld") Current Password
+          br
+          input(type="password" name="passwordOld")
+          br
+          label(for="passwordNew") New Password
+          br
+          input(type="password" name="passwordNew")
+          br
+          label(for="passwordVer") Verify Password
+          br
+          input(type="password" name="passwordVer")
+          br
+          br
+          input(type="submit" class="btn btn-primary")

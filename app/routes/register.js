@@ -1,6 +1,7 @@
 const models = require('../models');
 
 module.exports = (app) => {
+
   //Register Form Post
   app.post('/register', (req, res) => {
 
