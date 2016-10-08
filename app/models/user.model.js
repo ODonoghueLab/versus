@@ -7,6 +7,12 @@ module.exports = (sequelize, DataTypes) => {
     name: DataTypes.STRING,
     email: {type: DataTypes.STRING, unique: true},
     password: DataTypes.STRING,
+  }, {
+    classMethods: {
+      associate: function(models) {
+        User.belongsToMany(models.Experiment, {through: 'UserExperiment'});
+      }
+    }
   });
 
   User.beforeValidate((user) => {
