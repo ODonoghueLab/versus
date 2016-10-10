@@ -1,0 +1,169 @@
+doctype html
+html
+  head
+    //meta
+    title='Versus'
+    meta(name="viewport", content="width = device-width, initial-scale=1")
+
+    //bootstrap
+    link(
+      rel='stylesheet',
+      href='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css',
+      integrity='sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u',
+      crossorigin='anonymous')
+
+  body
+
+    //jquery
+    script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js")
+
+    //bootstrap
+    script(
+      src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js',
+      integrity='sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa',
+      crossorigin='anonymous')
+
+    .container
+      .container-fluid
+
+        if name
+          //logged in
+          a(class="navbar-brand" href="#") Dashboard
+          ul(class='nav navbar-nav')
+
+            li(class='dropdown')
+              a(href='#' class='dropdown-toggle' data-toggle='dropdown') Experiments
+                span(class='caret')
+              ul(class='dropdown-menu')
+                form(method="GET" action="/experiment/create")
+                  if experiments
+                    each val in experiments
+                      .col-sm-12
+                        br
+                        a(href='#') #{val}
+                  .col-sm-12
+                    br
+                    button(type='submit' class="btn btn-primary btn-block") Create Experiment
+                    br
+
+        ul(class="nav navbar-nav navbar-right")
+
+          if !name
+            //register
+            li(class='dropdown')
+              a(href='#' class='dropdown-toggle' data-toggle='dropdown')
+                span(class='glyphicon glyphicon-user')  Register
+              ul(class='dropdown-menu')
+                .col-sm-12
+                  form(name="registerForm" method="post" action="/register")
+                    .col-sm-12
+                      br
+                      p(class='text-center') Name
+                      if !retryRegName
+                        input(type='text' name='reg_name')
+                      else
+                        input(type='text' name='reg_name' value=retryRegName )
+                    .col-sm-12
+                      br
+                      p(class='text-center') Email
+                      if !retryRegEmail
+                        input(type='email' name='reg_email')
+                      else
+                        input(type='email' name='reg_email' value=retryRegEmail)
+                    .col-sm-12
+                      br
+                      p(class='text-center') Password
+                      input(type='password' name='reg_password')
+                    .col-sm-12
+                      br
+                      p(class='text-center') Verify Password
+                      input(type='password' name='reg_passwordv')
+                    .col-sm-12
+                      br
+                      button(type='submit' class="btn btn-primary btn-block") Register
+                      br
+
+            //login
+            li(class='dropdown')
+              a(href='#' class='dropdown-toggle' data-toggle='dropdown')
+                span(class='glyphicon glyphicon-log-in')  Login
+              ul(class='dropdown-menu')
+                .col-sm-12
+                  form(name="loginForm" method="post" action="/login")
+                    .col-sm-12
+                      br
+                      p(class='text-center') Email
+                      if !retryLogEmail
+                        input(type='email' name='username')
+                      else
+                        input(type='email' name='username' value=retryLogEmail)
+                    .col-sm-12
+                      br
+                      p(class='text-center') Password
+                      input(type='password' name='password')
+                    .col-sm-12
+                      br
+                      button(type='submit' class="btn btn-primary btn-block") Login
+                      br
+
+          else
+            li(class='dropdown')
+              a(href='#' class='dropdown-toggle' data-toggle='dropdown') #{name}
+                span(class='caret')
+              ul(class='dropdown-menu')
+                .col-sm-12
+                    .col-sm-12
+                      br
+                      a(href='/account' class='text-center') Account Settings
+                    .col-sm-12
+                      br
+                      form(action="/logout" method="get")
+                        button(type="submit" class="btn btn-primary btn-block") Logout
+                      br
+
+    .page-header
+      h1(class="text-center") Versus
+
+    .container
+      //event response handling
+      if errors
+        each val in errors
+          -var last
+          if val != last
+            .div(class="alert alert-danger")
+              a(href="#" class="close" data-dismiss="alert" aria-label="close") &times;
+              p #{val}
+          - last = val
+      if warnings
+        each val in warnings
+          -var last
+          if val != last
+            .div(class="alert alert-warning")
+              a(href="#" class="close" data-dismiss="alert" aria-label="close") &times;
+              p #{val}
+          - last = val
+      if success
+        each val in success
+          -var last
+          if val != last
+            .div(class="alert alert-success")
+              a(href="#" class="close" data-dismiss="alert" aria-label="close") &times;
+              p #{val}
+          - last = val
+
+      //Experiment Images
+      if name
+        if images
+          each pic in images
+            img(src=pic width="400")
+        else
+          form(method="post" action="/experiment/create" enctype="multipart/form-data" name="upload")
+            p(class='text-center') Experiment Name
+            input(type="text" name="name" class="form-control")
+            br
+            p(class='text-center') Experiment Description
+            input(type="text" name="description" class="form-control")
+            br
+            input(input="input-1" type="file" name="files" multiple)
+            br
+            button(type="submit" class="btn btn-primary btn-block") Upload Experiment Images
