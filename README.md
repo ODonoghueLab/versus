@@ -42,6 +42,30 @@ To get started working on versus there are a few prerequisites.
     npm start
     ```
 
+#### Mac
+1. Install and Configure PostgreSQL
+    ```bash
+    brew install postgres
+    ```
+
+2. Install Node Version Manager - [GitHub Repository](https://github.com/creationix/nvm)
+    ```bash
+    brew install nvm
+    ```
+3. Clone the Repository!
+    ```bash
+    git clone https://github.com/ODonoghueLab/versus.git
+    ```
+4. Modify configuration files as needed.
+    ```bash
+    /config
+    ```
+5. Verify branch integrity and run project.
+    ```bash
+    npm test
+    npm start
+    ```
+
 #### Windows
 Windows is not currently supported because let's face it... you know why.
 
