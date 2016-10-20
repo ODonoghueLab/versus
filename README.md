@@ -57,6 +57,8 @@ To get started working on versus there are a few prerequisites.
     git clone https://github.com/ODonoghueLab/versus.git
     ```
 4. Modify configuration files as needed.
+
+    `note: postgres default configuration for mac is your username with no password.`
     ```bash
     /config
     ```
