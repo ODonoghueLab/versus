@@ -51,6 +51,7 @@ To get started working on versus there are a few prerequisites.
 2. Install Node Version Manager - [GitHub Repository](https://github.com/creationix/nvm)
     ```bash
     brew install nvm
+    nvm use 6.5
     ```
 3. Clone the Repository!
     ```bash
