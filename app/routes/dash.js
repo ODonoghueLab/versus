@@ -1,12 +1,10 @@
 module.exports = (app) => {
-
-  //Page Landing
+  // Page Landing
   app.get('/', (req, res) => {
-    try{
-      res.render('dash', {name:req.user.name});
-    } catch(err){
+    try {
+      res.render('dash', { name: req.user.name });
+    } catch (err) {
       res.render('dash');
     }
   });
-
-}
+};

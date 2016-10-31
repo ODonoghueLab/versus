@@ -1,12 +1,31 @@
 {
-  "name": "versus",
-  "version": "0.1.0",
-  "main": "app/app.js",
+  "name": "csiro-versus",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "start": "node app/bin/www",
-    "test": "mocha --recursive app/tests/ --reporter nyan"
+    "test": "npm run unit-tests && npm run lint",
+    "lint": "./node_modules/.bin/eslint ./app/**/*.js --fix",
+    "unit-tests": "mocha --recursive app/tests/ --reporter nyan"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ODonoghueLab/versus.git"
+  },
+  "contributors": [
+    { "name" : "Tylor Stewart",
+      "email" : "trjstewart@gmail.com",
+      "url" : "https://twitter.com/trjstewart"
+    },
+    { "name" : "Russel Demos",
+      "email" : "",
+      "url" : ""
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/codenetwork/SlackBot/issues"
+  },
+  "license": "UNLICENSED",
   "dependencies": {
     "bcryptjs": "*",
     "body-parser": "~1.15.1",
@@ -29,8 +48,9 @@
     "s3": "*"
   },
   "devDependencies": {
-    "babel-cli": "^6.11.4",
     "chai": "^3.5.0",
-    "mocha": "^3.0.2"
+    "eslint": "^3.7.1",
+    "eslint-config-airbnb": "^12.0.0",
+    "mocha": "^3.1.0"
   }
 }

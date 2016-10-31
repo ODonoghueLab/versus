@@ -1,4 +1,5 @@
-//Primitive
+
+
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
@@ -7,96 +8,83 @@ const logger = require('morgan');
 const path = require('path');
 const fs = require('fs');
 
-//Auth
+// Authentication Middleware and Strategies.
 const expressValidator = require('express-validator');
 const session = require('express-session');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 
-// Import and Configure and Sync Sequelize Models.
-const models = require('./models');
-models.sequelize.sync({ force: false })
-  .then(function() {
-    console.log('Database Synchronised Successfully!');
-  }, function (err) {
-    console.log('Unable to Synchronise Database:', err);
-  });
-
-//S3 Integration
-const s3File = path.join(__dirname, "config", "s3.js");
+// AWS S3 Integration
+const s3File = path.join(__dirname, 'config', 's3.js');
 const s3 = require(s3File).s3;
 const client = require(s3File).client;
 
-//Begin Application
+// Import and Configure and Sync Sequelize Models.
+const models = require('./models');
+models.sequelize.sync({ force: false })
+  .then(() => {
+    console.log('Database Synchronised Successfully!');
+  }, (err) => {
+    console.log('Unable to Synchronise Database:', err);
+  });
+
+// Begin Application
 const app = express();
 
-// Setup the app
-app.set('port', process.env.PORT || 3000);
-
-// Set the views
+// View Engine Initialisation
+app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
-app.set('views', path.join(__dirname, '/views'));
 
-// Set public folder
-app.use(express.static(path.join(__dirname, '/public')));
-
-// Log the requests
-if (!module.parent) app.use(logger('dev'));
-
-// Setup Body Parser
-app.use( bodyParser.json() );       // to support JSON-encoded bodies
-app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
-  extended: true
-}));
-
-//Express Session
-app.use(session({
-  secret: 'secret',
-  saveUninitialized: true,
-  resave: true
-}));
-
-//S3 Initialisation
+// AWS S3 Initialisation
 app.set('s3', s3);
 app.set('client', client);
 
-//Passport Initialisation
+// Middleware Configuration
+app.use(express.static(path.join(__dirname, 'public')));
+// app.use(favicon(path.join(__dirname, 'public/img', 'favicon.ico'))); TODO: Add Favicon.
+app.use(logger('dev'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(session({ secret: 'csiro-versus', saveUninitialized: true, resave: true }));
 app.use(passport.initialize());
 app.use(passport.session());
-
-//Express Validator
 app.use(expressValidator({
-  errorFormatter: function(param, msg, value) {
-      var namespace = param.split('.')
-      , root    = namespace.shift()
-      , formParam = root;
+  errorFormatter: (param, msg, value) => {
+    let namespace = param.split('.'),
+      root = namespace.shift(),
+      formParam = root;
 
-    while(namespace.length) {
-      formParam += '[' + namespace.shift() + ']';
-    }
+    while (namespace.length) formParam += `[${namespace.shift()}]`;
+
     return {
-      param : formParam,
-      msg   : msg,
-      value : value
+      param: formParam,
+      msg,
+      value,
     };
-  }
+  },
 }));
 
-// Dynamically load routes
+// Application Routes
 const routePath = path.join(__dirname, '/routes');
 fs.readdirSync(routePath).forEach((file) => {
-  var route = path.join(routePath,file);
+  const route = path.join(routePath, file);
   require(route)(app);
 });
 
-// assume 404 since no middleware responded
-app.use((req, res) => {
-  res.status(404).render('404', { url: req.originalUrl });
+// Catch 404 and forward to Error Handler
+app.use((req, res, next) => {
+  const err = new Error('Not Found');
+  err.status = 404;
+  next(err);
 });
 
-// Listen
-if (!module.parent) {
-  app.listen(app.get('port'));
+// Development Error Handler (stack-traces printed)
+if (app.get('env') === 'development') {
+  app.use((err, req, res) => res.status(err.status || 500).render('error', { message: err.message, error: err }));
 }
+
+// Production Error Handler (no stack-traces printed)
+app.use((err, req, res) => res.status(err.status || 500).render('error', { message: err.message, error: {} }));
 
 module.exports = app;

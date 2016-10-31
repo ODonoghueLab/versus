@@ -1,10 +1,8 @@
 module.exports = (app) => {
-
-  //Logout
+  // Logout
   app.get('/logout', (req, res) => {
     req.session.destroy();
     req.logout();
-    res.render('dash', {success: ["You have been Logged Out."]});
+    res.render('dash', { success: ['You have been Logged Out.'] });
   });
-
-}
+};
