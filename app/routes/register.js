@@ -1,18 +1,16 @@
-const models = require('../models');
+const models = require('../models/index');
 
 module.exports = (app) => {
-
-  //Register Form Post
+  // Register Form Post
   app.post('/register', (req, res) => {
-
-    //Sanitization
-    var form = ['name', 'email', 'password', 'passwordv'];
-    for(i = 0; i < form.length; i++){
-      req.sanitize("reg_" + form[i]).escape();
-      req.sanitize("reg_" + form[i]).trim();
+    // Sanitization
+    const form = ['name', 'email', 'password', 'passwordv'];
+    for (i = 0; i < form.length; i++) {
+      req.sanitize(`reg_${form[i]}`).escape();
+      req.sanitize(`reg_${form[i]}`).trim();
     }
 
-    //Validation
+    // Validation
     req.checkBody('reg_name', 'Please Enter Your Name').notEmpty();
     req.checkBody('reg_email', 'Please Enter Your Email').notEmpty();
     req.checkBody('reg_password', 'Please Enter Both Password Fields').notEmpty();
@@ -20,19 +18,17 @@ module.exports = (app) => {
     req.checkBody('reg_password', 'Please Enter A Longer Password').len(8);
     req.checkBody('reg_password', 'Passwords Do Not Match').equals(req.body.reg_passwordv);
 
-    var errors = req.validationErrors();
+    const errors = req.validationErrors();
 
-    if(errors){
-
-      //Render the page again with errors
-      res.render('dash',{
-        warnings: errors.map((obj) => {
-          return obj.msg;
-        }),
+    if (errors) {
+      // Render the page again with errors
+      res.render('dash', {
+        warnings: errors.map(obj =>
+           obj.msg
+        ),
         retryRegName: req.body.reg_name,
-        retryRegEmail: req.body.reg_email
+        retryRegEmail: req.body.reg_email,
       });
-
     } else {
       models.User.create({
         name: req.body.reg_name,
@@ -42,20 +38,18 @@ module.exports = (app) => {
         .then((user) => {
           res.render('dash', {
             name: user.name,
-            success: ["You Have Been Registered!"]
+            success: ['You Have Been Registered!'],
           });
         })
-        .catch(error => {
+        .catch((error) => {
           if (error.original.code == 23505) {
-            res.render('dash',{
-              errors: ["Email already in use"],
+            res.render('dash', {
+              errors: ['Email already in use'],
               retryRegName: req.body.reg_name,
               retryRegEmail: req.body.reg_email,
             });
           } else res.render('dash');
         });
-    }//end validation errors
-
-  }); //end post request
-
-}
+    }// end validation errors
+  }); // end post request
+};

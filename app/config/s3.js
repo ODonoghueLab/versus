@@ -5,7 +5,7 @@ let keys;
 try {
   keys = require('../config/keys.json');
 } catch (err) {
-  throw "App Requires app/config/keys.json"
+  throw 'App Requires app/config/keys.json';
 }
 
 module.exports.s3 = s3;
