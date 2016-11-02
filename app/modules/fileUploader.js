@@ -2,20 +2,20 @@ const path = require('path');
 const del = require('del');
 const fs = require('fs');
 const multer = require('multer');
-const upload = multer({ dest: path.join(__dirname, '../temp/') });
 
+const upload = multer({ dest: path.join(__dirname, '../temp/') }); // eslint-disable-line
 
 // require key
 let keys;
 
 try {
-  keys = require('../config/keys.json');
+  keys = require('../config/keys.json'); // eslint-disable-line
 } catch (err) {
-  throw 'App Requires app/config/keys.json';
+  throw 'App Requires app/config/keys.json'; // eslint-disable-line
 }
 
 // export this module
-module.exports.upload = function upload(app, req, callback) {
+module.exports.upload = (app, req, callback) => {
   const s3 = req.app.get('s3');
   const client = req.app.get('client');
 
@@ -31,7 +31,7 @@ module.exports.upload = function upload(app, req, callback) {
 
   if (req.files.length < 2) { callback(null, ['Minimum two images.']); return; }
 
-  for (i = 0; i < req.files.length; i++) {
+  for (let i = 0; i < req.files.length; i += 1) {
     //  * * * * BEGIN LOCAL * * * *
 
     // or atleast try too..
@@ -41,7 +41,9 @@ module.exports.upload = function upload(app, req, callback) {
       path.extname(req.files[i].originalname).toLowerCase()));
     } catch (err) {
       // delete files
-      for (i = 0; i < req.files.length; i++) { del(req.files[i].path); }
+      for (let deleteVar = 0; deleteVar < req.files.length; deleteVar += 1) {
+        del(req.files[deleteVar].path);
+      }
 
       callback(null, ['No File Uploaded']);
 
@@ -51,7 +53,9 @@ module.exports.upload = function upload(app, req, callback) {
     // size checking
     if (req.files[i].size / 1000000 > 2) {
       // delete files
-      for (i = 0; i < req.files.length; i++) { del(req.files[i].path); }
+      for (let deleteVar = 0; deleteVar < req.files.length; deleteVar += 1) {
+        del(req.files[deleteVar].path);
+      }
 
       callback(null, ['Please Keep Images Under 2MB']);
 
@@ -67,7 +71,9 @@ module.exports.upload = function upload(app, req, callback) {
     // non supported file
     else {
       // delete files
-      for (i = 0; i < req.files.length; i++) { del(req.files[i].path); }
+      for (let deleteVar = 0; deleteVar < req.files.length; deleteVar += 1) {
+        del(req.files[deleteVar].path);
+      }
 
       callback(null, ['.png\'s .jpg\'s .gif\'s only!']);
 
@@ -90,32 +96,36 @@ module.exports.upload = function upload(app, req, callback) {
     const uploader = client.uploadFile(params);
 
     // file couldnt upload
-    uploader.on('error', (err) => {
+    uploader.on('error', () => {
       // delete the files locally for now
-      for (i = 0; i < targetPath.length; i++) { del(targetPath[i]); }
+      for (let deleteVar = 0; deleteVar < req.files.length; deleteVar += 1) {
+        del(targetPath[deleteVar]);
+      }
     });
 
     // file is uploading
     uploader.on('progress', () => {
       // TODO This could be sent over as json
-      const percentage = uploader.progressAmount / uploader.progressTotal * 100;
+      // const percentage = uploader.progressAmount / uploader.progressTotal / 0.1;
     });
 
     // file is done
-    uploader.on('end', () => {
-      filesUploaded++;
+    uploader.on('end', () => { //eslint-disable-line
+      filesUploaded += 1;
 
       // once all files are uploaded
-      if (filesUploaded == req.files.length) {
+      if (filesUploaded === req.files.length) {
         // get the links for every file
-        for (i = 0; i < targetPath.length; i++) {
-          resultImages.push(s3.getPublicUrlHttp(keys.s3.bucket, path.basename(targetPath[i])));
+        for (let link = 0; link < targetPath.length; link += 1) {
+          resultImages.push(s3.getPublicUrlHttp(keys.s3.bucket, path.basename(targetPath[link])));
         }
 
         // check if the links match length
-        if (resultImages.length == req.files.length) {
+        if (resultImages.length === req.files.length) {
           // delete the files locally for now
-          for (i = 0; i < targetPath.length; i++) { del(targetPath[i]); }
+          for (let deleteVar = 0; deleteVar < req.files.length; deleteVar += 1) {
+            del(targetPath[deleteVar]);
+          }
 
           // finish
           callback(resultImages);

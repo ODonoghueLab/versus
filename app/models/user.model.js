@@ -1,5 +1,3 @@
-
-
 const bcrypt = require('bcryptjs');
 
 module.exports = (sequelize, DataTypes) => {
@@ -16,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   User.beforeValidate((user) => {
-    user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10));
+    user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10)); // eslint-disable-line
   });
 
   return User;

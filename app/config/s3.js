@@ -3,9 +3,9 @@ const s3 = require('s3');
 let keys;
 
 try {
-  keys = require('../config/keys.json');
+  keys = require('../config/keys.json'); // eslint-disable-line
 } catch (err) {
-  throw 'App Requires app/config/keys.json';
+  throw 'App Requires app/config/keys.json'; // eslint-disable-line
 }
 
 module.exports.s3 = s3;

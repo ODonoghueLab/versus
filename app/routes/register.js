@@ -5,7 +5,7 @@ module.exports = (app) => {
   app.post('/register', (req, res) => {
     // Sanitization
     const form = ['name', 'email', 'password', 'passwordv'];
-    for (i = 0; i < form.length; i++) {
+    for (let i = 0; i < form.length; i += 1) {
       req.sanitize(`reg_${form[i]}`).escape();
       req.sanitize(`reg_${form[i]}`).trim();
     }
@@ -42,7 +42,7 @@ module.exports = (app) => {
           });
         })
         .catch((error) => {
-          if (error.original.code == 23505) {
+          if (error.original.code === 23505) {
             res.render('dash', {
               errors: ['Email already in use'],
               retryRegName: req.body.reg_name,

@@ -1,10 +1,9 @@
 const bcrypt = require('bcryptjs');
 const models = require('../models/index');
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
 
 module.exports = (app) => {
-  const passport = require('passport');
-  const LocalStrategy = require('passport-local').Strategy;
-
   // FIXME
   // Implement Custom Callback
 
@@ -12,13 +11,13 @@ module.exports = (app) => {
   app.post('/login', passport.authenticate('local', {
     successRedirect: '/',
     failureRedirect: '/',
-  }), (req, res) => {
+  }), () => {
   });
 
   // Passport Configuration : Local Strategy.
   passport.use(new LocalStrategy((email, password, done) => {
     models.User.findOne({ where: { email } })
-      .then((user) => {
+      .then((user) => { //eslint-disable-line
         if (user === null) {
           return done(null, false, {
             errors: ['Incorrect Email or Password'],
@@ -28,15 +27,15 @@ module.exports = (app) => {
         bcrypt.compare(password, user.password, (err, isMatch) => {
           if (err) throw err;
 
-          if (isMatch) return done(null, user.dataValues, { name: user.name });
-          else {
+          if (isMatch) { return done(null, user.dataValues, { name: user.name }); }
+          else { //eslint-disable-line
             return done(null, false, {
               errors: ['Incorrect Email/Password'],
               retryLogEmail: email,
             }); }
         });
       })
-      .catch((error) => {
+      .catch(() => {
         done(null, false, {
           errors: ['Could Not Check Email'],
           retryLogEmail: email,
