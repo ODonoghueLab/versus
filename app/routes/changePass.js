@@ -17,7 +17,7 @@ module.exports = (app) => {
   app.post('/account/details', (req, res) => {
     // Sanitization
     const form = ['name', 'email', 'passwordOld', 'passwordNew', 'passwordVer'];
-    for (i = 0; i < form.length; i++) {
+    for (let i = 0; i < form.length; i += 1) {
       req.sanitize(form[i]).escape();
       req.sanitize(form[i]).trim();
     }
@@ -30,14 +30,14 @@ module.exports = (app) => {
 
     // Check If All Fields Are Empty
     let allEmpty = 0;
-    for (i = 0; i < empty.length; i++) {
+    for (let i = 0; i < empty.length; i += 1) {
       if (empty[i]) {
-        allEmpty++;
+        allEmpty += 1;
       }
     }
 
     // Set true if all empty
-    allEmpty = (allEmpty == empty.length);
+    allEmpty = (allEmpty === empty.length);
 
     // Validation
     req.checkBody('passwordOld', 'Please Enter Your Current Password').notEmpty();
@@ -81,7 +81,7 @@ module.exports = (app) => {
                 models.User.update(
                   { name: req.body.name },
                   { where: { id: req.user.id } })
-                  .catch(error => res.render('error'));
+                  .catch(() => res.render('error'));
               }
 
               // New Email
@@ -89,7 +89,7 @@ module.exports = (app) => {
                 models.User.update(
                   { email: req.body.email },
                   { where: { id: req.user.id } })
-                  .catch(error => res.render('error'));
+                  .catch(() => res.render('error'));
               }
 
               // New Password
@@ -97,7 +97,7 @@ module.exports = (app) => {
                 models.User.update(
                   { password: req.body.passwordNew },
                   { where: { id: req.user.id } })
-                  .catch(error => res.render('error'));
+                  .catch(() => res.render('error'));
               }
 
               // Render Successs
@@ -105,12 +105,12 @@ module.exports = (app) => {
             }
 
             // User Entered The Wrong Password
-            else res.render('editAcc', { errors: ['Incorrect Password'] });
+            else { res.render('editAcc', { errors: ['Incorrect Password'] }); } //eslint-disable-line
           });
         })
 
         // Error Getting User By Id
-        .catch((error) => {
+        .catch(() => {
           res.render('editAcc', {
             errors: ['Could Not Check Email'],
           });

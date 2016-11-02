@@ -1,10 +1,7 @@
-'user strict';
-
-const async = require('async');
 const models = require('../models/index');
-
 const path = require('path');
 const multer = require('multer');
+
 const upload = multer({ dest: path.join(__dirname, '../temp/') });
 
 const fileUploader = require('../modules/fileUploader.js');
@@ -27,16 +24,16 @@ module.exports = (app) => {
 
       // Create the new Experiment.
       models.Experiment.create({ name: req.body.name, description: req.body.description })
-        .catch((error) => { res.render('error'); return; })
+        .catch(() => { res.render('error'); return; })
         .then((experiment) => {
           // Create each Image.
-          images.map((image) => {
+          images.map((image) => { //eslint-disable-line
             models.Image.create({ url: image })
-              .catch((error) => { res.render('error'); return; })
-              .then((image) => {
+              .catch(() => { res.render('error'); return; })
+              .then((image) => { //eslint-disable-line
                 // Add the Image to the Experiment.
                 experiment.addImage(image)
-                  .catch((error) => { res.render('error'); return; })
+                  .catch(() => { res.render('error'); return; })
                   .then(() => {});
               });
           });

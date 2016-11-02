@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 // import { expect } from 'chai';
 const expect = require('chai').expect;
 
