@@ -99,7 +99,7 @@ module.exports.upload = (app, req, callback) => {
     uploader.on('error', () => {
       // delete the files locally for now
       for (let deleteVar = 0; deleteVar < req.files.length; deleteVar += 1) {
-        del(req.files[deleteVar].path);
+        del(targetPath[deleteVar]);
       }
     });
 
@@ -124,7 +124,7 @@ module.exports.upload = (app, req, callback) => {
         if (resultImages.length === req.files.length) {
           // delete the files locally for now
           for (let deleteVar = 0; deleteVar < req.files.length; deleteVar += 1) {
-            del(req.files[deleteVar].path);
+            del(targetPath[deleteVar]);
           }
 
           // finish
