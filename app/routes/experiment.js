@@ -9,18 +9,18 @@ const fileUploader = require('../modules/fileUploader.js');
 module.exports = (app) => {
   // Handle Landing
   app.get('/experiment/create', (req, res) => {
-    if (req.user) { res.render('createExperiment', { name: req.user.name }); } else { res.render('dash'); }
+    if (req.user) { res.render('createExperiment', { name: req.user.firstName }); } else { res.render('dash'); }
   });
 
   // Adds a new experiment to the current user.
   app.post('/experiment/create', upload.array('files'), (req, res) => {
     // Ensure all paramaters have been submitted via POST.
-    if (!req.body.name) { res.render('createExperiment', { name: req.user.name, errors: ['Name must be set.'] }); return; }
-    if (!req.body.description) { res.render('createExperiment', { name: req.user.name, errors: ['Description must be set.'] }); return; }
+    if (!req.body.name) { res.render('createExperiment', { name: req.user.firstName, errors: ['Name must be set.'] }); return; }
+    if (!req.body.description) { res.render('createExperiment', { name: req.user.firstName, errors: ['Description must be set.'] }); return; }
 
     // Upload Images
     fileUploader.upload(app, req, (images, error) => {
-      if (error) { res.render('createExperiment', { name: req.user.name, errors: error }); return; }
+      if (error) { res.render('createExperiment', { name: req.user.firstName, errors: error }); return; }
 
       // Create the new Experiment.
       models.Experiment.create({ name: req.body.name, description: req.body.description })
@@ -43,7 +43,7 @@ module.exports = (app) => {
           experiment.addUser(1);
 
           // TODO pull experiment names from token or query
-          res.render('createExperiment', { experiments: [experiment.name], name: req.user.name, images });
+          res.render('createExperiment', { experiments: [experiment.name], name: req.user.firstName, images });
         }); // End Anonymous Callback
     }); // End Upload
   }); // End Post
