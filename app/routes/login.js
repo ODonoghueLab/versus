@@ -7,7 +7,7 @@ module.exports = (app) => {
   // FIXME
   // Implement Custom Callback
 
-  // Login Request TODO: Russ, wtf is this?
+  // Login Request
   app.post('/login', passport.authenticate('local', {
     successRedirect: '/',
     failureRedirect: '/',
