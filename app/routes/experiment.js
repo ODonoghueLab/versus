@@ -5,15 +5,16 @@ const multer = require('multer');
 const upload = multer({ dest: path.join(__dirname, '../temp/') });
 
 const fileUploader = require('../modules/fileUploader.js');
+const routeAuth = require('../modules/isAuth.js');
 
 module.exports = (app) => {
   // Handle Landing
-  app.get('/experiment/create', (req, res) => {
+  app.get('/experiment/create', routeAuth.isAuth, (req, res) => {
     if (req.user) { res.render('createExperiment', { name: req.user.firstName }); } else { res.render('dash'); }
   });
 
   // Adds a new experiment to the current user.
-  app.post('/experiment/create', upload.array('files'), (req, res) => {
+  app.post('/experiment/create', routeAuth.isAuth, upload.array('files'), (req, res) => {
     // Ensure all paramaters have been submitted via POST.
     if (!req.body.name) { res.render('createExperiment', { name: req.user.firstName, errors: ['Name must be set.'] }); return; }
     if (!req.body.description) { res.render('createExperiment', { name: req.user.firstName, errors: ['Description must be set.'] }); return; }
