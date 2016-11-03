@@ -1,9 +1,11 @@
 const models = require('../models/index');
 const bcrypt = require('bcryptjs');
 
+const routeAuth = require('../modules/isAuth.js');
+
 module.exports = (app) => {
   // Page Landing
-  app.get('/account', (req, res) => {
+  app.get('/account', routeAuth.isAuth, (req, res) => {
     try {
       res.render('editAcc', { name: req.user.name });
     } catch (err) {
@@ -14,7 +16,7 @@ module.exports = (app) => {
   });
 
   // Change Personal Details
-  app.post('/account/details', (req, res) => {
+  app.post('/account/details', routeAuth.isAuth, (req, res) => {
     // Sanitization
     const form = ['name', 'email', 'passwordOld', 'passwordNew', 'passwordVer'];
     for (let i = 0; i < form.length; i += 1) {
