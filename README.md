@@ -11,7 +11,16 @@ Versus is a web-based application that allows users ('requesters') to create mul
 To get started working on versus there are a few prerequisites.
 
 #### Linux [Ubuntu 16.04]
-1. Install and Configure PostgreSQL - [Digital Ocean Guide](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-16-04)
+0. Make Sure to Update and Install PostgreSQL
+    - Update.
+    ```
+    sudo apt-get update
+    ```
+    - Install.
+    ```
+    sudo apt-get install postgresql postgresql-contrib
+    ```
+1. Configure PostgreSQL - [Digital Ocean Guide](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-16-04)
     - Create the `versus` Database.
         ```bash
         sudo -u postgres createdb versus
