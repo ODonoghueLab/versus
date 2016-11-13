@@ -1,4 +1,4 @@
-'use strict';
+
 
 const models = require('../models/index');
 const path = require('path');
@@ -10,10 +10,9 @@ const fileUploader = require('../modules/fileUploader.js');
 const routeAuth = require('../modules/isAuth.js');
 
 module.exports = (app) => {
-  
   // [GET] Create a new Experiment for current user.
   app.get('/experiment/create', (req, res) => {
-    (req.user) ? res.render('createExperiment', { name: req.user.name }) : res.render('dash');
+    (req.user) ? res.render('createExperiment', { name: req.user.name }) : res.render('dash'); //eslint-disable-line
   });
 
   // [POST] Create a new Experiment for current user.
@@ -51,20 +50,15 @@ module.exports = (app) => {
         }); // End Anonymous Callback
     }); // End Upload
   });
-  
+
   // Display a single Experiment.
   app.get('/experiment/:id', (req, res) => {
-    console.log(req.params.id);
-    
     // Find the Experiment based on the id from the URL.
     models.Experiment.find({
       where: { id: req.params.id },
-      include: [{ model: models.Image, as: 'Images' }]
+      include: [{ model: models.Image, as: 'Images' }],
     }).then((experiment) => {
-      console.log(experiment);
-      res.render('experiment', { experiment: experiment });
+      res.render('experiment', { experiment });
     });
-    
-  })
-  
+  });
 };
