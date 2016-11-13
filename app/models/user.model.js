@@ -1,10 +1,9 @@
-
-
 const bcrypt = require('bcryptjs');
 
 module.exports = (sequelize, DataTypes) => {
   const User = sequelize.define('User', {
-    name: DataTypes.STRING,
+    firstName: DataTypes.STRING,
+    lastName: DataTypes.STRING,
     email: { type: DataTypes.STRING, unique: true },
     password: DataTypes.STRING,
   }, {
@@ -16,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   User.beforeValidate((user) => {
-    user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10));
+    user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10)); // eslint-disable-line
   });
 
   return User;

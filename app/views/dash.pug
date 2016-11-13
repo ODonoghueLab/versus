@@ -66,11 +66,18 @@ html
                     form(name="registerForm" method="post" action="/register")
                       .col-sm-12
                         br
-                        p(class='text-center') Name
-                        if !retryRegName
-                          input(type='text' name='reg_name')
+                        p(class='text-center') First Name
+                        if !retryRegFirstName
+                          input(type='text' name='reg_firstName')
                         else
-                          input(type='text' name='reg_name' value=retryRegName )
+                          input(type='text' name='reg_firstName' value=retryRegFirstName )
+                      .col-sm-12
+                        br
+                        p(class='text-center') Last Name
+                        if !retryRegLastName
+                          input(type='text' name='reg_lastName')
+                        else
+                          input(type='text' name='reg_lastName' value=retryRegLastName )
                       .col-sm-12
                         br
                         p(class='text-center') Email

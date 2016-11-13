@@ -3,7 +3,6 @@
 const models = require('../models/index');
 
 module.exports = (app) => {
-  
   // Primary User Dashboard
   app.get('/dashboard', (req, res) => {
     

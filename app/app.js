@@ -1,9 +1,7 @@
-"use strict";
-
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
-const favicon = require('serve-favicon');
+// const favicon = require('serve-favicon'); TODO: Add Favicon.
 const logger = require('morgan');
 const path = require('path');
 const fs = require('fs');
@@ -12,21 +10,16 @@ const fs = require('fs');
 const expressValidator = require('express-validator');
 const session = require('express-session');
 const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
 
 // AWS S3 Integration
 const s3File = path.join(__dirname, 'config', 's3.js');
-const s3 = require(s3File).s3;
-const client = require(s3File).client;
+const s3 = require(s3File).s3; // eslint-disable-line
+const client = require(s3File).client; // eslint-disable-line
 
 // Import and Configure and Sync Sequelize Models.
 const models = require('./models');
-models.sequelize.sync({ force: false })
-  .then(() => {
-    console.log('Database Synchronised Successfully!');
-  }, (err) => {
-    console.log('Unable to Synchronise Database:', err);
-  });
+
+models.sequelize.sync({ force: false });
 
 // Begin Application
 const app = express();
@@ -49,31 +42,18 @@ app.use(cookieParser());
 app.use(session({ secret: 'csiro-versus', saveUninitialized: true, resave: true }));
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(expressValidator({
-  errorFormatter: (param, msg, value) => {
-    let namespace = param.split('.'),
-      root = namespace.shift(),
-      formParam = root;
-
-    while (namespace.length) formParam += `[${namespace.shift()}]`;
-
-    return {
-      param: formParam,
-      msg,
-      value,
-    };
-  },
-}));
+app.use(expressValidator());
 
 // Application Routes
 const routePath = path.join(__dirname, '/routes');
 fs.readdirSync(routePath).forEach((file) => {
   const route = path.join(routePath, file);
-  require(route)(app);
+  require(route)(app); // eslint-disable-line
 });
 
 // Catch 404 and forward to Error Handler
 app.use((req, res, next) => {
+  res.status(404).render('404', { url: req.originalUrl });
   const err = new Error('Not Found');
   err.status = 404;
   next(err);
