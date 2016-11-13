@@ -71,12 +71,30 @@ module.exports = (app) => {
   });
 
   app.post('/run/test', routeAuth.isAuth, (req, res) => {
-    console.log(req.body);
-    res.render('experimentTest', {
-      name: req.user.firstName,
-      started: true,
-      itemA: '' + (Math.round(Math.random()*10)),
-      itemB: '' + (Math.round(Math.random()*10)),
-    });
+
+    console.log("Recieved: " + req.body);
+
+    // The User Just Started
+    // Wants first 2
+    if(req.body.start === true) {
+      information = {
+        "itemA": '' + (Math.round(Math.random() * 10)),
+        "itemB": '' + (Math.round(Math.random() * 10)),
+      };
+      res.json(information);
+      console.log("Sending: " + information);
+    }
+
+    // The User Has Started
+    // Wants Next Data
+    if(typeof req.body.itemA !== typeof undefined || typeof req.body.itemB !== typeof undefined) {
+      let tag = (typeof req.body.itemA !== typeof undefined) ? "ItemA" : "ItemB";
+      information = {
+        tag: '' + (Math.round(Math.random() * 10))
+      };
+      res.json(information);
+      console.log("Sending: " + information);
+    }
+
   });
 };

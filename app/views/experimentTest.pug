@@ -151,11 +151,11 @@ html
               p #{val}
           - last = val
 
-      if started
-        include includes/experimentFront.js
-        button(type="button" name="ButtonA" value=itemA) ITEM: #{itemA}
-        button(type="button" name="ButtonB" value=itemB) ITEM: #{itemB}
+      include includes/experimentFront.js
 
-      else
-        form(method="POST" action="/run/test/")
-          button(type="submit") START
+      div(id="experimentStart")
+        button(type="button" name="startButton") START
+
+      div(id="experiment")
+        input(type="image" name="ButtonA" value="default")
+        input(type="image" name="ButtonB" value="default")
