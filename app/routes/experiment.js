@@ -61,4 +61,22 @@ module.exports = (app) => {
       res.render('experiment', { experiment });
     });
   });
+
+
+  // Comparison Test
+  app.get('/run/test', routeAuth.isAuth, (req, res) => {
+    res.render('experimentTest', {
+      name: req.user.firstName,
+    });
+  });
+
+  app.post('/run/test', routeAuth.isAuth, (req, res) => {
+    console.log(req.body);
+    res.render('experimentTest', {
+      name: req.user.firstName,
+      started: true,
+      itemA: '' + (Math.round(Math.random()*10)),
+      itemB: '' + (Math.round(Math.random()*10)),
+    });
+  });
 };
