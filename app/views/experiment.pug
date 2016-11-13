@@ -1,0 +1,10 @@
+extends partials/layout
+
+block content
+  div
+    h1= experiment.dataValues.name
+    p= experiment.dataValues.description
+    each image in experiment.Images
+      img(src=image.dataValues.url)
+  div
+    a(href='/dashboard') Back to Dashboard

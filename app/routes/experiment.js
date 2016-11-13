@@ -1,8 +1,6 @@
-'user strict';
+'use strict';
 
-const async = require('async');
 const models = require('../models/index');
-
 const path = require('path');
 const multer = require('multer');
 const upload = multer({ dest: path.join(__dirname, '../temp/') });
@@ -10,12 +8,13 @@ const upload = multer({ dest: path.join(__dirname, '../temp/') });
 const fileUploader = require('../modules/fileUploader.js');
 
 module.exports = (app) => {
-  // Handle Landing
+  
+  // [GET] Create a new Experiment for current user.
   app.get('/experiment/create', (req, res) => {
-    if (req.user) { res.render('createExperiment', { name: req.user.name }); } else { res.render('dash'); }
+    (req.user) ? res.render('createExperiment', { name: req.user.name }) : res.render('dash');
   });
 
-  // Adds a new experiment to the current user.
+  // [POST] Create a new Experiment for current user.
   app.post('/experiment/create', upload.array('files'), (req, res) => {
     // Ensure all paramaters have been submitted via POST.
     if (!req.body.name) { res.render('createExperiment', { name: req.user.name, errors: ['Name must be set.'] }); return; }
@@ -49,5 +48,21 @@ module.exports = (app) => {
           res.render('createExperiment', { experiments: [experiment.name], name: req.user.name, images });
         }); // End Anonymous Callback
     }); // End Upload
-  }); // End Post
-}; // End Module
+  });
+  
+  // Display a single Experiment.
+  app.get('/experiment/:id', (req, res) => {
+    console.log(req.params.id);
+    
+    // Find the Experiment based on the id from the URL.
+    models.Experiment.find({
+      where: { id: req.params.id },
+      include: [{ model: models.Image, as: 'Images' }]
+    }).then((experiment) => {
+      console.log(experiment);
+      res.render('experiment', { experiment: experiment });
+    });
+    
+  })
+  
+};

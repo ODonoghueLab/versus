@@ -1,4 +1,21 @@
 extends partials/layout
 
 block content
-  h2 This will be the content for the Dashboard, containing things like an overview of your experiments etc...
+  div
+    p #{username}
+  div
+    table
+      tr
+        th ID
+        th Name
+        th Description
+        th View
+      each experiment in experiments
+        tr
+          td= experiment.dataValues.id
+          td= experiment.dataValues.name
+          td= experiment.dataValues.description
+          td
+            a(href='experiment/' + experiment.dataValues.id) View
+  div
+    a(href='/experiment/create') Create Experiment
