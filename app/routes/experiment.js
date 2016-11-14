@@ -1,5 +1,3 @@
-
-
 const models = require('../models/index');
 const path = require('path');
 const multer = require('multer');
@@ -97,10 +95,9 @@ module.exports = (app) => {
       let information = {};
       let tag = (typeof req.body.itemA !== typeof undefined) ? "itemB" : "itemA";
       information[tag] = {
-          'value': '' + (Math.round(Math.random() * 10)),
-          'url': 'http://lorempixel.com/400/600/',
+        'value': '' + (Math.round(Math.random() * 10)),
+        'url': 'http://lorempixel.com/400/600/',
       };
-
       res.json(information);
       console.log("Sending: " + information);
     }
