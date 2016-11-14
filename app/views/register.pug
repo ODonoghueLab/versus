@@ -1,0 +1,52 @@
+extends partials/layout
+
+block content
+  style(type='text/css').
+    body {
+      background-color: #37657B;
+    }
+
+    body > .grid {
+      height: 100%;
+    }
+
+    .image {
+      margin-top: -100px;
+    }
+
+    .column {
+      max-width: 450px;
+    }
+
+  .ui.middle.aligned.center.aligned.grid
+    .column
+      form.ui.large.form
+        .ui.stacked.segment
+          h2.ui.teal.image.header
+            .content
+              | Register your account
+          .field
+            .ui.left.icon.input
+              i.user.icon
+              input(type='text', name='fmane', placeholder='First Name', autocomplete='off')
+          .field
+            .ui.left.icon.input
+              i.user.icon
+              input(type='text', name='lname', placeholder='Last Name', autocomplete='off')
+          .field
+            .ui.left.icon.input
+              i.mail.icon
+              input(type='text', name='email', placeholder='E-mail address', autocomplete='off')
+          .field
+            .ui.left.icon.input
+              i.lock.icon
+              input(type='password', name='password', placeholder='Password', autocomplete='off')
+          .field
+            .ui.left.icon.input
+              i.lock.icon
+              input(type='password', name='rptpassword', placeholder='Confirm Password', autocomplete='off')
+          .ui.fluid.large.teal.submit.button Register
+        .ui.error.message
+      .ui.message
+        | Already have an account?
+        a(href='/login')  Login

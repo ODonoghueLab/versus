@@ -1,7 +1,10 @@
 const models = require('../models/index');
 
 module.exports = (app) => {
-  // Register Form Post
+  // [GET] Registration Form
+  app.get('/register', (req, res) => res.render('register'));
+  
+  // [POST] Registration Request
   app.post('/register', (req, res) => {
     // Sanitization
     const form = ['firstName', 'lastName', 'email', 'password', 'passwordv'];
