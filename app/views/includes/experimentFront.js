@@ -17,8 +17,8 @@ $(document).ready( () => {
         if(typeof data !== typeof undefined){
 
           //append DOM
-          $('[name="ButtonA"]').attr("value", data.itemA).attr("src", "http://lorempixel.com/400/599/");
-          $('[name="ButtonB"]').attr("value", data.itemB).attr("src", "http://lorempixel.com/400/601/");
+          $('[name="ButtonA"]').attr("value", data.itemA.value).attr("src", data.itemA.url);
+          $('[name="ButtonB"]').attr("value", data.itemB.value).attr("src", data.itemB.url);
 
         }
       });
@@ -30,17 +30,37 @@ $(document).ready( () => {
 
 
   //Choices
+  //If we pick A, change B
   $('[name="ButtonA"]').click(function(){
     get(JSON.stringify({ "itemA": $(this).attr("value") }), (data) => {
-      $('[name="ButtonB"]').attr("value", data.itemB).attr("src", "http://lorempixel.com/400/601/");
+      //hide();
+      $('[name="ButtonB"]').attr("value", data.itemB.value).attr("src", data.itemB.url);
+      //shuffle();
+      //show();
     })
   });
 
+  //If we pick B, change A
   $('[name="ButtonB"]').click(function(){
     get(JSON.stringify({ "itemB": $(this).attr("value") }), (data) => {
-      $('[name="ButtonA"]').attr("value", data.itemB).attr("src", "http://lorempixel.com/400/601/");
+      //hide();
+      $('[name="ButtonA"]').attr("value", data.itemA.value).attr("src", data.itemA.url);
+      //shuffle();
+      //show();
     })
   });
+
+  function hide(){
+    $('#experiment').slideUp(300);
+  }
+
+  function show(){
+    $('#experiment').slideDown(450);
+  }
+
+  function shuffle(){
+
+  }
 
   function get(request, callback){
     console.log("Sending: " + request);
@@ -55,7 +75,7 @@ $(document).ready( () => {
         callback(responseData);
       },
       error: function(XMLHttpRequest, textStatus, errorThrown) {
-        console.log(error);
+        console.log("Error Recieving");
         callback();
       }
     });

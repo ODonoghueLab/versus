@@ -78,8 +78,14 @@ module.exports = (app) => {
     // Wants first 2
     if(req.body.start === true) {
       information = {
-        "itemA": '' + (Math.round(Math.random() * 10)),
-        "itemB": '' + (Math.round(Math.random() * 10)),
+        'itemA': {
+          'value': '' + (Math.round(Math.random() * 10)),
+          'url': 'http://lorempixel.com/400/599/',
+        },
+        'itemB': {
+          'value': '' + (Math.round(Math.random() * 10)),
+          'url': 'http://lorempixel.com/400/601/',
+        },
       };
       res.json(information);
       console.log("Sending: " + information);
@@ -88,10 +94,13 @@ module.exports = (app) => {
     // The User Has Started
     // Wants Next Data
     if(typeof req.body.itemA !== typeof undefined || typeof req.body.itemB !== typeof undefined) {
-      let tag = (typeof req.body.itemA !== typeof undefined) ? "ItemA" : "ItemB";
-      information = {
-        tag: '' + (Math.round(Math.random() * 10))
+      let information = {};
+      let tag = (typeof req.body.itemA !== typeof undefined) ? "itemB" : "itemA";
+      information[tag] = {
+          'value': '' + (Math.round(Math.random() * 10)),
+          'url': 'http://lorempixel.com/400/600/',
       };
+
       res.json(information);
       console.log("Sending: " + information);
     }
