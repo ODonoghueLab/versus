@@ -18,9 +18,50 @@ block content
       max-width: 450px;
     }
 
+  script.
+    $(document).ready(function () {
+      $('.ui.form').form({
+        fields: {
+          firstName: {
+            identifier: 'reg_firstName',
+            rules: [
+              {type: 'empty', prompt: 'Please enter your first name'}
+            ]
+          },
+          lastName: {
+            identifier: 'reg_lastName',
+            rules: [
+              {type: 'empty', prompt: 'Please enter your last name'}
+            ]
+          },
+          email: {
+            identifier: 'reg_email',
+            rules: [
+              {type: 'empty', prompt: 'Please enter your e-mail'},
+              {type: 'email', prompt: 'Please enter a valid e-mail'}
+            ]
+          },
+          password: {
+            identifier: 'reg_password',
+            rules: [
+              {type: 'empty', prompt: 'Please enter your password'},
+              {type: 'length[6]', prompt: 'Your password must be at least 6 characters'}
+            ]
+          },
+          passwordRepeat: {
+            identifier: 'reg_passwordv',
+            rules: [
+              {type: 'empty', prompt: 'Please enter your password'},
+              {type: 'length[6]', prompt: 'Your password must be at least 6 characters'}
+            ]
+          }
+        }
+      });
+    });
+
   .ui.middle.aligned.center.aligned.grid
     .column
-      form.ui.large.form
+      form.ui.large.form(method="post" action="/register")
         .ui.stacked.segment
           h2.ui.teal.image.header
             .content
@@ -28,23 +69,23 @@ block content
           .field
             .ui.left.icon.input
               i.user.icon
-              input(type='text', name='fmane', placeholder='First Name', autocomplete='off')
+              input(type='text', name='reg_firstName', placeholder='First Name')
           .field
             .ui.left.icon.input
               i.user.icon
-              input(type='text', name='lname', placeholder='Last Name', autocomplete='off')
+              input(type='text', name='reg_lastName', placeholder='Last Name')
           .field
             .ui.left.icon.input
               i.mail.icon
-              input(type='text', name='email', placeholder='E-mail address', autocomplete='off')
+              input(type='text', name='reg_email', placeholder='E-mail address')
           .field
             .ui.left.icon.input
               i.lock.icon
-              input(type='password', name='password', placeholder='Password', autocomplete='off')
+              input(type='password', name='reg_password', placeholder='Password')
           .field
             .ui.left.icon.input
               i.lock.icon
-              input(type='password', name='rptpassword', placeholder='Confirm Password', autocomplete='off')
+              input(type='password', name='reg_passwordv', placeholder='Confirm Password')
           .ui.fluid.large.teal.submit.button Register
         .ui.error.message
       .ui.message
