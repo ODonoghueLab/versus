@@ -1,17 +1,16 @@
 
 
 module.exports = (sequelize, DataTypes) => {
-  const Experiment = sequelize.define('Experiment', {
-    name: DataTypes.STRING,
-    description: DataTypes.STRING,
+  const Invite = sequelize.define('Invite', {
+    inviteId: { primaryKey: true, type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4 },
+    email: DataTypes.STRING,
   }, {
     classMethods: {
       associate(models) {
-        Experiment.hasMany(models.Image, { as: 'Images' });
-        Experiment.belongsToMany(models.User, { through: 'UserExperiment' });
+        Invite.belongsTo(models.Experiment);
       },
     },
   });
 
-  return Experiment;
+  return Invite;
 };

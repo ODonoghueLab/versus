@@ -2,9 +2,9 @@
 
 module.exports = (sequelize, DataTypes) => {
   const Result = sequelize.define('Result', {
-    inviteId: DataTypes.UUID,
+    inviteId: { primaryKey: true, type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4 },
     age: DataTypes.INTEGER,
-    gender: DataTypes.ENUM('male', 'female', 'other'),
+    gender: DataTypes.ENUM('male', 'female', 'other'), // eslint-disable-line
     imageIndex: DataTypes.INTEGER,
     treeIndex: DataTypes.INTEGER,
     tree: DataTypes.JSON,
