@@ -16,7 +16,7 @@ function Node(imageIndex, left, right){
 module.exports = (app) => {
   // [GET] Create a new Experiment for current user.
   app.get('/experiment/create', (req, res) => {
-    (req.user) ? res.render('createExperiment', { name: req.user.name }) : res.render('dash'); //eslint-disable-line
+    (req.user) ? res.render('createExperiment', { name: req.user.firstName }) : res.render('dash'); //eslint-disable-line
   });
 
   // [POST] Create a new Experiment for current user.
@@ -30,7 +30,7 @@ module.exports = (app) => {
       if (error) { res.render('createExperiment', { name: req.user.firstName, errors: error }); return; }
 
       // Create the new Experiment.
-      models.Experiment.create({ name: req.body.name, description: req.body.description })
+      models.Experiment.create({ name: req.body.firstName, description: req.body.description })
         .catch(() => { res.render('error'); return; })
         .then((experiment) => {
           // Create each Image.
@@ -98,14 +98,18 @@ module.exports = (app) => {
         // Wants first 2
         if (req.body.start === true) {
           // Initialise Result Object
-          models.Result.create({
-            inviteId: req.params.uuid,
-            age: 0,
-            gender: 'other',
-            imageIndex: 0,
-            treeIndex: 0,
-            tree: {},
+          models.Result.findOrCreate({
+            where: { inviteId: req.params.uuid },
+            defaults: {
+              age: 0,
+              gender: 'other',
+              imageIndex: 0,
+              treeIndex: 0,
+              tree: JSON.stringify('{}'),
+              ExperimentId: req.params.id,
+            },
           }).then((result) => {
+            console.log(result);
             // Append Root Node
             result.tree[result.treeIndex] = new Node(result.treeIndex, undefined, undefined);
             result.save().then(() => {
@@ -123,7 +127,7 @@ module.exports = (app) => {
               };
 
               // Increment ImageIndex
-              result.imageIndex += 1; //eslint-disable-line
+              result.dataValues.imageIndex += 1; //eslint-disable-line
               result.save().then(() => {
                 // Send Resulting Comparison
                 res.json(information);
