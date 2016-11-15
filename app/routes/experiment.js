@@ -84,7 +84,7 @@ module.exports = (app) => {
     models.Invite.findOne({
       where: { inviteId: req.params.uuid },
     }).then(() => {
-      console.log('Recieved: ', req.body);
+      console.log('Recieved: ', req.body, '\n\n');
 
       // Grab Experiment Images
       models.Experiment.find({
@@ -92,7 +92,12 @@ module.exports = (app) => {
         include: [{ model: models.Image, as: 'Images' }],
       }).then((experiment) => {
         // Get Image Buffer
-        const items = experiment.Images;
+        const items = experiment.Images.map((obj) => {
+          return obj.get({plain: true}).url;
+        });
+        console.log("Got the images:");
+        console.log(items);
+        console.log('\n\n');
 
         // The User Just Started
         // Wants first 2
@@ -108,26 +113,30 @@ module.exports = (app) => {
               tree: JSON.stringify('{}'),
               ExperimentId: req.params.id,
             },
-          }).then((result) => {
-            console.log(result);
+          }).spread((result) => {
+            const state = result.get({plain: true});
+            console.log("Got the users state");
+            console.log(state);
+            console.log('\n\n');
+
             // Append Root Node
-            result.tree[result.treeIndex] = new Node(result.treeIndex, undefined, undefined);
+            state.tree[state.treeIndex] = new Node(state.treeIndex, undefined, undefined);
             result.save().then(() => {
               // Send the index of the image
               // Along with url attached to index
               const information = {
                 itemA: {
-                  value: result.tree[result.treeIndex].imageIndex,
-                  url: items[result.tree[result.treeIndex].imageIndex],
+                  value: state.tree[state.treeIndex].imageIndex,
+                  url: items[state.tree[state.treeIndex].imageIndex],
                 },
                 itemB: {
-                  value: result.tree[result.treeIndex].imageIndex + 1,
-                  url: items[result.tree[result.treeIndex].imageIndex + 1],
+                  value: state.tree[state.treeIndex].imageIndex + 1,
+                  url: items[state.tree[state.treeIndex].imageIndex + 1],
                 },
               };
 
               // Increment ImageIndex
-              result.dataValues.imageIndex += 1; //eslint-disable-line
+              state.imageIndex += 1; //eslint-disable-line
               result.save().then(() => {
                 // Send Resulting Comparison
                 res.json(information);
@@ -153,6 +162,8 @@ module.exports = (app) => {
           res.json(information);
           console.log('Sending: ', information);
         }
+
+
       }).catch(err => console.log(err));
     }).catch(() => {
       res.render('error');
