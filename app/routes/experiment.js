@@ -7,6 +7,12 @@ const upload = multer({ dest: path.join(__dirname, '../temp/') });
 const fileUploader = require('../modules/fileUploader.js');
 const routeAuth = require('../modules/isAuth.js');
 
+function Node(imageIndex, left, right){
+  this.imageIndex = imageIndex;
+  this.left = left;
+  this.right = right;
+}
+
 module.exports = (app) => {
   // [GET] Create a new Experiment for current user.
   app.get('/experiment/create', (req, res) => {
@@ -62,45 +68,91 @@ module.exports = (app) => {
 
 
   // Comparison Test
-  app.get('/run/test', routeAuth.isAuth, (req, res) => {
-    res.render('experimentTest', {
-      name: req.user.firstName,
+  app.get('/experiment/:id/:uuid', (req, res) => {
+    // Check ID
+    models.Invite.findOne({
+      where: { inviteId: req.params.uuid },
+    }).then(() => {
+      res.render('experimentTest', {});
+    }).catch(() => {
+      res.render('error');
     });
   });
 
-  app.post('/run/test', routeAuth.isAuth, (req, res) => {
+  app.post('/experiment/:id/:uuid', (req, res) => {
+    // Check ID
+    models.Invite.findOne({
+      where: { inviteId: req.params.uuid },
+    }).then(() => {
+      console.log('Recieved: ', req.body);
 
-    console.log("Recieved: " + req.body);
+      // Grab Experiment Images
+      models.Experiment.find({
+        where: { id: req.params.id },
+        include: [{ model: models.Image, as: 'Images' }],
+      }).then((experiment) => {
+        // Get Image Buffer
+        const items = experiment.Images;
 
-    // The User Just Started
-    // Wants first 2
-    if(req.body.start === true) {
-      information = {
-        'itemA': {
-          'value': '' + (Math.round(Math.random() * 10)),
-          'url': 'http://lorempixel.com/400/599/',
-        },
-        'itemB': {
-          'value': '' + (Math.round(Math.random() * 10)),
-          'url': 'http://lorempixel.com/400/601/',
-        },
-      };
-      res.json(information);
-      console.log("Sending: " + information);
-    }
+        // The User Just Started
+        // Wants first 2
+        if (req.body.start === true) {
+          // Initialise Result Object
+          models.Result.create({
+            inviteId: req.params.uuid,
+            age: 0,
+            gender: 'other',
+            imageIndex: 0,
+            treeIndex: 0,
+            tree: {},
+          }).then((result) => {
+            // Append Root Node
+            result.tree[result.treeIndex] = new Node(result.treeIndex, undefined, undefined);
+            result.save().then(() => {
+              // Send the index of the image
+              // Along with url attached to index
+              const information = {
+                itemA: {
+                  value: result.tree[result.treeIndex].imageIndex,
+                  url: items[result.tree[result.treeIndex].imageIndex],
+                },
+                itemB: {
+                  value: result.tree[result.treeIndex].imageIndex + 1,
+                  url: items[result.tree[result.treeIndex].imageIndex + 1],
+                },
+              };
 
-    // The User Has Started
-    // Wants Next Data
-    if(typeof req.body.itemA !== typeof undefined || typeof req.body.itemB !== typeof undefined) {
-      let information = {};
-      let tag = (typeof req.body.itemA !== typeof undefined) ? "itemB" : "itemA";
-      information[tag] = {
-        'value': '' + (Math.round(Math.random() * 10)),
-        'url': 'http://lorempixel.com/400/600/',
-      };
-      res.json(information);
-      console.log("Sending: " + information);
-    }
+              // Increment ImageIndex
+              result.imageIndex += 1; //eslint-disable-line
+              result.save().then(() => {
+                // Send Resulting Comparison
+                res.json(information);
+                console.log('Sending: ', information);
+              }).catch((err) => {
+                console.log(err);
+              });
+            });
+          }).then((err) => {
+            console.log(err);
+          });
+        }
+
+        // The User Has Started
+        // Wants Next Data
+        if(typeof req.body.itemA !== typeof undefined || typeof req.body.itemB !== typeof undefined) {
+          const information = {};
+          const tag = (typeof req.body.itemA !== typeof undefined) ? 'itemB' : 'itemA';
+          information[tag] = {
+            value: '' + (Math.round(Math.random() * 10)),
+            url: 'http://lorempixel.com/400/600/',
+          };
+          res.json(information);
+          console.log('Sending: ', information);
+        }
+      }).catch(err => console.log(err));
+    }).catch(() => {
+      res.render('error');
+    });
 
   });
 };
