@@ -7,7 +7,7 @@ const upload = multer({ dest: path.join(__dirname, '../temp/') });
 const fileUploader = require('../modules/fileUploader.js');
 const routeAuth = require('../modules/isAuth.js');
 
-function Node(imageIndex, left, right){
+function Node(imageIndex, left, right) {
   this.imageIndex = imageIndex;
   this.left = left;
   this.right = right;
@@ -95,10 +95,11 @@ module.exports = (app) => {
         const items = experiment.Images.map((obj) => {
           return obj.get({plain: true}).url;
         });
-        console.log("Got the images:");
+        console.log('Got the images:');
         console.log(items);
         console.log('\n\n');
 
+        // Phase 1
         // The User Just Started
         // Wants first 2
         if (req.body.start === true) {
@@ -114,16 +115,22 @@ module.exports = (app) => {
               ExperimentId: req.params.id,
             },
           }).spread((result) => {
-            const state = result.get({plain: true});
-            console.log("Got the users state");
+            const state = result.get({ plain: true });
+            console.log('Got the users state');
             console.log(state);
             console.log('\n\n');
 
             // Append Root Node
             state.tree[state.treeIndex] = new Node(state.treeIndex, undefined, undefined);
-            result.save().then(() => {
-              // Send the index of the image
-              // Along with url attached to index
+
+            // Update State
+            result.update({
+              tree: state.tree,
+            }, {
+              where: { id: 1 },
+            }).then(() => {
+            // Send the index of the image
+            // Along with url attached to index
               const information = {
                 itemA: {
                   value: state.tree[state.treeIndex].imageIndex,
@@ -135,24 +142,30 @@ module.exports = (app) => {
                 },
               };
 
-              // Increment ImageIndex
-              state.imageIndex += 1; //eslint-disable-line
-              result.save().then(() => {
+            // Increment ImageIndex
+            state.imageIndex += 1; //eslint-disable-line
+
+            // Update State
+              result.update({
+                imageIndex: state.imageIndex,
+              }, {
+                where: { id: 1 },
+              }).then(() => {
                 // Send Resulting Comparison
                 res.json(information);
                 console.log('Sending: ', information);
-              }).catch((err) => {
-                console.log(err);
               });
             });
-          }).then((err) => {
+          }, (err) => {
+            console.log('Error Updating State: Tree');
             console.log(err);
           });
         }
 
+        // Phase 2
         // The User Has Started
         // Wants Next Data
-        if(typeof req.body.itemA !== typeof undefined || typeof req.body.itemB !== typeof undefined) {
+        if (typeof req.body.itemA !== typeof undefined || typeof req.body.itemB !== typeof undefined) {
           const information = {};
           const tag = (typeof req.body.itemA !== typeof undefined) ? 'itemB' : 'itemA';
           information[tag] = {
@@ -162,10 +175,9 @@ module.exports = (app) => {
           res.json(information);
           console.log('Sending: ', information);
         }
-
-
-      }).catch(err => console.log(err));
+      });
     }).catch(() => {
+      // User entered fake UUID
       res.render('error');
     });
 
