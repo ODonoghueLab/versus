@@ -93,7 +93,7 @@ module.exports = (app) => {
       }).then((experiment) => {
         // Get Image Buffer
         const items = experiment.Images.map((obj) => {
-          return obj.get({plain: true}).url;
+          return obj.get({ plain: true }).url;
         });
         console.log('Got the images:');
         console.log(items);
@@ -122,7 +122,10 @@ module.exports = (app) => {
             console.log('\n\n');
 
             // Append Root Node
-            state.tree[state.treeIndex] = new Node(state.treeIndex, undefined, undefined);
+            state.tree[state.treeIndex] = new Node(state.treeIndex, null, null);
+            console.log("Appended Root Node:");
+            console.log(state.tree);
+            console.log('\n\n');
 
             // Update State
             result.update({
@@ -130,8 +133,13 @@ module.exports = (app) => {
             }, {
               where: { id: 1 },
             }).then(() => {
-            // Send the index of the image
-            // Along with url attached to index
+              // Updated value of true
+              console.log('Updated Tree Looks Like:');
+              console.log(result.get({ plain: true }).tree);
+              console.log('\n\n');
+
+              // Send the index of the image
+              // Along with url attached to index
               const information = {
                 itemA: {
                   value: state.tree[state.treeIndex].imageIndex,
@@ -185,19 +193,31 @@ module.exports = (app) => {
             // Newest Item is Worse
             if (itemAPresent) {
               console.log('Newest Item is Worse');
-              state.tree[state.nodeIndex].right = state.imageIndex;
+              console.log('Attempting to the objects .direction');
+              console.log(state.tree[state.treeIndex]);
+              console.log('\n\n');
+              console.log('Full Tree With Attempt At Index ', state.treeIndex);
+              console.log(state.tree);
+              console.log('\n\n');
+              state.tree[state.treeIndex].right = state.imageIndex;
             }
             // Chose The Second Item
             // Newest Item is Better
             else {
               console.log('Newest Item is Better');
-              state.tree[state.nodeIndex].left = state.imageIndex;
+              console.log('Attempting to set this objects .direction');
+              console.log(state.tree[state.treeIndex]);
+              console.log('\n\n');
+              console.log('Full Tree With Attempt At Index ', state.treeIndex);
+              console.log(state.tree);
+              console.log('\n\n');
+              state.tree[state.treeIndex].left = state.imageIndex;
             }
 
             // After Choosing Direction Previously
             // Append Node
-            state.tree[state.imageIndex] = new Node(state.imageIndex, undefined, undefined);
-            state.nodeIndex = state.imageIndex;
+            state.tree[state.imageIndex] = new Node(state.imageIndex, null, null);
+            state.treeIndex = state.imageIndex;
 
             // Increment ImageIndex
             state.imageIndex += 1; //eslint-disable-line
@@ -205,7 +225,7 @@ module.exports = (app) => {
             // Update State
             result.update({
               tree: state.tree,
-              nodeIndex: state.nodeIndex,
+              treeIndex: state.treeIndex,
               imageIndex: state.imageIndex,
             }, {
               where: { id: 1 },
