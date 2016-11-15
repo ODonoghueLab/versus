@@ -103,6 +103,7 @@ module.exports = (app) => {
         // The User Just Started
         // Wants first 2
         if (req.body.start === true) {
+          console.log('Phase 1\n\n');
           // Initialise Result Object
           models.Result.findOrCreate({
             where: { inviteId: req.params.uuid },
@@ -165,15 +166,64 @@ module.exports = (app) => {
         // Phase 2
         // The User Has Started
         // Wants Next Data
-        if (typeof req.body.itemA !== typeof undefined || typeof req.body.itemB !== typeof undefined) {
-          const information = {};
-          const tag = (typeof req.body.itemA !== typeof undefined) ? 'itemB' : 'itemA';
-          information[tag] = {
-            value: '' + (Math.round(Math.random() * 10)),
-            url: 'http://lorempixel.com/400/600/',
-          };
-          res.json(information);
-          console.log('Sending: ', information);
+        const itemAPresent = (typeof req.body.itemA !== typeof undefined);
+        const itemBPresent = (typeof req.body.itemB !== typeof undefined);
+        if (itemAPresent || itemBPresent) {
+
+          console.log('Phase 2\n\n');
+
+          // Initialise Result Object
+          models.Result.findOne({
+            where: { inviteId: req.params.uuid },
+          }).then((result) => {
+            const state = result.get({ plain: true });
+            console.log('Got State');
+            console.log(state);
+            console.log('\n\n');
+
+            // Chose The First Item
+            // Newest Item is Worse
+            if (itemAPresent) {
+              console.log('Newest Item is Worse');
+              state.tree[state.nodeIndex].right = state.imageIndex;
+            }
+            // Chose The Second Item
+            // Newest Item is Better
+            else {
+              console.log('Newest Item is Better');
+              state.tree[state.nodeIndex].left = state.imageIndex;
+            }
+
+            // After Choosing Direction Previously
+            // Append Node
+            state.tree[state.imageIndex] = new Node(state.imageIndex, undefined, undefined);
+            state.nodeIndex = state.imageIndex;
+
+            // Increment ImageIndex
+            state.imageIndex += 1; //eslint-disable-line
+
+            // Update State
+            result.update({
+              tree: state.tree,
+              nodeIndex: state.nodeIndex,
+              imageIndex: state.imageIndex,
+            }, {
+              where: { id: 1 },
+            }).then(() => {
+              // Rebalance Tree
+              // rebalance(state.tree());
+
+              // Send Next Item
+              const information = {};
+              const tag = (itemAPresent) ? 'itemB' : 'itemA';
+              information[tag] = {
+                value: state.tree[state.treeIndex].imageIndex,
+                url: items[state.tree[state.treeIndex].imageIndex],
+              };
+              res.json(information);
+              console.log('Sending: ', information);
+            });
+          });
         }
       });
     }).catch(() => {
