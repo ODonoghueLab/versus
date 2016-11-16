@@ -11,57 +11,61 @@ const routeAuth = require('../modules/isAuth.js');
 
 module.exports = (app) => {
   // [GET] Create a new Experiment for current user.
-  app.get('/experiment/create', (req, res) => {
-    (req.user) ? res.render('createExperiment', { name: req.user.name }) : res.render('dash');
-  });
+  app.get('/experiment/create', (req, res) => res.render('experiment-create'));
 
   // [POST] Create a new Experiment for current user.
-  app.post('/experiment/create', routeAuth.isAuth, upload.array('files'), (req, res) => {
-    // Ensure all paramaters have been submitted via POST.
-    if (!req.body.name) { res.render('createExperiment', { name: req.user.firstName, errors: ['Name must be set.'] }); return; }
-    if (!req.body.description) { res.render('createExperiment', { name: req.user.firstName, errors: ['Description must be set.'] }); return; }
-
-    // Upload Images
+  app.post('/experiment/create', routeAuth.isAuth, upload.array('experiment[images]'), (req, res) => {
+    console.log(req.body);
+    
+    // Ensure required parameters have been submitted.
+    if (!req.body.experiment || !req.body.experiment['name'] || !req.files) return res.redirect(301, 'experiment-create', { error: 'Please enter all required fields.' });
+    
+    // Upload the Images to S3.
     fileUploader.upload(app, req, (images, error) => {
-      if (error) { res.render('createExperiment', { name: req.user.firstName, errors: error }); return; }
+      if (error) return res.redirect(301, 'experiment-create', { error: true });
 
       // Create the new Experiment.
-      models.Experiment.create({ name: req.body.name, description: req.body.description })
-        .catch(() => { res.render('error'); return; })
-        .then((experiment) => {
+      models.Experiment.create({ name: req.body.experiment['name'], description: req.body.experiment['description'] })
+        .then(experiment => {
+          
           // Create each Image.
-          images.map((image) => { //eslint-disable-line
+          images.map(image => {
             models.Image.create({ url: image })
-              .catch(() => { res.render('error'); return; })
-              .then((image) => { //eslint-disable-line
+              .then(image => {
+                
                 // Add the Image to the Experiment.
                 experiment.addImage(image)
-                  .catch(() => { res.render('error'); return; })
-                  .then(() => {});
-              });
+                  .catch(_ => res.redirect(301, 'experiment-create', { error: true }));
+              })
+              .catch(_ => res.redirect(301, 'experiment-create', { error: true }));
           });
 
           // Add the Experiment to the current User.
-          // TODO: Change magic number user Session User Id.
-          experiment.addUser(1);
-
-          // TODO pull experiment names from token or query
-          res.render('createExperiment', { experiments: [experiment.name], name: req.user.firstName, images });
-        }); // End Anonymous Callback
-    }); // End Upload
+          experiment.addUser(req.user.id)
+            .catch(_ => res.redirect(301, 'experiment-create', { error: true }))
+            .then(_ => res.redirect(301, '/dashboard'));
+        })
+        .catch(_ => res.redirect(301, 'experiment-create', { error: true }));
+    });
   });
 
-  // Display a single Experiment.
+  // [GET] Display a single Experiment.
   app.get('/experiment/:id', (req, res) => {
-    console.log(req.params.id);
-
     // Find the Experiment based on the id from the URL.
     models.Experiment.find({
       where: { id: req.params.id },
       include: [{ model: models.Image, as: 'Images' }],
     }).then((experiment) => {
-      console.log(experiment);
       res.render('experiment', { experiment });
     });
   });
+  
+  // [POST] Delete an Experiment
+  app.post('/experiment/delete', (req, res) => {
+    // TODO: probably should make sure the user owns the experiment too?
+    
+    models.Experiment.destroy({ where: { id: req.body.id } })
+      .catch(err => res.json({ success: false, error: err }))
+      .then(_ => res.json({ success: true }))
+  })
 };

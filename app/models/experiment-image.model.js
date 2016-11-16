@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     classMethods: {
       associate(models) {
-        Image.belongsTo(models.Experiment);
+        Image.belongsTo(models.Experiment, { onDelete: 'cascade' });
       },
     },
   });

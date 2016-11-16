@@ -43,6 +43,10 @@ app.use(session({ secret: 'csiro-versus', saveUninitialized: true, resave: true 
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(expressValidator());
+app.use((req, res, next) => {
+  res.locals.user = req.user;
+  next();
+});
 
 // Application Routes
 const routePath = path.join(__dirname, '/routes');
