@@ -7,10 +7,12 @@ const upload = multer({ dest: path.join(__dirname, '../temp/') });
 const fileUploader = require('../modules/fileUploader.js');
 const routeAuth = require('../modules/isAuth.js');
 
-function Node(imageIndex, left, right) {
-  this.imageIndex = imageIndex;
-  this.left = left;
-  this.right = right;
+function newNode(imageIndex, left, right) {
+  let node = {};
+  node.imageIndex = imageIndex;
+  node.left = left;
+  node.right = right;
+  return node;
 }
 
 module.exports = (app) => {
@@ -112,19 +114,13 @@ module.exports = (app) => {
               gender: 'other',
               imageIndex: 0,
               treeIndex: 0,
-              tree: JSON.stringify('{}'),
+              tree: [newNode(0, null, null)],
               ExperimentId: req.params.id,
             },
           }).spread((result) => {
             const state = result.get({ plain: true });
             console.log('Got the users state');
             console.log(state);
-            console.log('\n\n');
-
-            // Append Root Node
-            state.tree[state.treeIndex] = new Node(state.treeIndex, null, null);
-            console.log("Appended Root Node:");
-            console.log(state.tree);
             console.log('\n\n');
 
             // Update State
@@ -135,7 +131,7 @@ module.exports = (app) => {
             }).then(() => {
               // Updated value of true
               console.log('Updated Tree Looks Like:');
-              console.log(result.get({ plain: true }).tree);
+              console.log(state.tree);
               console.log('\n\n');
 
               // Send the index of the image
@@ -193,34 +189,29 @@ module.exports = (app) => {
             // Newest Item is Worse
             if (itemAPresent) {
               console.log('Newest Item is Worse');
-              console.log('Attempting to the objects .direction');
+              console.log('Attempting to set this objects .right');
               console.log(state.tree[state.treeIndex]);
               console.log('\n\n');
-              console.log('Full Tree With Attempt At Index ', state.treeIndex);
-              console.log(state.tree);
-              console.log('\n\n');
-              state.tree[state.treeIndex].right = state.imageIndex;
+              state.tree[state.treeIndex].right = state.treeIndex + 1;
             }
             // Chose The Second Item
             // Newest Item is Better
             else {
               console.log('Newest Item is Better');
-              console.log('Attempting to set this objects .direction');
+              console.log('Attempting to set this objects .left');
               console.log(state.tree[state.treeIndex]);
               console.log('\n\n');
-              console.log('Full Tree With Attempt At Index ', state.treeIndex);
-              console.log(state.tree);
-              console.log('\n\n');
-              state.tree[state.treeIndex].left = state.imageIndex;
+              state.tree[state.treeIndex].left = state.treeIndex + 1;
             }
 
             // After Choosing Direction Previously
             // Append Node
-            state.tree[state.imageIndex] = new Node(state.imageIndex, null, null);
-            state.treeIndex = state.imageIndex;
-
-            // Increment ImageIndex
+            state.treeIndex += 1;
             state.imageIndex += 1; //eslint-disable-line
+            state.tree[state.treeIndex] = newNode(state.imageIndex, null, null);
+            console.log('Full Tree With Attempt At Index ', state.treeIndex);
+            console.log(state.tree);
+            console.log('\n\n');
 
             // Update State
             result.update({
@@ -233,6 +224,10 @@ module.exports = (app) => {
               // Rebalance Tree
               // rebalance(state.tree());
 
+              console.log('Full State');
+              console.log(state);
+              console.log('\n\n');
+
               // Send Next Item
               const information = {};
               const tag = (itemAPresent) ? 'itemB' : 'itemA';
@@ -242,6 +237,7 @@ module.exports = (app) => {
               };
               res.json(information);
               console.log('Sending: ', information);
+              console.log(new Date().getTime());
             });
           });
         }

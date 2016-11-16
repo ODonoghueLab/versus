@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
     gender: DataTypes.ENUM('male', 'female', 'other'), // eslint-disable-line
     imageIndex: DataTypes.INTEGER,
     treeIndex: DataTypes.INTEGER,
-    tree: DataTypes.JSON,
+    tree: DataTypes.ARRAY(DataTypes.JSON), // eslint-disable-line
   }, {
     classMethods: {
       associate(models) {
