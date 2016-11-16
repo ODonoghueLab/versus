@@ -1,4 +1,4 @@
-"use strict";
+
 
 const bcrypt = require('bcryptjs');
 const models = require('../models/index');
@@ -8,7 +8,7 @@ const LocalStrategy = require('passport-local').Strategy;
 module.exports = (app) => {
   // [GET] Login Form
   app.get('/login', (req, res) => res.render('login'));
-  
+
   // [POST] Login Request
   app.post('/login', (req, res, next) => {
     passport.authenticate('local', (err, user) => {

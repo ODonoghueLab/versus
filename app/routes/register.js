@@ -3,7 +3,7 @@ const models = require('../models/index');
 module.exports = (app) => {
   // [GET] Registration Form
   app.get('/register', (req, res) => res.render('register'));
-  
+
   // [POST] Registration Request
   app.post('/register', (req, res) => {
     // Sanitization
