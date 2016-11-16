@@ -17,8 +17,8 @@ $(document).ready( () => {
         if(typeof data !== typeof undefined){
 
           //append DOM
-          $('[name="ButtonA"]').attr("value", data.itemA.value).attr("src", data.itemA.url);
-          $('[name="ButtonB"]').attr("value", data.itemB.value).attr("src", data.itemB.url);
+          $('[name="ButtonA"]').attr("src", data.itemA.url);
+          $('[name="ButtonB"]').attr("src", data.itemB.url);
 
         }
       });
@@ -32,35 +32,23 @@ $(document).ready( () => {
   //Choices
   //If we pick A, change B
   $('[name="ButtonA"]').click(function(){
-    get(JSON.stringify({ "itemA": $(this).attr("value") }), (data) => {
-      //hide();
-      $('[name="ButtonB"]').attr("value", data.itemB.value).attr("src", data.itemB.url);
-      //shuffle();
-      //show();
+    get(JSON.stringify({ "itemA": 1 }), (data) => {
+      $('[name="ButtonB"]').attr("src", data.itemB.url);
+      if(data.itemA.url !== $('[name="ButtonA"]').attr("src")){
+        $('[name="ButtonA"]').attr("src", data.itemA.url);
+      }
     })
   });
 
   //If we pick B, change A
   $('[name="ButtonB"]').click(function(){
-    get(JSON.stringify({ "itemB": $(this).attr("value") }), (data) => {
-      //hide();
-      $('[name="ButtonA"]').attr("value", data.itemA.value).attr("src", data.itemA.url);
-      //shuffle();
-      //show();
+    get(JSON.stringify({ "itemB": 1 }), (data) => {
+      $('[name="ButtonA"]').attr("src", data.itemA.url);
+      if(data.itemB.url !== $('[name="ButtonB"]').attr("src")){
+        $('[name="ButtonB"]').attr("src", data.itemB.url);
+      }
     })
   });
-
-  function hide(){
-    $('#experiment').slideUp(300);
-  }
-
-  function show(){
-    $('#experiment').slideDown(450);
-  }
-
-  function shuffle(){
-
-  }
 
   function get(request, callback){
     console.log("Sending: " + request);
@@ -71,7 +59,8 @@ $(document).ready( () => {
       contentType: 'application/json; charset=utf-8',
       dataType:'json',
       success: function(responseData) {
-        console.log("Recieving: " + responseData);
+        console.log("Recieving: ");
+        console.log(responseData);
         callback(responseData);
       },
       error: function(XMLHttpRequest, textStatus, errorThrown) {

@@ -127,7 +127,7 @@ module.exports = (app) => {
             result.update({
               tree: state.tree,
             }, {
-              where: { id: 1 },
+              where: { inviteId: 1 },
             }).then(() => {
               // Updated value of true
               console.log('Updated Tree Looks Like:');
@@ -154,12 +154,20 @@ module.exports = (app) => {
               result.update({
                 imageIndex: state.imageIndex,
               }, {
-                where: { id: 1 },
+                where: { inviteId: 1 },
               }).then(() => {
                 // Send Resulting Comparison
                 res.json(information);
                 console.log('Sending: ', information);
+              }, (err) => {
+                console.log("Error Updating State");
+                console.log(err);
+                console.log('\n\n');
               });
+            }, (err) => {
+              console.log("Error Updating Tree");
+              console.log(err);
+              console.log('\n\n');
             });
           }, (err) => {
             console.log('Error Updating State: Tree');
@@ -189,37 +197,60 @@ module.exports = (app) => {
             // Newest Item is Worse
             if (itemAPresent) {
               console.log('Newest Item is Worse');
-              console.log('Attempting to set this objects .right');
-              console.log(state.tree[state.treeIndex]);
-              console.log('\n\n');
-              state.tree[state.treeIndex].right = state.treeIndex + 1;
+
+              // Traverse Tree
+              if (typeof state.tree[state.treeIndex].right !== typeof null) {
+                state.treeIndex = state.tree[state.treeIndex].right;
+              }
+
+              // Insert Node
+              else {
+                console.log('Attempting to set this objects .right');
+                console.log(state.tree[state.treeIndex]);
+                console.log('\n\n');
+                state.tree[state.treeIndex].right = state.treeIndex + 1;
+                state.treeIndex += 1;
+                state.imageIndex += 1; //eslint-disable-line
+                state.tree[state.treeIndex] = newNode(state.imageIndex, null, null);
+                state.treeIndex = 0;
+              }
             }
             // Chose The Second Item
             // Newest Item is Better
             else {
               console.log('Newest Item is Better');
-              console.log('Attempting to set this objects .left');
-              console.log(state.tree[state.treeIndex]);
-              console.log('\n\n');
-              state.tree[state.treeIndex].left = state.treeIndex + 1;
+
+              // Traverse Tree
+              if (typeof state.tree[state.treeIndex].left !== typeof null) {
+                state.treeIndex = state.tree[state.treeIndex].left;
+              }
+
+              // Insert Node
+              else {
+                console.log('Attempting to set this objects .left');
+                console.log(state.tree[state.treeIndex]);
+                console.log('\n\n');
+                state.tree[state.treeIndex].left = state.treeIndex + 1;
+                state.treeIndex += 1;
+                state.imageIndex += 1; //eslint-disable-line
+                state.tree[state.treeIndex] = newNode(state.imageIndex, null, null);
+                state.treeIndex = 0;
+              }
             }
 
             // After Choosing Direction Previously
             // Append Node
-            state.treeIndex += 1;
-            state.imageIndex += 1; //eslint-disable-line
-            state.tree[state.treeIndex] = newNode(state.imageIndex, null, null);
             console.log('Full Tree With Attempt At Index ', state.treeIndex);
             console.log(state.tree);
             console.log('\n\n');
 
-            // Update State
+            // Update TREE
             result.update({
               tree: state.tree,
               treeIndex: state.treeIndex,
               imageIndex: state.imageIndex,
             }, {
-              where: { id: 1 },
+              where: { inviteId: 1 },
             }).then(() => {
               // Rebalance Tree
               // rebalance(state.tree());
@@ -229,15 +260,25 @@ module.exports = (app) => {
               console.log('\n\n');
 
               // Send Next Item
-              const information = {};
-              const tag = (itemAPresent) ? 'itemB' : 'itemA';
-              information[tag] = {
-                value: state.tree[state.treeIndex].imageIndex,
-                url: items[state.tree[state.treeIndex].imageIndex],
-              };
+              let information = {};
+              if (itemAPresent) {
+                information = {
+                  itemB: { url: items[state.imageIndex] },
+                  itemA: { url: items[state.tree[state.treeIndex].imageIndex] },
+                };
+              } else {
+                information = {
+                  itemB: { url: items[state.tree[state.treeIndex].imageIndex] },
+                  itemA: { url: items[state.imageIndex] },
+                };
+              }
               res.json(information);
               console.log('Sending: ', information);
               console.log(new Date().getTime());
+            }, (err) => {
+              console.log('Error Updating State');
+              console.log(err);
+              console.log('\n\n');
             });
           });
         }
@@ -246,6 +287,5 @@ module.exports = (app) => {
       // User entered fake UUID
       res.render('error');
     });
-
   });
 };
