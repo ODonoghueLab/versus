@@ -114,6 +114,10 @@ module.exports = (app) => {
 
           display(0);
 
+          for(let i = 0; i < ranks.length; i+=1){
+            console.log(ranks[i]);
+          }
+
           // Delete thingy
           // Congratulate them
           res.render('dash', { success: ['Thankyou For Participating!'] });
@@ -172,7 +176,8 @@ module.exports = (app) => {
             };
 
             // Increment ImageIndex
-            state.imageIndex += 1; //eslint-disable-line
+            //state.imageIndex += 1; //eslint-disable-line
+            //console.log(state);
 
             // Update State
             // result.update({ imageIndex: state.imageIndex }).then(() => {
@@ -200,36 +205,61 @@ module.exports = (app) => {
             // Chose The First Item
             // Newest Item is Worse
             if (itemAPresent) {
+              console.log(typeof state.tree[state.treeIndex].right);
               // Traverse Tree
-              if (typeof state.tree[state.treeIndex].right !== typeof null) {
+              if (typeof state.tree[state.treeIndex].right === typeof 1) {
+                console.log('before setting node .right');
+                console.log(state);
                 state.treeIndex = state.tree[state.treeIndex].right;
+                console.log('\n\n');
               }
 
               // Insert Node
               else { //eslint-disable-line
-                state.tree[state.treeIndex].right = state.treeIndex + 1;
-                state.treeIndex += 1;
+                console.log('before appending node to right');
+                console.log(state);
+                console.log('\n');
+                state.tree[state.treeIndex].right = state.tree.length;
+                state.treeIndex = state.tree.length;
                 state.imageIndex += 1; //eslint-disable-line
                 state.tree[state.treeIndex] = newNode(state.imageIndex, null, null);
                 state.treeIndex = 0;
+                console.log('after appending node to right');
+                console.log(state);
+                console.log('\n\n');
               }
             }
             // Chose The Second Item
             // Newest Item is Better
             else { //eslint-disable-line
+              console.log(typeof state.tree[state.treeIndex].left);
               // Traverse Tree
-              if (typeof state.tree[state.treeIndex].left !== typeof null) { //eslint-disable-line
+              if (typeof state.tree[state.treeIndex].left === typeof 1) { //eslint-disable-line
+                console.log('before setting node .right');
+                console.log(state);
                 state.treeIndex = state.tree[state.treeIndex].left;
+                console.log('\n\n');
               }
 
               // Insert Node
               else { //eslint-disable-line
-                state.tree[state.treeIndex].left = state.treeIndex + 1;
-                state.treeIndex += 1;
+                console.log('before appending node to left');
+                console.log(state);
+                console.log('\n');
+                state.tree[state.treeIndex].left = state.tree.length;
+                state.treeIndex = state.tree.length;
                 state.imageIndex += 1; //eslint-disable-line
                 state.tree[state.treeIndex] = newNode(state.imageIndex, null, null);
                 state.treeIndex = 0;
+                console.log('after appending node to left');
+                console.log(state);
+                console.log('\n\n');
               }
+            }
+
+            // End of Buffer Check
+            if (state.imageIndex === items.length) {
+              state.tree.pop();
             }
 
             // Update TREE
@@ -238,6 +268,7 @@ module.exports = (app) => {
                 + '\', "treeIndex"=\'' + state.treeIndex + '' +                             //eslint-disable-line
                 '\' WHERE "inviteId"=\'' + req.params.uuid + '\'';                          //eslint-disable-line
               models.sequelize.query(updateQuery).spread(() => {
+                // End of Buffer Check
                 if (state.imageIndex === items.length) {
                   res.json({ done: true });
                   return null;
