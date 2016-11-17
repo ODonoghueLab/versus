@@ -114,11 +114,8 @@ module.exports = (app) => {
 
           display(0);
 
-          for(let i = 0; i < ranks.length; i+=1){
-            console.log(ranks[i]);
-          }
-
-          // Delete thingy
+          // Insert Ranks Into Completed Table
+          // Delete Entry
           // Congratulate them
           res.render('dash', { success: ['Thankyou For Participating!'] });
         });
@@ -148,12 +145,18 @@ module.exports = (app) => {
         // The User Just Started
         // Wants first 2
         if (req.body.start === true) {
+          // Server Side Validation
+          const userAge = (typeof parseInt(req.body.age, 10) === typeof 1) ? req.body.age : 0;
+          const userGender = (req.body.gender === 'male' ||
+                              req.body.gender === 'female' ||
+                              req.body.gender === 'other') ? req.body.gender : 'other';
+
           // Initialise Result Object
           models.Result.findOrCreate({
             where: { inviteId: req.params.uuid },
             defaults: {
-              age: 0,
-              gender: 'other',
+              age: userAge,
+              gender: userGender,
               imageIndex: 0,
               treeIndex: 0,
               tree: [newNode(0, null, null)],
@@ -161,7 +164,7 @@ module.exports = (app) => {
             },
           }).spread((result) => {
             const state = result.get({ plain: true });
-
+            console.log(state);
             // Send the index of the image
             // Along with url attached to index
             const information = {
@@ -175,18 +178,8 @@ module.exports = (app) => {
               },
             };
 
-            // Increment ImageIndex
-            //state.imageIndex += 1; //eslint-disable-line
-            //console.log(state);
-
-            // Update State
-            // result.update({ imageIndex: state.imageIndex }).then(() => {
-            const updateQuery = 'UPDATE "Results" SET "imageIndex"=\'' + state.imageIndex //eslint-disable-line
-              + '\' WHERE "inviteId"=\'' + req.params.uuid + '\''; //eslint-disable-line
-            models.sequelize.query(updateQuery).spread(() => {
-              // Send Resulting Comparison
-              res.json(information);
-            });
+            // Send Resulting Comparison
+            res.json(information);
           });
         }
 
@@ -205,55 +198,35 @@ module.exports = (app) => {
             // Chose The First Item
             // Newest Item is Worse
             if (itemAPresent) {
-              console.log(typeof state.tree[state.treeIndex].right);
               // Traverse Tree
               if (typeof state.tree[state.treeIndex].right === typeof 1) {
-                console.log('before setting node .right');
-                console.log(state);
                 state.treeIndex = state.tree[state.treeIndex].right;
-                console.log('\n\n');
               }
 
               // Insert Node
               else { //eslint-disable-line
-                console.log('before appending node to right');
-                console.log(state);
-                console.log('\n');
                 state.tree[state.treeIndex].right = state.tree.length;
                 state.treeIndex = state.tree.length;
                 state.imageIndex += 1; //eslint-disable-line
                 state.tree[state.treeIndex] = newNode(state.imageIndex, null, null);
                 state.treeIndex = 0;
-                console.log('after appending node to right');
-                console.log(state);
-                console.log('\n\n');
               }
             }
             // Chose The Second Item
             // Newest Item is Better
             else { //eslint-disable-line
-              console.log(typeof state.tree[state.treeIndex].left);
               // Traverse Tree
               if (typeof state.tree[state.treeIndex].left === typeof 1) { //eslint-disable-line
-                console.log('before setting node .right');
-                console.log(state);
                 state.treeIndex = state.tree[state.treeIndex].left;
-                console.log('\n\n');
               }
 
               // Insert Node
               else { //eslint-disable-line
-                console.log('before appending node to left');
-                console.log(state);
-                console.log('\n');
                 state.tree[state.treeIndex].left = state.tree.length;
                 state.treeIndex = state.tree.length;
                 state.imageIndex += 1; //eslint-disable-line
                 state.tree[state.treeIndex] = newNode(state.imageIndex, null, null);
                 state.treeIndex = 0;
-                console.log('after appending node to left');
-                console.log(state);
-                console.log('\n\n');
               }
             }
 

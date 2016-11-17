@@ -154,6 +154,11 @@ html
       include includes/experimentFront.js
 
       div(id="experimentStart")
+        input(type="number" name="ageDrop" min="1" max="100")
+        select(name="genderDrop")
+            option(value="male") Male
+            option(value="female") Female
+            option(value="other") Other
         button(type="button" name="startButton") START
 
       div(id="experiment")

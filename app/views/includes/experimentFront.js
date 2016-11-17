@@ -13,7 +13,11 @@ $(document).ready( () => {
     $('#experimentStart').slideUp(150,()=>{
 
       //recieve first two in buffer
-      get(JSON.stringify({ "start": true }), (data) => {
+      get(JSON.stringify({
+        start: true,
+        age: $('[name="ageDrop"]').val(),
+        gender: $('[name="genderDrop"]').val(),
+      }), (data) => {
         if(typeof data !== typeof undefined){
 
           //append DOM
