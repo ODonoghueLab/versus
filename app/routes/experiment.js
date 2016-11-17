@@ -97,9 +97,6 @@ module.exports = (app) => {
         const items = experiment.Images.map((obj) => {
           return obj.get({ plain: true }).url;
         });
-        console.log('Got the images:');
-        console.log(items);
-        console.log('\n\n');
 
         // Phase 1
         // The User Just Started
@@ -124,16 +121,7 @@ module.exports = (app) => {
             console.log('\n\n');
 
             // Update State
-            result.update({
-              tree: state.tree,
-            }, {
-              where: { inviteId: 1 },
-            }).then(() => {
-              // Updated value of true
-              console.log('Updated Tree Looks Like:');
-              console.log(state.tree);
-              console.log('\n\n');
-
+            result.update({ tree: state.tree }).then(() => {
               // Send the index of the image
               // Along with url attached to index
               const information = {
@@ -147,25 +135,26 @@ module.exports = (app) => {
                 },
               };
 
-            // Increment ImageIndex
-            state.imageIndex += 1; //eslint-disable-line
+              // Increment ImageIndex
+              state.imageIndex += 1; //eslint-disable-line
 
-            // Update State
-              result.update({
-                imageIndex: state.imageIndex,
-              }, {
-                where: { inviteId: 1 },
-              }).then(() => {
+              // Update State
+              result.update({ imageIndex: state.imageIndex }).then(() => {
+
+                console.log('Full State');
+                console.log(state);
+                console.log('\n\n');
+
                 // Send Resulting Comparison
                 res.json(information);
                 console.log('Sending: ', information);
               }, (err) => {
-                console.log("Error Updating State");
+                console.log('Error Updating State');
                 console.log(err);
                 console.log('\n\n');
               });
             }, (err) => {
-              console.log("Error Updating Tree");
+              console.log('Error Updating Tree');
               console.log(err);
               console.log('\n\n');
             });
@@ -196,8 +185,6 @@ module.exports = (app) => {
             // Chose The First Item
             // Newest Item is Worse
             if (itemAPresent) {
-              console.log('Newest Item is Worse');
-
               // Traverse Tree
               if (typeof state.tree[state.treeIndex].right !== typeof null) {
                 state.treeIndex = state.tree[state.treeIndex].right;
@@ -205,12 +192,19 @@ module.exports = (app) => {
 
               // Insert Node
               else {
-                console.log('Attempting to set this objects .right');
-                console.log(state.tree[state.treeIndex]);
-                console.log('\n\n');
                 state.tree[state.treeIndex].right = state.treeIndex + 1;
+
+                console.log("\t\ttI: " + state.treeIndex);
                 state.treeIndex += 1;
+                console.log("\t\ttI + 1: " + state.treeIndex);
+                console.log(typeof state.treeIndex);
+
+                console.log('\n');
+
+                console.log("\t\tiI: " + state.imageIndex);
                 state.imageIndex += 1; //eslint-disable-line
+                console.log("\t\tiI: " + state.imageIndex);
+
                 state.tree[state.treeIndex] = newNode(state.imageIndex, null, null);
                 state.treeIndex = 0;
               }
@@ -218,8 +212,6 @@ module.exports = (app) => {
             // Chose The Second Item
             // Newest Item is Better
             else {
-              console.log('Newest Item is Better');
-
               // Traverse Tree
               if (typeof state.tree[state.treeIndex].left !== typeof null) {
                 state.treeIndex = state.tree[state.treeIndex].left;
@@ -227,30 +219,29 @@ module.exports = (app) => {
 
               // Insert Node
               else {
-                console.log('Attempting to set this objects .left');
-                console.log(state.tree[state.treeIndex]);
-                console.log('\n\n');
                 state.tree[state.treeIndex].left = state.treeIndex + 1;
+
+                console.log("\t\ttI: " + state.treeIndex);
                 state.treeIndex += 1;
+                console.log("\t\ttI + 1: " + state.treeIndex);
+                console.log(typeof state.treeIndex);
+
+                console.log('\n');
+
+                console.log("\t\tiI: " + state.imageIndex);
                 state.imageIndex += 1; //eslint-disable-line
+                console.log("\t\tiI: " + state.imageIndex);
+
                 state.tree[state.treeIndex] = newNode(state.imageIndex, null, null);
                 state.treeIndex = 0;
               }
             }
 
-            // After Choosing Direction Previously
-            // Append Node
-            console.log('Full Tree With Attempt At Index ', state.treeIndex);
-            console.log(state.tree);
-            console.log('\n\n');
-
             // Update TREE
             result.update({
+              treeIndex: parseInt(state.treeIndex, 10),
+              imageIndex: parseInt(state.imageIndex, 10),
               tree: state.tree,
-              treeIndex: state.treeIndex,
-              imageIndex: state.imageIndex,
-            }, {
-              where: { inviteId: 1 },
             }).then(() => {
               // Rebalance Tree
               // rebalance(state.tree());
@@ -280,8 +271,14 @@ module.exports = (app) => {
               console.log(err);
               console.log('\n\n');
             });
+          }).catch(() => {
+            // User entered fake UUID
+            res.render('error');
           });
         }
+      }).catch(() => {
+        // This Experiment Does Not Exist
+        res.render('error');
       });
     }).catch(() => {
       // User entered fake UUID
