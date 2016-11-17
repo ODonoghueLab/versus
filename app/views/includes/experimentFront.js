@@ -33,9 +33,13 @@ $(document).ready( () => {
   //If we pick A, change B
   $('[name="ButtonA"]').click(function(){
     get(JSON.stringify({ "itemA": 1 }), (data) => {
-      $('[name="ButtonB"]').attr("src", data.itemB.url);
-      if(data.itemA.url !== $('[name="ButtonA"]').attr("src")){
-        $('[name="ButtonA"]').attr("src", data.itemA.url);
+      if(!data.done) {
+        $('[name="ButtonB"]').attr("src", data.itemB.url);
+        if (data.itemA.url !== $('[name="ButtonA"]').attr("src")) {
+          $('[name="ButtonA"]').attr("src", data.itemA.url);
+        }
+      } else {
+        window.location.href += '/done';
       }
     })
   });
@@ -43,9 +47,13 @@ $(document).ready( () => {
   //If we pick B, change A
   $('[name="ButtonB"]').click(function(){
     get(JSON.stringify({ "itemB": 1 }), (data) => {
-      $('[name="ButtonA"]').attr("src", data.itemA.url);
-      if(data.itemB.url !== $('[name="ButtonB"]').attr("src")){
-        $('[name="ButtonB"]').attr("src", data.itemB.url);
+      if(!data.done) {
+        $('[name="ButtonA"]').attr("src", data.itemA.url);
+        if (data.itemB.url !== $('[name="ButtonB"]').attr("src")) {
+          $('[name="ButtonB"]').attr("src", data.itemB.url);
+        }
+      } else {
+        window.location.href += '/done';
       }
     })
   });
