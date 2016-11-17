@@ -139,7 +139,10 @@ module.exports = (app) => {
               state.imageIndex += 1; //eslint-disable-line
 
               // Update State
-              result.update({ imageIndex: state.imageIndex }).then(() => {
+              // result.update({ imageIndex: state.imageIndex }).then(() => {
+              const updateQuery = 'UPDATE "Results" SET "imageIndex"=\'' + state.imageIndex
+                + '\' WHERE "inviteId"=\'' + req.params.uuid + '\'';
+              models.sequelize.query(updateQuery).spread(() => {
 
                 console.log('Full State');
                 console.log(state);
@@ -148,10 +151,6 @@ module.exports = (app) => {
                 // Send Resulting Comparison
                 res.json(information);
                 console.log('Sending: ', information);
-              }, (err) => {
-                console.log('Error Updating State');
-                console.log(err);
-                console.log('\n\n');
               });
             }, (err) => {
               console.log('Error Updating Tree');
@@ -193,18 +192,8 @@ module.exports = (app) => {
               // Insert Node
               else {
                 state.tree[state.treeIndex].right = state.treeIndex + 1;
-
-                console.log("\t\ttI: " + state.treeIndex);
                 state.treeIndex += 1;
-                console.log("\t\ttI + 1: " + state.treeIndex);
-                console.log(typeof state.treeIndex);
-
-                console.log('\n');
-
-                console.log("\t\tiI: " + state.imageIndex);
                 state.imageIndex += 1; //eslint-disable-line
-                console.log("\t\tiI: " + state.imageIndex);
-
                 state.tree[state.treeIndex] = newNode(state.imageIndex, null, null);
                 state.treeIndex = 0;
               }
@@ -220,56 +209,52 @@ module.exports = (app) => {
               // Insert Node
               else {
                 state.tree[state.treeIndex].left = state.treeIndex + 1;
-
-                console.log("\t\ttI: " + state.treeIndex);
                 state.treeIndex += 1;
-                console.log("\t\ttI + 1: " + state.treeIndex);
-                console.log(typeof state.treeIndex);
-
-                console.log('\n');
-
-                console.log("\t\tiI: " + state.imageIndex);
                 state.imageIndex += 1; //eslint-disable-line
-                console.log("\t\tiI: " + state.imageIndex);
-
                 state.tree[state.treeIndex] = newNode(state.imageIndex, null, null);
                 state.treeIndex = 0;
               }
             }
 
             // Update TREE
-            result.update({
-              treeIndex: parseInt(state.treeIndex, 10),
-              imageIndex: parseInt(state.imageIndex, 10),
-              tree: state.tree,
-            }).then(() => {
-              // Rebalance Tree
-              // rebalance(state.tree());
+            result.update({ tree: state.tree }).then(() => {
+              const updateQuery = 'UPDATE "Results" SET "imageIndex"=\'' + state.imageIndex
+                + '\', "treeIndex"=\'' + state.treeIndex + '' +
+                '\' WHERE "inviteId"=\'' + req.params.uuid + '\'';
+              models.sequelize.query(updateQuery).spread(() => {
+                console.log('Full State');
+                console.log(state);
+                console.log('\n\n');
 
-              console.log('Full State');
-              console.log(state);
-              console.log('\n\n');
+                console.log("index: " + state.imageIndex + "/" + items.length);
+                console.log("comparison " + (state.imageIndex == items.length));
+                if (state.imageIndex === items.length) {
+                  console.log('time to leave');
+                  res.render('dash', { success: 'Thankyou For Participating!' });
+                  return null;
+                }
 
-              // Send Next Item
-              let information = {};
-              if (itemAPresent) {
-                information = {
-                  itemB: { url: items[state.imageIndex] },
-                  itemA: { url: items[state.tree[state.treeIndex].imageIndex] },
-                };
-              } else {
-                information = {
-                  itemB: { url: items[state.tree[state.treeIndex].imageIndex] },
-                  itemA: { url: items[state.imageIndex] },
-                };
-              }
-              res.json(information);
-              console.log('Sending: ', information);
-              console.log(new Date().getTime());
-            }, (err) => {
-              console.log('Error Updating State');
-              console.log(err);
-              console.log('\n\n');
+                // Send Next Item
+                let information = {};
+                if (itemAPresent) {
+                  information = {
+                    itemB: { url: items[state.imageIndex] },
+                    itemA: { url: items[state.tree[state.treeIndex].imageIndex] },
+                  };
+                } else {
+                  information = {
+                    itemB: { url: items[state.tree[state.treeIndex].imageIndex] },
+                    itemA: { url: items[state.imageIndex] },
+                  };
+                }
+                res.json(information);
+                console.log('Sending: ', information);
+                console.log(new Date().getTime());
+              }, (err) => {
+                console.log('Error Updating State');
+                console.log(err);
+                console.log('\n\n');
+              });
             });
           }).catch(() => {
             // User entered fake UUID
