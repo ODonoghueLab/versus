@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     classMethods: {
       associate(models) {
-        User.belongsToMany(models.Experiment, { through: 'UserExperiment' });
+        User.belongsToMany(models.Experiment, { through: models.UserExperiment });
       },
     },
   });

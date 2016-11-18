@@ -2,7 +2,6 @@ extends partials/layout
 
 block content
   .ui.container
-
     h2 Your Experiments
     table.ui.blue.table
       thead
@@ -16,20 +15,21 @@ block content
       tbody
         if experiments
           each experiment in experiments
-            tr
-              td= experiment.dataValues.name
-              td= experiment.dataValues.description
-              td.ui.center.aligned
-                a(href='experiment/' + experiment.dataValues.id)
-                  i.folder.icon.green
-              td.ui.center.aligned
-                a(href='#')
-                  i.bar.chart.icon.purple
-              td.ui.center.aligned
-                a(href='#')
-                  i.add.user.icon.orange
-              td.ui.right.center.aligned
-                i.trash.icon.red(data-id=experiment.dataValues.id, data-name=experiment.dataValues.name, style='cursor: pointer; cursor: hand;')
+            if experiment.dataValues.Users[0].UserExperiment.permission == 0
+              tr
+                td= experiment.dataValues.name
+                td= experiment.dataValues.description
+                td.ui.center.aligned
+                  a(href='experiment/' + experiment.dataValues.id)
+                    i.folder.icon.green
+                td.ui.center.aligned
+                  a(href='#')
+                    i.bar.chart.icon.purple
+                td.ui.center.aligned
+                  a(href='/experiment/' + experiment.dataValues.id + '/invite')
+                    i.add.user.icon.orange
+                td.ui.right.center.aligned
+                  i.trash.icon.red(data-id=experiment.dataValues.id, data-name=experiment.dataValues.name, style='cursor: pointer; cursor: hand;')
       tfoot.full-width
         tr
           th(colspan=6)
@@ -48,7 +48,23 @@ block content
           th.ui.one.wide.center.aligned Invite
           th.ui.one.wide.center.aligned Delete
       tbody
-
+        if experiments
+          each experiment in experiments
+            if experiment.dataValues.Users[0].UserExperiment.permission == 1
+              tr
+                td= experiment.dataValues.name
+                td= experiment.dataValues.description
+                td.ui.center.aligned
+                  a(href='experiment/' + experiment.dataValues.id)
+                    i.folder.icon.green
+                td.ui.center.aligned
+                  a(href='#')
+                    i.bar.chart.icon.purple
+                td.ui.center.aligned
+                  a(href='/experiment/' + experiment.dataValues.id + '/invite')
+                    i.add.user.icon.orange
+                td.ui.right.center.aligned
+                  i.trash.icon.red(data-id=experiment.dataValues.id, data-name=experiment.dataValues.name, style='cursor: pointer; cursor: hand;')
 
   .ui.basic.small.modal.delete
     .ui.icon.header
