@@ -15,7 +15,7 @@ module.exports.sendInvite = (type, email, invite) => {
       subject: 'Invite to participate in experiment',
       message: `${'You have been invited to participate in an experiment on Versus.' +
       'Click on the link below to participate. <br>' +
-      'http://'}${config.server.domain}:${config.server.port}/${invite}`,
+      'http://'}${config.server.domain}:${config.server.port}/invites/${invite}`,
     }, (err) => {
       if (err) throw Error(err);
     });
@@ -29,7 +29,7 @@ module.exports.sendInvite = (type, email, invite) => {
       subject: 'Invite to collaborate on experiment',
       message: `${'You have been invited to collaborate on an experiment on Versus.' +
           'Click on the link below to collaborate. <br>' +
-          'http://'}${config.server.domain}:${config.server.port}/${invite}`,
+          'http://'}${config.server.domain}:${config.server.port}/invites/${invite}`,
     }, (err) => {
       if (err) throw Error(err);
     });

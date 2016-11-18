@@ -43,7 +43,7 @@ module.exports = (app) => {
   });
 
   // [GET] Accept invitation.
-  app.get('/:uuid', (req, res) => {
+  app.get('/invites/:uuid', (req, res) => {
     // There are two types of invites, participate and collaborate.
     models.Invite.findOne({ where: { inviteId: req.params.uuid } }).then((invite) => {
       // If the invite is to collaborate, ensure the user is logged in and accept the invitation.
