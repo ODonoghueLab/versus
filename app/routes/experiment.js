@@ -114,8 +114,8 @@ module.exports = (app) => {
 
           display(0);
 
-          // Insert Ranks Into Completed Table
-          // Delete Entry
+          // TODO: Insert Ranks Into Completed Table
+          // TODO: Delete Entry
           // Congratulate them
           res.render('dash', { success: ['Thankyou For Participating!'] });
         });
@@ -146,7 +146,8 @@ module.exports = (app) => {
         // Wants first 2
         if (req.body.start === true) {
           // Server Side Validation
-          const userAge = (typeof parseInt(req.body.age, 10) === typeof 1) ? req.body.age : 0;
+          let userAge = (typeof parseInt(req.body.age, 10) === typeof 1) ? req.body.age : 0;
+          userAge = (userAge > 0) ? userAge : 0;
           const userGender = (req.body.gender === 'male' ||
                               req.body.gender === 'female' ||
                               req.body.gender === 'other') ? req.body.gender : 'other';
@@ -164,7 +165,6 @@ module.exports = (app) => {
             },
           }).spread((result) => {
             const state = result.get({ plain: true });
-            console.log(state);
             // Send the index of the image
             // Along with url attached to index
             const information = {
