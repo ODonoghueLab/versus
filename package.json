@@ -13,13 +13,15 @@
     "url": "git+https://github.com/ODonoghueLab/versus.git"
   },
   "contributors": [
-    { "name" : "Tylor Stewart",
-      "email" : "trjstewart@gmail.com",
-      "url" : "https://twitter.com/trjstewart"
+    {
+      "name": "Tylor Stewart",
+      "email": "trjstewart@gmail.com",
+      "url": "https://twitter.com/trjstewart"
     },
-    { "name" : "Russel Demos",
-      "email" : "russelhughdemos@gmail.com",
-      "url" : ""
+    {
+      "name": "Russel Demos",
+      "email": "russelhughdemos@gmail.com",
+      "url": ""
     }
   ],
   "bugs": {
@@ -37,15 +39,16 @@
     "express-validator": "*",
     "morgan": "~1.7.0",
     "multer": "*",
+    "node-ses": "^2.0.1",
     "passport": "*",
     "passport-http": "*",
     "passport-local": "*",
     "pg": "^6.1.0",
     "pg-hstore": "^2.3.2",
     "pug": "^2.0.0-beta5",
+    "s3": "*",
     "sequelize": "^3.24.3",
-    "serve-favicon": "~2.3.0",
-    "s3": "*"
+    "serve-favicon": "~2.3.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",

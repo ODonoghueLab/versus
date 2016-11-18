@@ -1,5 +1,3 @@
-
-
 module.exports = (sequelize, DataTypes) => {
   const Experiment = sequelize.define('Experiment', {
     name: DataTypes.STRING,
@@ -8,7 +6,8 @@ module.exports = (sequelize, DataTypes) => {
     classMethods: {
       associate(models) {
         Experiment.hasMany(models.Image, { as: 'Images' });
-        Experiment.belongsToMany(models.User, { through: 'UserExperiment' });
+        Experiment.belongsToMany(models.User, { through: models.UserExperiment });
+        Experiment.hasMany(models.Invite, { as: 'Invites' });
       },
     },
   });

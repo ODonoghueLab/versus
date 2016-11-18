@@ -1,0 +1,63 @@
+extends partials/layout
+
+block content
+  style(type='text/css').
+    body {
+      background-color: #37657B;
+    }
+
+    body > .grid {
+      height: 100%;
+    }
+
+    .image {
+      margin-top: -100px;
+    }
+
+    .column {
+      max-width: 450px;
+    }
+
+  script.
+    $(document).ready(function () {
+      $('.ui.form').form({
+        fields: {
+          email: {
+            identifier: 'username',
+            rules: [
+              { type: 'empty', prompt: 'Please enter your e-mail' },
+              { type: 'email', prompt: 'Please enter a valid e-mail' }
+            ]
+          },
+          password: {
+            identifier: 'password',
+            rules: [
+              { type: 'empty', prompt: 'Please enter your password' },
+              { type: 'length[6]', prompt: 'Your password must be at least 6 characters' }
+            ]
+          }
+        }
+      });
+    });
+
+
+  .ui.middle.aligned.center.aligned.grid
+    .column
+      form.ui.large.form(method="post" action="/login")
+        .ui.stacked.segment
+          h2.ui.teal.image.header
+            .content
+              | Login to your account
+          .field
+            .ui.left.icon.input
+              i.user.icon
+              input(type='text', name='username', placeholder='E-mail address')
+          .field
+            .ui.left.icon.input
+              i.lock.icon
+              input(type='password', name='password', placeholder='Password')
+          .ui.fluid.large.teal.submit.button Login
+        .ui.error.message
+      .ui.message
+        | New to Versus?
+        a(href='/register')  Register

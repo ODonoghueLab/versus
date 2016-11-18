@@ -5,6 +5,6 @@ module.exports = (app) => {
   app.get('/logout', routeAuth.isAuth, (req, res) => {
     req.session.destroy();
     req.logout();
-    res.render('dash', { success: ['You have been Logged Out.'] });
+    res.redirect('/');
   });
 };

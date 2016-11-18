@@ -17,47 +17,47 @@ function newNode(imageIndex, left, right) {
 
 module.exports = (app) => {
   // [GET] Create a new Experiment for current user.
-  app.get('/experiment/create', (req, res) => {
-    (req.user) ? res.render('createExperiment', { name: req.user.firstName }) : res.render('dash'); //eslint-disable-line
-  });
+  app.get('/experiment/create', (req, res) => res.render('experiment-create'));
 
   // [POST] Create a new Experiment for current user.
-  app.post('/experiment/create', routeAuth.isAuth, upload.array('files'), (req, res) => {
-    // Ensure all paramaters have been submitted via POST.
-    if (!req.body.name) { res.render('createExperiment', { name: req.user.firstName, errors: ['Name must be set.'] }); return; }
-    if (!req.body.description) { res.render('createExperiment', { name: req.user.firstName, errors: ['Description must be set.'] }); return; }
+  app.post('/experiment/create', routeAuth.isAuth, upload.array('experiment[images]'), (req, res) => {
+    // Ensure required parameters have been submitted.
+    if (!req.body.experiment || !req.body.experiment.name || !req.files) return res.redirect(301, 'experiment-create', { error: 'Please enter all required fields.' });
 
-    // Upload Images
+    // Upload the Images to S3.
     fileUploader.upload(app, req, (images, error) => {
-      if (error) { res.render('createExperiment', { name: req.user.firstName, errors: error }); return; }
+      if (error) return res.redirect(301, 'experiment-create', { error: true });
 
       // Create the new Experiment.
-      models.Experiment.create({ name: req.body.firstName, description: req.body.description })
-        .catch(() => { res.render('error'); return; })
-        .then((experiment) => {
-          // Create each Image.
-          images.map((image) => { //eslint-disable-line
-            models.Image.create({ url: image })
-              .catch(() => { res.render('error'); return; })
-              .then((image) => { //eslint-disable-line
+      models.Experiment.create({
+        name: req.body.experiment.name,
+        description: req.body.experiment.description,
+      }).then((experiment) => {
+        // Create each Image.
+        images.forEach((image) => {
+          models.Image.create({ url: image })
+              .then((imageInstance) => {
                 // Add the Image to the Experiment.
-                experiment.addImage(image)
-                  .catch(() => { res.render('error'); return; })
-                  .then(() => {});
-              });
-          });
+                experiment.addImage(imageInstance)
+                  .catch(() => res.redirect(301, 'experiment-create', { error: true }));
+              })
+              .catch(() => res.redirect(301, 'experiment-create', { error: true }));
+        });
 
           // Add the Experiment to the current User.
-          // TODO: Change magic number user Session User Id.
-          experiment.addUser(1);
+        experiment.addUser(req.user.id, { permission: 0 })
+            .catch(() => res.redirect(301, 'experiment-create', { error: true }))
+            .then(() => res.redirect(301, '/dashboard'));
+      })
+        .catch(() => res.redirect(301, 'experiment-create', { error: true }));
 
-          // TODO pull experiment names from token or query
-          res.render('createExperiment', { experiments: [experiment.name], name: req.user.firstName, images });
-        }); // End Anonymous Callback
-    }); // End Upload
+      return null;
+    });
+
+    return null;
   });
 
-  // Display a single Experiment.
+  // [GET] Display a single Experiment.
   app.get('/experiment/:id', (req, res) => {
     // Find the Experiment based on the id from the URL.
     models.Experiment.find({
@@ -67,7 +67,6 @@ module.exports = (app) => {
       res.render('experiment', { experiment });
     });
   });
-
 
   // Comparison Test
   app.get('/experiment/:id/:uuid', (req, res) => {
@@ -116,8 +115,7 @@ module.exports = (app) => {
 
           // TODO: Insert Ranks Into Completed Table
           // TODO: Delete Entry
-          // Congratulate them
-          res.render('dash', { success: ['Thankyou For Participating!'] });
+          // TODO: Congratulate them
         });
       }).catch(() => {
         // User entered fake UUID
@@ -149,8 +147,8 @@ module.exports = (app) => {
           let userAge = (typeof parseInt(req.body.age, 10) === typeof 1) ? req.body.age : 0;
           userAge = (userAge > 0) ? userAge : 0;
           const userGender = (req.body.gender === 'male' ||
-                              req.body.gender === 'female' ||
-                              req.body.gender === 'other') ? req.body.gender : 'other';
+          req.body.gender === 'female' ||
+          req.body.gender === 'other') ? req.body.gender : 'other';
 
           // Initialise Result Object
           models.Result.findOrCreate({
@@ -276,5 +274,14 @@ module.exports = (app) => {
       // User entered fake UUID
       res.render('error');
     });
+  });
+
+  // [POST] Delete an Experiment
+  app.post('/experiment/delete', (req, res) => {
+    // TODO: probably should make sure the user owns the experiment too?
+
+    models.Experiment.destroy({ where: { id: req.body.id } })
+      .catch(err => res.json({ success: false, error: err }))
+      .then(() => res.json({ success: true }));
   });
 };
