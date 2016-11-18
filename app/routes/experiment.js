@@ -39,7 +39,7 @@ module.exports = (app) => {
         });
 
           // Add the Experiment to the current User.
-        experiment.addUser(req.user.id)
+        experiment.addUser(req.user.id, { permission: 0 })
             .catch(() => res.redirect(301, 'experiment-create', { error: true }))
             .then(() => res.redirect(301, '/dashboard'));
       })
