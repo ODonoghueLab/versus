@@ -1,5 +1,5 @@
 // Email Client for sending Invites to Collaborators or Participants.
-const config = require('../config/keys.json');
+const config = require(`${__dirname}/../config/keys.json`); //eslint-disable-line
 const ses = require('node-ses');
 
 // Initialise AWS SES Mail Client
