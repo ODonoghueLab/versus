@@ -1,5 +1,3 @@
-module.exports = (sequelize, DataTypes) => {
-  return sequelize.define('UserExperiment', {
-    permission: DataTypes.INTEGER
-  });
-};
+module.exports = (sequelize, DataTypes) => sequelize.define('UserExperiment', {
+  permission: DataTypes.INTEGER,
+});

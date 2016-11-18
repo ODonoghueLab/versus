@@ -12,7 +12,7 @@ module.exports = (app) => {
         { model: models.User, where: { id: req.user.id } },
         // { model: models.UserExperiment }
       ],
-    }).then(experiments => {
+    }).then((experiments) => {
       // Render the Dashboard.
       res.render('dashboard', { username: req.user.name, experiments });
     });

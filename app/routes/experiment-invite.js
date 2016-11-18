@@ -3,37 +3,20 @@ const models = require('../models/index');
 const mail = require('../modules/emailClient');
 
 module.exports = (app) => {
-  
   // [GET] Display the UI to send invites.
-  app.get('/experiment/:id/invite', (req, res) => {
+  app.get('/experiment/:id/invite', routeAuth.isAuth, (req, res) => {
     // TODO: Ensure user owns or is collaborator on the experiment.
-    
+
     // Retrieve the experiment from the Database and render the UI.
-    models.Experiment.findOne({ where: { id: req.params.id }})
-      .then(experiment => {
-        res.render('experiment-invite', experiment.dataValues)
+    models.Experiment.findOne({ where: { id: req.params.id } })
+      .then((experiment) => {
+        res.render('experiment-invite', experiment.dataValues);
       })
-      .catch(err => res.render('error', err))
+      .catch(err => res.render('error', err));
   });
-  
-  // [GET] Accept an invitation to collaborate
-  app.get('/experiment/invite/:id', (req, res) => {
-    
-    // Add the current user as a collaborator to the experiment.
-    models.Invite.find({
-      where: { inviteId: req.params.id },
-      include: [{ model: models.Experiment }]
-    }).then(invite => {
-      invite.Experiment.addUser(req.user.id, { permission: 1 })
-        .then(() => invite.destroy()
-          .then(() => res.redirect(301, '/dashboard')));
-    });
-  });
-  
+
   // [POST] Invite form submission.
-  app.post('/experiment/invite', (req, res) => {
-    console.log('sanity check');
-    
+  app.post('/experiment/invite', routeAuth.isAuth, (req, res) => {
     // Ensure all required fields are set.
     if (!req.body.id) { res.render('error'); return null; }
     if (!req.body.type) { res.render('error'); return null; }
@@ -44,46 +27,37 @@ module.exports = (app) => {
     // TODO: Ensure user owns or is collaborator on the experiment.
 
     // Fetch the Experiment to send the invites for.
-    models.Experiment.findOne({ where: { id: req.body.id }}).then(experiment => {
-
+    models.Experiment.findOne({ where: { id: req.body.id } }).then((experiment) => {
       // Separate out the email addresses and send relevant invites to each.
-      req.body.emails.split(',').forEach(email => {
-        console.log('woof 1');
-        models.Invite.create({email: email.trim(), type: req.body.type }).then(invite => {
-          console.log('woof 2');
+      req.body.emails.split(',').forEach((email) => {
+        models.Invite.create({ email: email.trim(), type: req.body.type }).then((invite) => {
           experiment.addInvite(invite);
           mail.sendInvite(req.body.type, email.trim(), invite.dataValues.inviteId);
-        }).catch(err => { console.log('woof 3', err) })
+        }).catch(err => res.render('error', err));
       });
 
-    }).catch(err => console.log(err));
+      res.redirect(301, '/dashboard');
+    }).catch(err => res.render('error', err));
 
-    res.redirect(301, '/dashboard')
+    return null;
   });
-  
+
   // [GET] Accept invitation.
   app.get('/:uuid', (req, res) => {
-    // There are two types of invites, participate and collaborate, so this could get kinda messy maybe.
-    models.Invite.findOne({ where: { inviteId: req.params.uuid }}).then(invite => {
-      
+    // There are two types of invites, participate and collaborate.
+    models.Invite.findOne({ where: { inviteId: req.params.uuid } }).then((invite) => {
       // If the invite is to collaborate, ensure the user is logged in and accept the invitation.
       if (invite.type === 'collaborate') {
-        
         if (req.user) {
-          models.Experiment.findOne({ where: { id: invite.ExperimentId }}).then(experiment =>
-            experiment.addUser(req.user.id, { permission: 1 }));
-            res.json(2)
-        }
-        
-        else res.render('login')
-      }
-      
-      else if (invite.type === 'participate') {
+          models.Experiment.findOne({ where: { id: invite.ExperimentId } }).then(experiment =>
+            experiment.addUser(req.user.id, { permission: 1 }))
+              .then(() => invite.destroy()
+                .then(() => res.redirect(301, '/dashboard')));
+          res.json(2);
+        } else res.render('login');
+      } else if (invite.type === 'participate') {
         // TODO: Russel plz run the experiment.
-      }
-      
-      else res.render('error')
-      
+      } else res.render('error');
     });
   });
 };
