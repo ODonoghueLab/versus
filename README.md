@@ -82,7 +82,7 @@ To get started working on versus there are a few prerequisites.
     ```
 
 #### Windows
-Windows is not currently supported because let's face it... you know why.
+Windows is not actively supported due to module dependencies. Results may vary.
 
 #Development Workflow
 * Write Code
