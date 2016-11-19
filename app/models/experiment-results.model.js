@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
     imageIndex: DataTypes.INTEGER,
     treeIndex: DataTypes.INTEGER,
     tree: DataTypes.ARRAY(DataTypes.JSON), // eslint-disable-line
+    Ranks: DataTypes.ARRAY(DataTypes.STRING), // eslint-disable-line
   }, {
     classMethods: {
       associate(models) {

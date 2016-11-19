@@ -64,7 +64,7 @@ module.exports = (app) => {
           res.json(2);
         } else res.render('login');
       } else if (invite.type === 'participate') {
-        res.render('experimentTest');
+        res.render('experiment-run');
       } else res.render('error');
     });
   });
@@ -245,6 +245,7 @@ module.exports = (app) => {
         }).then((result) => {
           const state = result.get({ plain: true });
 
+          // Perform Pre Order Search
           const ranks = [];
           function display(root) {
             if (typeof state.tree[root] !== typeof undefined) {
@@ -256,10 +257,10 @@ module.exports = (app) => {
 
           display(0);
 
-          // TODO: Insert Ranks Into Completed Table
-          // TODO: Delete Entry
-          // TODO: Congratulate them
-          res.redirect('/');
+          result.update({ Ranks: ranks }).then(() => {
+            // TODO: Congratulate them
+            res.redirect('/');
+          });
         });
       }).catch(() => {
         // User entered fake UUID

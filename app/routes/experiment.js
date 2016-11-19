@@ -60,6 +60,20 @@ module.exports = (app) => {
     });
   });
 
+  // [GET] Display Experiment Results
+  app.get('/experiment/:id/results', (req, res) => {
+    const findQuery = 'SELECT "Ranks" FROM "Results"' +                           //eslint-disable-line
+      ' WHERE "ExperimentId"=\'' + req.params.id + '\'';                          //eslint-disable-line
+    models.sequelize.query(findQuery).spread((allResults) => {
+      // Returns a Result Array of Image Arrayss
+      const results = allResults.map((obj) => { //eslint-disable-line
+        return obj.Ranks;
+      });
+      // Display Results
+      res.render('experiment-results', { images: results });
+    });
+  });
+
   // [POST] Delete an Experiment
   app.post('/experiment/delete', (req, res) => {
     // TODO: probably should make sure the user owns the experiment too?
