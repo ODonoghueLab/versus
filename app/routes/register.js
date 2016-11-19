@@ -41,21 +41,15 @@ module.exports = (app) => {
         email: req.body.reg_email,
         password: req.body.reg_password,
       })
-        .then((user) => {
-          res.render('dash', {
-            name: user.firstName,
-            success: ['You Have Been Registered!'],
-          });
+        .then(() => {
+          // TODO: Display Registration Success
+          res.redirect('/');
         })
         .catch((error) => {
           if (error.original.code === 23505) {
-            res.render('dash', {
-              errors: ['Email already in use'],
-              retryRegFirstName: req.body.reg_firstName,
-              retryRegLastName: req.body.reg_lastName,
-              retryRegEmail: req.body.reg_email,
-            });
-          } else res.render('dash');
+            // TODO: Display email already in use
+            res.redirect('/');
+          } else res.redirect('/');
         });
     }// end validation errors
   }); // end post request
