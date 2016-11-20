@@ -18,7 +18,7 @@ module.exports = (app) => {
 
     // Upload the Images to S3.
     fileUploader.upload(app, req, (images, error) => {
-      if (error) return res.redirect(301, 'experiment-create', { error: true });
+      if (error) return res.redirect(301, 'experiment-create');
 
       // Create the new Experiment.
       models.Experiment.create({
@@ -31,17 +31,17 @@ module.exports = (app) => {
               .then((imageInstance) => {
                 // Add the Image to the Experiment.
                 experiment.addImage(imageInstance)
-                  .catch(() => res.redirect(301, 'experiment-create', { error: true }));
+                  .catch(() => res.redirect(301, 'experiment-create'));
               })
-              .catch(() => res.redirect(301, 'experiment-create', { error: true }));
+              .catch(() => res.redirect(301, 'experiment-create'));
         });
 
           // Add the Experiment to the current User.
         experiment.addUser(req.user.id, { permission: 0 })
-            .catch(() => res.redirect(301, 'experiment-create', { error: true }))
+            .catch(() => res.redirect(301, 'experiment-create'))
             .then(() => res.redirect(301, '/dashboard'));
       })
-        .catch(() => res.redirect(301, 'experiment-create', { error: true }));
+        .catch(() => res.redirect(301, 'experiment-create'));
 
       return null;
     });
@@ -56,6 +56,7 @@ module.exports = (app) => {
       where: { id: req.params.id },
       include: [{ model: models.Image, as: 'Images' }],
     }).then((experiment) => {
+      console.log(experiment);
       res.render('experiment', { experiment });
     });
   });
