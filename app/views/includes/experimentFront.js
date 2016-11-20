@@ -1,4 +1,3 @@
-/* eslint-disable */
 <script type="text/javascript">
 
 $(document).ready( () => {
@@ -8,6 +7,8 @@ $(document).ready( () => {
 
   //Start
   $('[name="startButton"]').click(function(){
+    // Hide the opening dialogue.
+    $('#welcome').hide();
 
     //animation
     $('#experimentStart').slideUp(150,()=>{

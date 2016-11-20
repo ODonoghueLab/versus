@@ -41,7 +41,7 @@ module.exports = (app) => {
         email: req.body.reg_email,
         password: req.body.reg_password,
       })
-        .then((user) => {
+        .then(() => {
           res.redirect(302, '/');
         })
         .catch((error) => {

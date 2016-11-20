@@ -1,3 +1,32 @@
-script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js")
-include includes/experimentDownload.js
-button(type="button" name="downloadButton") Download
+extends partials/layout-dashboard
+
+block content
+  .ui.container
+    h1 Results of #{experiment.name}
+
+    table.ui.blue.table
+      thead
+        tr
+          th.one.wide Age
+          th.one.wide Gender
+          th.eight.wide Best Image
+          th.three.wide Time Start
+          th.three.wide Time End
+      tbody
+        if experiment.Results
+          each result in experiment.Results
+            tr
+              td= result.age
+              td= result.gender
+              td
+                a(href=result.Ranks[0], target="_blank") #{result.Ranks[0]}
+              td= result.createdAt
+              td= result.updatedAt
+      tfoot.full-width
+        tr
+          th(colspan=5)
+            a.ui.small.primary.labeled.icon.button(name="downloadButton")
+              i.download.icon
+              | Download JSON Data
+
+  include includes/experimentDownload.js

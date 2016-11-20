@@ -63,8 +63,13 @@ module.exports = (app) => {
                 .then(() => res.redirect(301, '/dashboard')));
           res.json(2);
         } else res.render('login');
+
+        // If the invite is to participate, load the experiment.
       } else if (invite.type === 'participate') {
-        res.render('experiment-run');
+        models.Experiment.findOne({ where: { id: invite.ExperimentId } }).then(experiment =>
+          res.render('experiment-run', experiment.dataValues));
+
+      // Someone did something bad, grr!
       } else res.render('error');
     });
   });
