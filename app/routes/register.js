@@ -26,8 +26,8 @@ module.exports = (app) => {
 
     if (errors) {
       // Render the page again with errors
-      res.render('dash', {
-        warnings: errors.map(obj =>
+      res.redirect(302, '/', {
+        error: errors.map(obj =>
            obj.msg
         ),
         retryRegFirstName: req.body.reg_firstName,
@@ -42,10 +42,7 @@ module.exports = (app) => {
         password: req.body.reg_password,
       })
         .then((user) => {
-          res.render('dash', {
-            name: user.firstName,
-            success: ['You Have Been Registered!'],
-          });
+          res.redirect(302, '/');
         })
         .catch((error) => {
           if (error.original.code === 23505) {
@@ -55,7 +52,7 @@ module.exports = (app) => {
               retryRegLastName: req.body.reg_lastName,
               retryRegEmail: req.body.reg_email,
             });
-          } else res.render('dash');
+          } else res.redirect(302, '/');
         });
     }// end validation errors
   }); // end post request

@@ -2,6 +2,15 @@ extends partials/layout
 
 block content
   .ui.container
+
+    if success
+      .ui.positive.message
+        p=success
+
+    if error
+      .ui.negative.message
+        p=error
+
     h2 Your Experiments
     table.ui.blue.table
       thead
