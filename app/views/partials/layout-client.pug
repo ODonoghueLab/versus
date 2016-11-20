@@ -18,21 +18,6 @@ html
       .ui.container
         .item
           img(src='/img/logo.png')
-        a(href='/dashboard').item Dashboard
-        .right.menu
-          if user
-            .ui.dropdown.item
-              | #{user.firstName} #{user.lastName}
-              i.dropdown.icon
-              .menu
-                a(href='/#').item
-                  i.setting.icon
-                  | Settings
-                a(href='/logout').item
-                  i.sign.out.icon
-                  | Logout
-          else
-            a(href='/register').item Register
-            a(href='/login').item Login
+        .item #{name}
 
     block content

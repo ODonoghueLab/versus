@@ -6,8 +6,10 @@
     //Setup Page
     $('#experiment').slideUp(0);
 
-    //Start
-    $('[name="startButton"]').click(function(){
+  //Start
+  $('[name="startButton"]').click(function(){
+    // Hide the opening dialogue.
+    $('#welcome').hide();
 
       //animation
       $('#experimentStart').slideUp(150,()=>{

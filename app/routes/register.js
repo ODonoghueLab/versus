@@ -26,8 +26,8 @@ module.exports = (app) => {
 
     if (errors) {
       // Render the page again with errors
-      res.render('dash', {
-        warnings: errors.map(obj =>
+      res.redirect(302, '/', {
+        error: errors.map(obj =>
            obj.msg
         ),
         retryRegFirstName: req.body.reg_firstName,
@@ -42,14 +42,17 @@ module.exports = (app) => {
         password: req.body.reg_password,
       })
         .then(() => {
-          // TODO: Display Registration Success
-          res.redirect('/');
+          res.redirect(302, '/');
         })
         .catch((error) => {
           if (error.original.code === 23505) {
-            // TODO: Display email already in use
-            res.redirect('/');
-          } else res.redirect('/');
+            res.render('dash', {
+              errors: ['Email already in use'],
+              retryRegFirstName: req.body.reg_firstName,
+              retryRegLastName: req.body.reg_lastName,
+              retryRegEmail: req.body.reg_email,
+            });
+          } else res.redirect(302, '/');
         });
     }// end validation errors
   }); // end post request

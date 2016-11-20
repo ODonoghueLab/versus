@@ -14,7 +14,9 @@ module.exports = (app) => {
   // [POST] Create a new Experiment for current user.
   app.post('/experiment/create', routeAuth.isAuth, upload.array('experiment[images]'), (req, res) => {
     // Ensure required parameters have been submitted.
-    if (!req.body.experiment || !req.body.experiment.name || !req.files) return res.redirect(301, 'experiment-create', { error: 'Please enter all required fields.' });
+    if (!req.body.experiment || !req.body.experiment.name || !req.files) {
+      return res.redirect(301, 'experiment-create', { error: 'Please enter all required fields.' });
+    }
 
     // Upload the Images to S3.
     fileUploader.upload(app, req, (images, error) => {
@@ -62,21 +64,26 @@ module.exports = (app) => {
 
   // [GET] Display Experiment Results
   app.get('/experiment/:id/results', (req, res) => {
-    const findQuery = 'SELECT "Ranks" FROM "Results"' +                           //eslint-disable-line
-      ' WHERE "ExperimentId"=\'' + req.params.id + '\'';                          //eslint-disable-line
-    models.sequelize.query(findQuery).spread((allResults) => {
-      // Returns a Result Array of Image Arrayss
-      const results = allResults.map((obj) => { //eslint-disable-line
-        return obj.Ranks;
-      });
-      // Display Results
-      res.render('experiment-results', { images: results });
-    });
+    // TODO: Russel; plz stop using SQL, we have an ORM for a reason.
+    // const findQuery = 'SELECT "Ranks" FROM "Results"' +
+    //   ' WHERE "ExperimentId"=\'' + req.params.id + '\'';
+    // models.sequelize.query(findQuery).spread((allResults) => {
+    //   // Returns a Result Array of Image Arrayss
+    //   const results = allResults.map((obj) => { //eslint-disable-line
+    //     return obj.Ranks;
+    //   });
+    // });
+
+    // Fetch Experiment Details and display Results.
+    models.Experiment.findOne({
+      where: { id: req.params.id },
+      include: [{ model: models.Result, as: 'Results' }],
+    }).then(experiment => res.render('experiment-results', { experiment }));
   });
 
   // [POST] Send Data for Download
   app.post('/experiment/:id/results', (req, res) => {
-    const findQuery = 'SELECT "Ranks", "age", "gender" FROM "Results"' +              //eslint-disable-line
+    const findQuery = 'SELECT * FROM "Results"' +              //eslint-disable-line
       ' WHERE "ExperimentId"=\'' + req.params.id + '\'';                          //eslint-disable-line
     models.sequelize.query(findQuery).spread((allResults) => {
       const results = [];
@@ -87,6 +94,10 @@ module.exports = (app) => {
           age: obj.age,
           gender: obj.gender,
           ranks: obj.Ranks,
+          time: {
+            start: obj.createdAt,
+            end: obj.updatedAt,
+          },
         });
       });
 
