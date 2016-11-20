@@ -2,6 +2,14 @@ const routeAuth = require('../modules/isAuth.js');
 const models = require('../models/index');
 const mail = require('../modules/emailClient');
 
+function newNode(imageIndex, left, right) {
+  const node = {};
+  node.imageIndex = imageIndex;
+  node.left = left;
+  node.right = right;
+  return node;
+}
+
 module.exports = (app) => {
   // [GET] Display the UI to send invites.
   app.get('/experiment/:id/invite', routeAuth.isAuth, (req, res) => {
@@ -56,8 +64,208 @@ module.exports = (app) => {
           res.json(2);
         } else res.render('login');
       } else if (invite.type === 'participate') {
-        // TODO: Russel plz run the experiment.
+        res.render('experiment-run');
       } else res.render('error');
+    });
+  });
+
+  // [POST] Handle Experiment Participation
+  app.post('/invites/:uuid', (req, res) => {
+    // Check ID
+    models.Invite.findOne({
+      where: { inviteId: req.params.uuid },
+    }).then((invite) => {
+      // Grab Experiment Images
+      models.Experiment.find({
+        where: { id: invite.ExperimentId },
+        include: [{ model: models.Image, as: 'Images' }],
+      }).then((experiment) => {
+        // Get Image Buffer
+        const items = experiment.Images.map((obj) => { //eslint-disable-line
+          return obj.get({ plain: true }).url;
+        });
+
+        // Phase 1
+        // The User Just Started
+        // Wants first 2
+        if (req.body.start === true) {
+          // Server Side Validation
+          let userAge = (typeof parseInt(req.body.age, 10) === typeof 1) ? req.body.age : 0;
+          userAge = (userAge > 0) ? userAge : 0;
+          const userGender = (req.body.gender === 'male' ||
+          req.body.gender === 'female' ||
+          req.body.gender === 'other') ? req.body.gender : 'other';
+
+          // Initialise Result Object
+          models.Result.findOrCreate({
+            where: { inviteId: req.params.uuid },
+            defaults: {
+              age: userAge,
+              gender: userGender,
+              imageIndex: 0,
+              treeIndex: 0,
+              tree: [newNode(0, null, null)],
+              ExperimentId: invite.ExperimentId,
+            },
+          }).spread((result) => {
+            const state = result.get({ plain: true });
+            // Send the index of the image
+            // Along with url attached to index
+            const information = {
+              itemA: {
+                value: state.tree[state.treeIndex].imageIndex,
+                url: items[state.tree[state.treeIndex].imageIndex],
+              },
+              itemB: {
+                value: state.tree[state.treeIndex].imageIndex + 1,
+                url: items[state.tree[state.treeIndex].imageIndex + 1],
+              },
+            };
+
+            // Send Resulting Comparison
+            res.json(information);
+          });
+        }
+
+        // Phase 2
+        // The User Has Started
+        // Wants Next Data
+        const itemAPresent = (typeof req.body.itemA !== typeof undefined);
+        const itemBPresent = (typeof req.body.itemB !== typeof undefined);
+        if (itemAPresent || itemBPresent) {
+          // Initialise Result Object
+          models.Result.findOne({
+            where: { inviteId: req.params.uuid },
+          }).then((result) => {
+            const state = result.get({ plain: true });
+
+            // Chose The First Item
+            // Newest Item is Worse
+            if (itemAPresent) {
+              // Traverse Tree
+              if (typeof state.tree[state.treeIndex].right === typeof 1) {
+                state.treeIndex = state.tree[state.treeIndex].right;
+              }
+
+              // Insert Node
+              else { //eslint-disable-line
+                state.tree[state.treeIndex].right = state.tree.length;
+                state.treeIndex = state.tree.length;
+                state.imageIndex += 1; //eslint-disable-line
+                state.tree[state.treeIndex] = newNode(state.imageIndex, null, null);
+                state.treeIndex = 0;
+              }
+            }
+            // Chose The Second Item
+            // Newest Item is Better
+            else { //eslint-disable-line
+              // Traverse Tree
+              if (typeof state.tree[state.treeIndex].left === typeof 1) { //eslint-disable-line
+                state.treeIndex = state.tree[state.treeIndex].left;
+              }
+
+              // Insert Node
+              else { //eslint-disable-line
+                state.tree[state.treeIndex].left = state.tree.length;
+                state.treeIndex = state.tree.length;
+                state.imageIndex += 1; //eslint-disable-line
+                state.tree[state.treeIndex] = newNode(state.imageIndex, null, null);
+                state.treeIndex = 0;
+              }
+            }
+
+            // End of Buffer Check
+            if (state.imageIndex === items.length) {
+              state.tree.pop();
+            }
+
+            // Update TREE
+            result.update({ tree: state.tree }).then(() => {
+              const updateQuery = 'UPDATE "Results" SET "imageIndex"=\'' + state.imageIndex //eslint-disable-line
+                + '\', "treeIndex"=\'' + state.treeIndex + '' +                             //eslint-disable-line
+                '\' WHERE "inviteId"=\'' + req.params.uuid + '\'';                          //eslint-disable-line
+              models.sequelize.query(updateQuery).spread(() => {
+                // End of Buffer Check
+                if (state.imageIndex === items.length) {
+                  res.json({ done: true });
+                  return null;
+                }
+
+                // Send Next Item
+                let information = {};
+                if (itemAPresent) {
+                  information = {
+                    itemB: { url: items[state.imageIndex] },
+                    itemA: { url: items[state.tree[state.treeIndex].imageIndex] },
+                  };
+                } else {
+                  information = {
+                    itemB: { url: items[state.tree[state.treeIndex].imageIndex] },
+                    itemA: { url: items[state.imageIndex] },
+                  };
+                }
+                return res.json(information);
+              });
+            });
+          }).catch(() => {
+            // User entered fake UUID
+            res.render('error');
+          });
+        }
+      }).catch(() => {
+        // This Experiment Does Not Exist
+        res.render('error');
+      });
+    }).catch(() => {
+      // User entered fake UUID
+      res.render('error');
+    });
+  });
+
+  // [GET] Finished Results
+  app.get('/invites/:uuid/done', (req, res) => {
+    // Convert to ranked array
+    // Check ID
+    models.Invite.findOne({
+      where: { inviteId: req.params.uuid },
+    }).then((invite) => {
+      // Grab Experiment Images
+      models.Experiment.find({
+        where: { id: invite.ExperimentId },
+        include: [{ model: models.Image, as: 'Images' }],
+      }).then((experiment) => {
+        // Get Image Buffer
+        const items = experiment.Images.map((obj) => { //eslint-disable-line
+          return obj.get({ plain: true }).url;
+        });
+
+        // Get The User's State
+        models.Result.findOne({
+          where: { inviteId: req.params.uuid },
+        }).then((result) => {
+          const state = result.get({ plain: true });
+
+          // Perform Pre Order Search
+          const ranks = [];
+          function display(root) {
+            if (typeof state.tree[root] !== typeof undefined) {
+              display(state.tree[root].left);
+              ranks.push(items[state.tree[root].imageIndex]);
+              display(state.tree[root].right);
+            }
+          }
+
+          display(0);
+
+          result.update({ Ranks: ranks }).then(() => {
+            // TODO: Congratulate them
+            res.redirect('/');
+          });
+        });
+      }).catch(() => {
+        // User entered fake UUID
+        res.render('error');
+      });
     });
   });
 };

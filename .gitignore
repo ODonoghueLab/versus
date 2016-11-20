@@ -9,3 +9,5 @@ app/config/keys.json
 
 # Temporary Files
 app/temp
+npm-debug.log
+npm-debug.log.*

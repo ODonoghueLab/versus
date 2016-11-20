@@ -19,6 +19,7 @@ const client = require(s3File).client; // eslint-disable-line
 // Import and Configure and Sync Sequelize Models.
 const models = require('./models');
 
+// Synchronise Database | TRUE Will Wipe Database
 models.sequelize.sync({ force: false });
 
 // Begin Application

@@ -1,6 +1,6 @@
+/* eslint-disable */
 <script type="text/javascript">
 
-/* eslint-disable */
 $(document).ready( () => {
 
   //Setup Page
