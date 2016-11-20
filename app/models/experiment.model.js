@@ -8,6 +8,7 @@ module.exports = (sequelize, DataTypes) => {
         Experiment.hasMany(models.Image, { as: 'Images' });
         Experiment.belongsToMany(models.User, { through: models.UserExperiment });
         Experiment.hasMany(models.Invite, { as: 'Invites' });
+        Experiment.hasMany(models.Result, { as: 'Results' });
       },
     },
   });

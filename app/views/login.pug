@@ -1,4 +1,4 @@
-extends partials/layout
+extends partials/layout-dashboard
 
 block content
   style(type='text/css').
@@ -40,6 +40,15 @@ block content
       });
     });
 
+  .ui.container
+    if success
+      .ui.positive.message
+        p=success
+
+    if errors
+      each error in errors
+        .ui.negative.message
+          p=error
 
   .ui.middle.aligned.center.aligned.grid
     .column
@@ -51,7 +60,10 @@ block content
           .field
             .ui.left.icon.input
               i.user.icon
-              input(type='text', name='username', placeholder='E-mail address')
+              if !retryEmail
+                input(type='text', name='username', placeholder='E-mail address')
+              else
+                input(type='text', name='username', value=retryEmail)
           .field
             .ui.left.icon.input
               i.lock.icon

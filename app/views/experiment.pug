@@ -1,10 +1,9 @@
-extends partials/layout
+extends partials/layout-dashboard
 
 block content
-  div
+  .ui.container
     h1= experiment.dataValues.name
     p= experiment.dataValues.description
-    each image in experiment.Images
-      img(src=image.dataValues.url)
-  div
-    a(href='/dashboard') Back to Dashboard
+    ui.small.images
+      each image in experiment.Images
+        img.spaced(src=image.dataValues.url, style="padding: 5px;")

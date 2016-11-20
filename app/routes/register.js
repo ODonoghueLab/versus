@@ -19,15 +19,15 @@ module.exports = (app) => {
     req.checkBody('reg_email', 'Please Enter Your Email').notEmpty();
     req.checkBody('reg_password', 'Please Enter Both Password Fields').notEmpty();
     req.checkBody('reg_passwordv', 'Please Enter Both Password Fields').notEmpty();
-    req.checkBody('reg_password', 'Please Enter A Longer Password').len(8);
+    req.checkBody('reg_password', 'Please Enter A Longer Password').len(6);
     req.checkBody('reg_password', 'Passwords Do Not Match').equals(req.body.reg_passwordv);
 
     const errors = req.validationErrors();
 
     if (errors) {
       // Render the page again with errors
-      res.render('dash', {
-        warnings: errors.map(obj =>
+      res.render('register', {
+        error: errors.map(obj =>
            obj.msg
         ),
         retryRegFirstName: req.body.reg_firstName,
@@ -42,14 +42,15 @@ module.exports = (app) => {
         password: req.body.reg_password,
       })
         .then(() => {
-          // TODO: Display Registration Success
           res.redirect('/');
         })
-        .catch((error) => {
-          if (error.original.code === 23505) {
-            // TODO: Display email already in use
-            res.redirect('/');
-          } else res.redirect('/');
+        .catch(() => {
+          res.render('register', {
+            errors: ['Couldn\' register, is your email already in use?'],
+            retryFirstName: req.body.reg_firstName,
+            retryLastName: req.body.reg_lastName,
+            retryEmail: req.body.reg_email,
+          });
         });
     }// end validation errors
   }); // end post request
