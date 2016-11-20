@@ -1,0 +1,43 @@
+extends partials/layout-dashboard
+
+block content
+  .ui.text.container
+    if error
+      .ui.error.message #{error}
+
+    form.ui.form(method='post' action='' enctype="multipart/form-data")
+      h2.ui.dividing.header Create a new Experiment
+      .two.fields
+        .field
+          label Name
+          input(type='text', name='experiment[name]', placeholder='Experiment Name')
+        .field
+          label Images
+            input(type='file', name='experiment[images]' multiple)
+      .field
+        label Description
+        textarea(name='experiment[description]', placeholder='Experiment Description')
+      .field
+        button.ui.button.blue.fluid(type='submit') Create
+
+      .ui.error.message
+
+  script.
+    $(document).ready(function () {
+      $('.ui.form').form({
+        fields: {
+          name: {
+            identifier: 'experiment[name]',
+            rules: [
+              {type: 'empty', prompt: 'Please enter a name for your experiment'}
+            ]
+          },
+          images: {
+            identifier: 'experiment[images]',
+            rules: [
+              {type: 'empty', prompt: 'Please select images for your experiment'}
+            ]
+          }
+        }
+      });
+    });
