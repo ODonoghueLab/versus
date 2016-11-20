@@ -61,7 +61,6 @@ module.exports = (app) => {
             experiment.addUser(req.user.id, { permission: 1 }))
               .then(() => invite.destroy()
                 .then(() => res.redirect(301, '/dashboard')));
-          res.json(2);
         } else res.render('login');
 
         // If the invite is to participate, load the experiment.
