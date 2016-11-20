@@ -64,21 +64,17 @@ module.exports = (app) => {
 
   // [GET] Display Experiment Results
   app.get('/experiment/:id/results', (req, res) => {
-    // TODO: Russel; plz stop using SQL, we have an ORM for a reason.
-    // const findQuery = 'SELECT "Ranks" FROM "Results"' +
-    //   ' WHERE "ExperimentId"=\'' + req.params.id + '\'';
-    // models.sequelize.query(findQuery).spread((allResults) => {
-    //   // Returns a Result Array of Image Arrayss
-    //   const results = allResults.map((obj) => { //eslint-disable-line
-    //     return obj.Ranks;
-    //   });
-    // });
-
     // Fetch Experiment Details and display Results.
     models.Experiment.findOne({
       where: { id: req.params.id },
       include: [{ model: models.Result, as: 'Results' }],
-    }).then(experiment => res.render('experiment-results', { experiment }));
+    }).then((experiment) => {
+      if (experiment === null || experiment === undefined) {
+        res.render('404');
+      } else {
+        res.render('experiment-results', { experiment });
+      }
+    });
   });
 
   // [POST] Send Data for Download
