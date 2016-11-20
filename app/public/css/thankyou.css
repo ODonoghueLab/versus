@@ -1,0 +1,42 @@
+@import 'https://fonts.googleapis.com/css?family=Lato:100';
+* {
+    box-sizing: border-box;
+}
+
+html {
+    oveflow-x: hidden;
+}
+
+body {
+    width: 100vw;
+    height: 100vh;
+    background-image: -webkit-linear-gradient(55deg, #FF5F6D -10%, #FFC371);
+    background-image: linear-gradient(35deg, #FF5F6D -10%, #FFC371);
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    color: white;
+    text-transform: uppercase;
+    font-family: "Lato";
+}
+body h1 {
+    font-size: 40px;
+}
+body p {
+    font-size: 70px;
+    margin: 0;
+}
