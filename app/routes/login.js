@@ -15,9 +15,9 @@ module.exports = (app) => {
       if (err) { return next(err); }
 
       if (!user) {
-        return res.render('dash', {
+        return res.render('login', {
+          retryEmail: req.body.username,
           errors: ['Incorrect Email or Password'],
-          retryLogEmail: req.body.username,
         });
       }
 

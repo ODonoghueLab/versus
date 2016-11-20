@@ -59,6 +59,16 @@ block content
       });
     });
 
+  .ui.container
+    if success
+      .ui.positive.message
+        p=success
+
+    if errors
+      each error in errors
+        .ui.negative.message
+          p=error
+
   .ui.middle.aligned.center.aligned.grid
     .column
       form.ui.large.form(method="post" action="/register")
@@ -69,15 +79,24 @@ block content
           .field
             .ui.left.icon.input
               i.user.icon
-              input(type='text', name='reg_firstName', placeholder='First Name')
+              if !retryFirstName
+                input(type='text', name='reg_firstName', placeholder='First Name')
+              else
+                input(type='text', name='reg_firstName', value=retryFirstName)
           .field
             .ui.left.icon.input
               i.user.icon
-              input(type='text', name='reg_lastName', placeholder='Last Name')
+              if !retryLastName
+                input(type='text', name='reg_lastName', placeholder='Last Name')
+              else
+                input(type='text', name='reg_lastName', value=retryLastName)
           .field
             .ui.left.icon.input
               i.mail.icon
-              input(type='text', name='reg_email', placeholder='E-mail address')
+              if !retryEmail
+                input(type='text', name='reg_email', placeholder='E-mail address')
+              else
+                input(type='text', name='reg_email', value=retryEmail)
           .field
             .ui.left.icon.input
               i.lock.icon
