@@ -258,8 +258,7 @@ module.exports = (app) => {
           display(0);
 
           result.update({ Ranks: ranks }).then(() => {
-            // TODO: Congratulate them
-            res.redirect('/');
+            res.render('experiment-thankyou');
           });
         });
       }).catch(() => {
