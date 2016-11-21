@@ -106,7 +106,7 @@ module.exports = (app) => {
             defaults: {
               age: userAge,
               gender: userGender,
-              imageIndex: 0,
+              imageIndex: 1,
               treeIndex: 0,
               tree: [newNode(0, null, null)],
               ExperimentId: invite.ExperimentId,
@@ -134,18 +134,17 @@ module.exports = (app) => {
         // Phase 2
         // The User Has Started
         // Wants Next Data
-        const itemAPresent = (typeof req.body.itemA !== typeof undefined);
-        const itemBPresent = (typeof req.body.itemB !== typeof undefined);
-        if (itemAPresent || itemBPresent) {
+        if (typeof req.body.return !== typeof undefined) {
           // Initialise Result Object
           models.Result.findOne({
             where: { inviteId: req.params.uuid },
           }).then((result) => {
             const state = result.get({ plain: true });
+            const smaller = (req.body.return > state.tree[state.treeIndex].imageIndex);
 
             // Chose The First Item
             // Newest Item is Worse
-            if (itemAPresent) {
+            if (smaller) {
               // Traverse Tree
               if (typeof state.tree[state.treeIndex].right === typeof 1) {
                 state.treeIndex = state.tree[state.treeIndex].right;
@@ -154,10 +153,9 @@ module.exports = (app) => {
               // Insert Node
               else { //eslint-disable-line
                 state.tree[state.treeIndex].right = state.tree.length;
-                state.treeIndex = state.tree.length;
-                state.imageIndex += 1; //eslint-disable-line
-                state.tree[state.treeIndex] = newNode(state.imageIndex, null, null);
                 state.treeIndex = 0;
+                state.tree[state.tree.length] = newNode(state.imageIndex, null, null);
+                state.imageIndex += 1; //eslint-disable-line
               }
             }
             // Chose The Second Item
@@ -171,16 +169,10 @@ module.exports = (app) => {
               // Insert Node
               else { //eslint-disable-line
                 state.tree[state.treeIndex].left = state.tree.length;
-                state.treeIndex = state.tree.length;
-                state.imageIndex += 1; //eslint-disable-line
-                state.tree[state.treeIndex] = newNode(state.imageIndex, null, null);
                 state.treeIndex = 0;
+                state.tree[state.tree.length] = newNode(state.imageIndex, null, null);
+                state.imageIndex += 1; //eslint-disable-line
               }
-            }
-
-            // End of Buffer Check
-            if (state.imageIndex === items.length) {
-              state.tree.pop();
             }
 
             // Update TREE
@@ -197,15 +189,27 @@ module.exports = (app) => {
 
                 // Send Next Item
                 let information = {};
-                if (itemAPresent) {
+                if (smaller) {
                   information = {
-                    itemB: { url: items[state.imageIndex] },
-                    itemA: { url: items[state.tree[state.treeIndex].imageIndex] },
+                    itemB: {
+                      value: state.imageIndex,
+                      url: items[state.imageIndex],
+                    },
+                    itemA: {
+                      value: state.tree[state.treeIndex].imageIndex,
+                      url: items[state.tree[state.treeIndex].imageIndex],
+                    },
                   };
                 } else {
                   information = {
-                    itemB: { url: items[state.tree[state.treeIndex].imageIndex] },
-                    itemA: { url: items[state.imageIndex] },
+                    itemB: {
+                      value: state.tree[state.treeIndex].imageIndex,
+                      url: items[state.tree[state.treeIndex].imageIndex],
+                    },
+                    itemA: {
+                      value: state.imageIndex,
+                      url: items[state.imageIndex],
+                    },
                   };
                 }
                 return res.json(information);
@@ -253,9 +257,9 @@ module.exports = (app) => {
           const ranks = [];
           function display(root) {
             if (typeof state.tree[root] !== typeof undefined) {
-              display(state.tree[root].left);
-              ranks.push(items[state.tree[root].imageIndex]);
               display(state.tree[root].right);
+              ranks.push(items[state.tree[root].imageIndex]);
+              display(state.tree[root].left);
             }
           }
 
