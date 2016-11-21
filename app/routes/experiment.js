@@ -58,7 +58,6 @@ module.exports = (app) => {
       where: { id: req.params.id },
       include: [{ model: models.Image, as: 'Images' }],
     }).then((experiment) => {
-      console.log(experiment);
       res.render('experiment', { experiment });
     });
   });
