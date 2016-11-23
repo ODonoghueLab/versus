@@ -86,7 +86,6 @@ Windows is not actively supported due to module dependencies. Results may vary.
 
 #Development Workflow
 * Write Code
-* Write Tests
 ```
 npm test
 ```
