@@ -38,8 +38,7 @@ module.exports = (app) => {
 
         bcrypt.compare(password, user.password, (err, isMatch) => {
           if (err) throw err;
-          if (isMatch) { return done(null, user.dataValues, { name: user.name }); }
-          else { return done(null, false); } //eslint-disable-line
+          if (isMatch) { return done(null, user.dataValues, { name: user.name }); }          else { return done(null, false); } //eslint-disable-line
         });
       })
       .catch(() => {

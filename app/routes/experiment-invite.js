@@ -1,6 +1,6 @@
 const routeAuth = require('../modules/isAuth.js');
 const models = require('../models/index');
-const mail = require('../modules/emailClient');
+// const mail = require('../modules/emailClient');
 
 function newNode(imageIndex, left, right) {
   const node = {};
@@ -40,7 +40,7 @@ module.exports = (app) => {
       req.body.emails.split(',').forEach((email) => {
         models.Invite.create({ email: email.trim(), type: req.body.type }).then((invite) => {
           experiment.addInvite(invite);
-          mail.sendInvite(req.body.type, email.trim(), invite.dataValues.inviteId);
+          // mail.sendInvite(req.body.type, email.trim(), invite.dataValues.inviteId);
         }).catch(err => res.render('error', err));
       });
 

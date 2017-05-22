@@ -12,9 +12,9 @@ const session = require('express-session');
 const passport = require('passport');
 
 // AWS S3 Integration
-const s3File = path.join(__dirname, 'config', 's3.js');
-const s3 = require(s3File).s3; // eslint-disable-line
-const client = require(s3File).client; // eslint-disable-line
+// const s3File = path.join(__dirname, 'config', 's3.js');
+// const s3 = require(s3File).s3; // eslint-disable-line
+// const client = require(s3File).client; // eslint-disable-line
 
 // Import and Configure and Sync Sequelize Models.
 const models = require('./models');
@@ -30,8 +30,8 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
 // AWS S3 Initialisation
-app.set('s3', s3);
-app.set('client', client);
+// app.set('s3', s3);
+// app.set('client', client);
 
 // Middleware Configuration
 app.use(express.static(path.join(__dirname, 'public')));
