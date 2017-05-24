@@ -6,7 +6,7 @@ const ses = require('node-ses');
 const client = ses.createClient({ key: config.aws.id, secret: config.aws.secret });
 
 // Send an invite to the user via email.
-module.exports.sendInvite = (type, email, invite) => {
+module.exports.sendInvite = (type, email, inviteId) => {
   // Invite to Participate.
   if (type === 'participate') {
     client.sendEmail({
@@ -15,7 +15,7 @@ module.exports.sendInvite = (type, email, invite) => {
       subject: 'Invite to participate in experiment',
       message: `${'You have been invited to participate in an experiment on Versus.' +
       'Click on the link below to participate. <br>' +
-      'http://'}${config.server.domain}:${config.server.port}/invites/${invite}`,
+      'http://'}${config.server.domain}:${config.server.port}/invites/${inviteId}`,
     }, (err) => {
       if (err) throw Error(err);
     });
@@ -29,7 +29,7 @@ module.exports.sendInvite = (type, email, invite) => {
       subject: 'Invite to collaborate on experiment',
       message: `${'You have been invited to collaborate on an experiment on Versus.' +
           'Click on the link below to collaborate. <br>' +
-          'http://'}${config.server.domain}:${config.server.port}/invites/${invite}`,
+          'http://'}${config.server.domain}:${config.server.port}/invites/${inviteId}`,
     }, (err) => {
       if (err) throw Error(err);
     });
