@@ -1,5 +1,5 @@
 const routeAuth = require('../modules/isAuth.js');
-const models = require('../models/index');
+const models = require('../models');
 // const mail = require('../modules/emailClient');
 
 function newNode(imageIndex, left, right) {
@@ -56,13 +56,13 @@ module.exports = (app) => {
               // mail.sendInvite(req.body.type, email.trim(), invite.dataValues.inviteId);
             })
             .catch(err => {
-              res.render('error', err)
+              res.render('error', err);
             });
         });
         res.redirect(301, '/dashboard');
       })
       .catch(err => {
-        res.render('error', err)
+        res.render('error', err);
       });
 
     return null;
@@ -83,14 +83,14 @@ module.exports = (app) => {
               .findOne(
                 {where: {id: invite.ExperimentId}})
               .then(experiment => {
-                experiment.addUser(req.user.id, {permission: 1})
+                experiment.addUser(req.user.id, {permission: 1});
               })
               .then(() => {
                 invite
                   .destroy()
                   .then(() => {
-                    res.redirect(301, '/dashboard')
-                  })
+                    res.redirect(301, '/dashboard');
+                  });
               });
           } else {
             res.render('login');
@@ -101,7 +101,7 @@ module.exports = (app) => {
             .findOne(
               {where: {id: invite.ExperimentId}})
             .then(experiment => {
-              res.render('experiment-run', experiment.dataValues)
+              res.render('experiment-run', experiment.dataValues);
             });
         } else {
           // Someone did something bad, grr!

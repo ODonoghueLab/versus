@@ -1,7 +1,7 @@
 
 
 const routeAuth = require('../modules/isAuth.js');
-const models = require('../models/index');
+const models = require('../models');
 
 module.exports = (app) => {
   // [GET] Primary User Dashboard

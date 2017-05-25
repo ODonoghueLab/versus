@@ -1,4 +1,4 @@
-const models = require('../models/index');
+const models = require('../models');
 const path = require('path');
 const mime = require('mime');
 const fs = require('fs');
@@ -44,7 +44,7 @@ module.exports = (app) => {
       }
 
       let fail = () => {
-        res.redirect(301, 'experiment-create')
+        res.redirect(301, 'experiment-create');
       };
 
       // Upload the Images to S3.
@@ -78,7 +78,7 @@ module.exports = (app) => {
               .addUser(req.user.id, {permission: 0})
               .catch(fail)
               .then(() => {
-                res.redirect(301, '/dashboard')
+                res.redirect(301, '/dashboard');
               });
           });
         return null;

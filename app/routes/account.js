@@ -1,4 +1,4 @@
-const models = require('../models/index');
+const models = require('../models');
 const bcrypt = require('bcryptjs');
 
 const routeAuth = require('../modules/isAuth.js');
