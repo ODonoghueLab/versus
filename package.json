@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node app/bin/www",
+    "start": "node app/server.js",
     "test": "npm run unit-tests && npm run lint",
     "lint": "./node_modules/.bin/eslint ./app/**/*.js --fix",
     "unit-tests": "mocha --recursive app/tests/ --reporter nyan"

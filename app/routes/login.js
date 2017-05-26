@@ -12,7 +12,9 @@ module.exports = (app) => {
   // [POST] Login Request
   app.post('/login', (req, res, next) => {
     passport.authenticate('local', (err, user) => {
-      if (err) { return next(err); }
+      if (err) { 
+        return next(err); 
+      }
 
       if (!user) {
         return res.render('login', {
@@ -32,13 +34,19 @@ module.exports = (app) => {
 
   // Passport Configuration : Local Strategy.
   passport.use(new LocalStrategy((email, password, done) => {
-    models.User.findOne({ where: { email } })
+    models.User
+      .findOne({ where: { email } })
       .then((user) => { //eslint-disable-line
         if (user === null) { return done(null, false); }
-
         bcrypt.compare(password, user.password, (err, isMatch) => {
-          if (err) throw err;
-          if (isMatch) { return done(null, user.dataValues, { name: user.name }); }          else { return done(null, false); } //eslint-disable-line
+          if (err) {
+            throw err;
+          }
+          if (isMatch) { 
+            return done(null, user.dataValues, { name: user.name }); 
+          } else { 
+            return done(null, false); 
+          } //eslint-disable-line
         });
       })
       .catch(() => {

@@ -18,7 +18,6 @@ const passport = require('passport');
 
 // Import and Configure and Sync Sequelize Models.
 const models = require('./models');
-
 // Synchronise Database | TRUE Will Wipe Database
 models.sequelize.sync({ force: false });
 

@@ -35,12 +35,13 @@ module.exports = (app) => {
         retryRegEmail: req.body.reg_email,
       });
     } else {
-      models.User.create({
-        firstName: req.body.reg_firstName,
-        lastName: req.body.reg_lastName,
-        email: req.body.reg_email,
-        password: req.body.reg_password,
-      })
+      models.User
+        .create({
+          firstName: req.body.reg_firstName,
+          lastName: req.body.reg_lastName,
+          email: req.body.reg_email,
+          password: req.body.reg_password,
+        })
         .then(() => {
           res.redirect('/');
         })
