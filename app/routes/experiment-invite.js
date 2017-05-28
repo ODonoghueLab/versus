@@ -7,6 +7,7 @@ function newNode(imageIndex, left, right) {
   node.imageIndex = imageIndex;
   node.left = left;
   node.right = right;
+  console.log('newNode', node);
   return node;
 }
 
@@ -142,27 +143,27 @@ module.exports = (app) => {
                   defaults: {
                     age: userAge,
                     gender: userGender,
-                    imageIndex: 1,
-                    treeIndex: 0,
+                    imageIndex: 1, // currently testing this imageIndex
+                    treeIndex: 0, // node to compare to test imageIndex
                     tree: [newNode(0, null, null)],
                     ExperimentId: invite.ExperimentId,
                   },
                 })
-                .then((result) => {
+                .spread((result) => {
                   const state = result.get({ plain: true });
+                  console.log('state', state);
+                  if (state.imageIndex === imageUrls.length) {
+                    res.json({ done: true });
+                    return null;
+                  }
                   // Send the index of the image
                   // Along with url attached to index
+                  let i = state.tree[state.treeIndex].imageIndex
                   const comparison = {
-                    itemA: {
-                      value: state.tree[state.treeIndex].imageIndex,
-                      url: imageUrls[state.tree[state.treeIndex].imageIndex],
-                    },
-                    itemB: {
-                      value: state.tree[state.treeIndex].imageIndex + 1,
-                      url: imageUrls[state.tree[state.treeIndex].imageIndex + 1],
-                    },
+                    itemA: { value: i, url: imageUrls[i] },
+                    itemB: { value: i + 1, url: imageUrls[i + 1] },
                   };
-
+                  console.log('comparison', JSON.stringify(comparison, null, 2));
                   // Send Resulting Comparison
                   res.json(comparison);
                 });
@@ -177,77 +178,92 @@ module.exports = (app) => {
                 .findOne({ where: { inviteId: req.params.uuid } })
                 .then((result) => {
                   const state = result.get({ plain: true });
-                  const smaller = (req.body.return > state.tree[state.treeIndex].imageIndex);
+                  console.log('return', req.body.return);
+                  
+                  // return = comparison.itemA.value or comparison.itemB.value
+                  // return is eith state.imageIndex or state.tree[state.treeIndex].imageIndex
+                  const newIsBetter = (parseInt(req.body.return) > state.tree[state.treeIndex].imageIndex);
+
+                  console.log('tree update', state.imageIndex, state.treeIndex, state.tree);
 
                   // Chose The First Item
                   // Newest Item is Worse
-                  if (smaller) {
-                    // Traverse Tree
-                    if (typeof state.tree[state.treeIndex].right === typeof 1) {
-                      state.treeIndex = state.tree[state.treeIndex].right;
-                    }
-
-                    // Insert Node
-                    else { //eslint-disable-line
+                  if (newIsBetter) {
+                    if (state.tree[state.treeIndex].right == null) {
+                      // Insert Node
+                      console.log('smaller insert');
                       state.tree[state.treeIndex].right = state.tree.length;
-                      state.treeIndex = 0;
                       state.tree[state.tree.length] = newNode(state.imageIndex, null, null);
-                      state.imageIndex += 1; //eslint-disable-line
-                    }
-                  } else { //eslint-disable-line
+                      state.treeIndex = 0;
+                      state.imageIndex += 1; // choose new image
+                    } else {
+                      // Traverse Tree
+                      console.log('smaller travers');
+                      state.treeIndex = state.tree[state.treeIndex].right;
+                    } 
+                  } else { 
                     // Chose The Second Item
                     // Newest Item is Better
-
-                    // Traverse Tree
-                    if (typeof state.tree[state.treeIndex].left === typeof 1) { //eslint-disable-line
-                      state.treeIndex = state.tree[state.treeIndex].left;
-                    }
-
-                    // Insert Node
-                    else { //eslint-disable-line
+                    if (state.tree[state.treeIndex].left == null) {
+                      // Insert Node
+                      console.log('larger insert');
                       state.tree[state.treeIndex].left = state.tree.length;
                       state.treeIndex = 0;
                       state.tree[state.tree.length] = newNode(state.imageIndex, null, null);
-                      state.imageIndex += 1; //eslint-disable-line
-                    }
+                      state.imageIndex += 1; // load new image
+                    } else { 
+                      console.log('larger travers');
+                      // Traverse Tree
+                      state.treeIndex = state.tree[state.treeIndex].left;
+                    } 
                   }
+
+                  console.log('tree update', state.imageIndex, state.treeIndex, state.tree);
 
                   // Update TREE
                   result
-                    .update({ tree: state.tree })
+                    .update({ 
+                      tree: state.tree, 
+                    })
                     .then(() => {
-                      // End of Buffer Check
-                      if (state.imageIndex === imageUrls.length) {
-                        res.json({ done: true });
-                        return null;
-                      }
+                      const updateQuery = 'UPDATE "Results" SET "imageIndex"=\'' + state.imageIndex //eslint-disable-line
+                        + '\', "treeIndex"=\'' + state.treeIndex + '' +                             //eslint-disable-line
+                        '\' WHERE "inviteId"=\'' + req.params.uuid + '\'';                          //eslint-disable-line
+                      models.sequelize.query(updateQuery).spread(() => {
+                        // End of Buffer Check
+                        if (state.imageIndex === imageUrls.length) {
+                          res.json({ done: true });
+                          return null;
+                        }
 
-                      // Send Next Item
-                      let comparison = {};
-                      if (smaller) {
-                        comparison = {
-                          itemB: {
-                            value: state.imageIndex,
-                            url: imageUrls[state.imageIndex],
-                          },
-                          itemA: {
-                            value: state.tree[state.treeIndex].imageIndex,
-                            url: imageUrls[state.tree[state.treeIndex].imageIndex],
-                          },
-                        };
-                      } else {
-                        comparison = {
-                          itemB: {
-                            value: state.tree[state.treeIndex].imageIndex,
-                            url: imageUrls[state.tree[state.treeIndex].imageIndex],
-                          },
-                          itemA: {
-                            value: state.imageIndex,
-                            url: imageUrls[state.imageIndex],
-                          },
-                        };
-                      }
-                      return res.json(comparison);
+                        // Send Next Item
+                        let comparison = {};
+                        if (newIsBetter) {
+                          comparison = {
+                            itemB: {
+                              value: state.imageIndex,
+                              url: imageUrls[state.imageIndex],
+                            },
+                            itemA: {
+                              value: state.tree[state.treeIndex].imageIndex,
+                              url: imageUrls[state.tree[state.treeIndex].imageIndex],
+                            },
+                          };
+                        } else {
+                          comparison = {
+                            itemB: {
+                              value: state.tree[state.treeIndex].imageIndex,
+                              url: imageUrls[state.tree[state.treeIndex].imageIndex],
+                            },
+                            itemA: {
+                              value: state.imageIndex,
+                              url: imageUrls[state.imageIndex],
+                            },
+                          };
+                        }
+                        console.log('comparison', JSON.stringify(comparison, null, 2));
+                        return res.json(comparison);
+                      });
                     });
                 }).catch(() => {
                   // User entered fake UUID
@@ -291,6 +307,8 @@ module.exports = (app) => {
                 const state = result.get({ plain: true });
 
                 // Perform Pre Order Search
+                // binary search with the deepest branch
+                // stored in ranks first
                 const ranks = [];
                 function display(root) {
                   if (typeof state.tree[root] !== typeof undefined) {

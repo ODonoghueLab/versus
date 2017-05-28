@@ -39,6 +39,7 @@
     //If we pick A, change B
     $('[name="ButtonA"]').click(function(){
       get(JSON.stringify({ "return": $('[name="ButtonA"]').attr("val") }), (data) => {
+        console.log('Receiving:', JSON.stringify(data, null, 2));
         if(!data.done) {
           $('[name="ButtonB"]').attr("val", data.itemB.value).attr("src", data.itemB.url);
           if (data.itemA.url !== $('[name="ButtonA"]').attr("src")) {
@@ -53,6 +54,7 @@
     //If we pick B, change A
     $('[name="ButtonB"]').click(function(){
       get(JSON.stringify({ "return": $('[name="ButtonB"]').attr("val") }), (data) => {
+        console.log('Receiving:', JSON.stringify(data, null, 2));
         if(!data.done) {
           $('[name="ButtonA"]').attr("val", data.itemA.value).attr("src", data.itemA.url);
           if (data.itemB.url !== $('[name="ButtonB"]').attr("src")) {
@@ -65,7 +67,8 @@
     });
 
     function get(request, callback){
-      console.log("Sending: " + request);
+      console.log('Sending:', request);
+
       $.ajax({
         url: '',
         type: 'POST',
@@ -73,8 +76,7 @@
         contentType: 'application/json; charset=utf-8',
         dataType:'json',
         success: function(responseData) {
-          console.log("Recieving: ");
-          console.log(responseData);
+          console.log('Receiving:', JSON.stringify(responseData, null, 2));
           callback(responseData);
         },
         error: function(XMLHttpRequest, textStatus, errorThrown) {
