@@ -8,6 +8,6 @@ node_modules
 app/config/keys.json
 
 # Temporary Files
-app/temp
+app/files
 npm-debug.log
 npm-debug.log.*
