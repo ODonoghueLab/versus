@@ -7,6 +7,8 @@
 
 <script>
 import Navbar from '@/components/Navbar.vue'
+import axios from 'axios'
+
 export default {
   name: 'app',
   components: {
@@ -16,7 +18,4 @@ export default {
 </script>
 
 <style>
-#app {
-  width: 100%
-}
 </style>

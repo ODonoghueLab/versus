@@ -1,5 +1,4 @@
 
-
 function newNode(imageIndex, left, right) {
   return { imageIndex, left, right };
 }
@@ -18,9 +17,10 @@ function makeChoice(state, isTestImageChosen) {
   // state.testImageIndex is always larger than all previously seen imageIndex's
   // so if chosenImageIndex is larger than tree.testImageIndex, this mean 
   // state.testImageIndex was chosen, therefore the new image is better
-  console.log('tree update', state.testImageIndex, state.nodeIndex, state.nodes);
+  console.log('>> tree.makeChoice', state.testImageIndex, state.nodeIndex)
+  console.log(state.nodes)
   if (isTestImageChosen) {
-    // Right branch holds nodes to better imageIndex's
+    // Right branch holds nodes thar are better thatn imageIndex
     if (state.nodes[state.nodeIndex].right == null) {
       // Insert Node
       state.nodes[state.nodeIndex].right = state.nodes.length;
@@ -32,7 +32,7 @@ function makeChoice(state, isTestImageChosen) {
       state.nodeIndex = state.nodes[state.nodeIndex].right;
     }
   } else {
-    // Left branch holds nodes to worse imageIndex's
+    // Left branch holds nodes that are worse than imageIndex
     if (state.nodes[state.nodeIndex].left == null) {
       // Insert Node
       state.nodes[state.nodeIndex].left = state.nodes.length;
@@ -44,6 +44,16 @@ function makeChoice(state, isTestImageChosen) {
       state.nodeIndex = state.nodes[state.nodeIndex].left;
     }
   }
+}
+
+function isDone(state) {
+  if (state.testImageIndex === state.urls.length) {
+    return true
+  }
+  if (('ranks' in state) && (state.ranks.length > 0)) {
+    return true
+  }
+  return false
 }
 
 function makeComparison(state, imageIndexA, imageIndexB) {
@@ -69,4 +79,18 @@ function rankNodes(state) {
   state.ranks = ranks;
 }
 
-module.exports = { newState, newNode, makeChoice, makeComparison, rankNodes }
+function getCurrentComparison(state) {
+  let iNew = state.testImageIndex;
+  let iNode = state.nodes[state.nodeIndex].imageIndex;
+  return makeComparison(state, iNode, iNew)
+}
+
+module.exports = {
+  isDone,
+  newState,
+  newNode,
+  makeChoice,
+  makeComparison,
+  getCurrentComparison,
+  rankNodes
+}

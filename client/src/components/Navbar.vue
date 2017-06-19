@@ -4,7 +4,7 @@
     <span class="logo">Versus</span>
 
     <span v-if="user.authenticated">
-      <router-link to='Experiments' class='button'>
+      <router-link to='/experiments' class='button'>
         Experiments
       </router-link>
       <span class="user">
@@ -14,7 +14,7 @@
     </span>
 
     <span v-else>
-      <router-link to='Login' class='button'>
+      <router-link to='/login' class='button'>
         Login
       </router-link>
     </span>
@@ -28,6 +28,8 @@
 <script>
 
 import auth from '../modules/auth'
+import axios from 'axios'
+import config from '../config'
 
 export default {
   name: 'navbar',
@@ -37,7 +39,14 @@ export default {
     }
   },
   methods: {
-    logout: auth.logout
+    logout () {
+      auth.logout()
+      axios
+        .post(`${config.api}/logout`)
+        .then(() => {
+          this.$router.push('/login')
+        })
+    }
   }
 }
 </script>

@@ -5,25 +5,17 @@ const _ = require('lodash');
 const mime = require('mime');
 
 const multer = require('multer');
-const filesDir = path.join(__dirname, '..', 'files/')
+const filesDir = path.join(__dirname, '..', '..', 'files')
 const upload = multer({ dest: filesDir });
-
+console.log('filesDir', filesDir)
 const models = require('../models');
 
+const del = require('del')
+
 const fileUploader = require('../modules/fileUploader.js');
-const routeAuth = require('../modules/isAuth.js');
+const auth = require('../modules/auth.js');
 
 module.exports = (app) => {
-
-  // [GET] images that were saved on the server
-  app.get('/experiment/image/:basename', (req, res) => {
-    let basename = req.params.basename;
-    let filename = path.join(filesDir, basename);
-    let mimeType = mime.lookup(filename);
-    res.setHeader('Content-disposition', `attachment; filename=${basename}`);
-    res.setHeader('Content-type', mimeType);
-    fs.createReadStream(filename).pipe(res);
-  });
 
   // [GET] Create a new Experiment for current user.
   app.get('/experiment/create', (req, res) => {
@@ -33,14 +25,13 @@ module.exports = (app) => {
   // [POST] Create a new Experiment for current user.
   app.post(
     '/experiment/create',
-    routeAuth.isAuth,
     upload.array('experiment[images]'),
     (req, res) => {
 
       // Ensure required parameters have been submitted.
       if (!req.body.experiment
-          || !req.body.experiment.name
-          || !req.files) {
+        || !req.body.experiment.name
+        || !req.files) {
         return res.redirect(
           301,
           'experiment-create',
@@ -51,8 +42,11 @@ module.exports = (app) => {
         res.redirect(301, 'experiment-create');
       };
 
+      console.log('got here', req.body.experiment)
+
       // Upload the Images to S3.
       fileUploader.upload(app, req, (imageUrls, error) => {
+        console.log('got here', imageUrls, error)
         if (error) {
           return res.redirect(301, 'experiment-create');
         }
@@ -166,4 +160,4 @@ module.exports = (app) => {
       .then(() => res.json({ success: true }));
   });
 
-};
+}

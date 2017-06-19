@@ -1,47 +1,83 @@
-const express = require('express')
-const cookieParser = require('cookie-parser')
-const bodyParser = require('body-parser')
-
-// allow cross-origin-resource
-const cors = require('cors')
-
-// const favicon = require('serve-favicon'); TODO: Add Favicon.
 const logger = require('morgan')
 const path = require('path')
 const fs = require('fs')
+const _ = require('lodash')
+
+const express = require('express')
+const cookieParser = require('cookie-parser')
+const bodyParser = require('body-parser')
+const cors = require('cors') // allow cross-origin-resource-sharing
+// const favicon = require('serve-favicon'); TODO: Add Favicon.
 
 // Authentication Middleware and Strategies.
 const expressValidator = require('express-validator')
 const session = require('express-session')
 const passport = require('passport')
-const _ = require('lodash')
 
-// AWS S3 Integration
-// const s3File = path.join(__dirname, 'config', 's3.js');
-// const s3 = require(s3File).s3; // eslint-disable-line
-// const client = require(s3File).client; // eslint-disable-line
-
-// Import and Configure and Sync Sequelize Models.
-const models = require('./models')
 // Synchronise Database | TRUE Will Wipe Database
+const models = require('./models')
 models.sequelize.sync({ force: false })
+
+const bcrypt = require('bcryptjs');
+const LocalStrategy = require('passport-local').Strategy;
+
+// Session : Serialization
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+// Session : Deserialization
+passport.deserializeUser((id, done) => {
+  models.User.findOne({ where: { id } })
+    .then(user => done(null, user.dataValues))
+    .catch(error => done(error, null));
+});
+
+// Passport Configuration : Local Strategy.
+passport.use(new LocalStrategy((email, password, done) => {
+  models.User
+    .findOne({ where: { email } })
+    .then((user) => { //eslint-disable-line
+      if (user === null) { return done(null, false); }
+      bcrypt.compare(password, user.password, (err, isMatch) => {
+        if (err) {
+          throw err;
+        }
+        if (isMatch) {
+          return done(null, user.dataValues, { name: user.name });
+        } else {
+          return done(null, false);
+        } //eslint-disable-line
+      });
+    })
+    .catch(() => {
+      done(null, false);
+    });
+  }
+));
+
 
 // Begin Application
 const app = express()
-
-// allow cross-origin-resoruce-sharing - hope this works
-app.use(cors())
 
 // View Engine Initialisation
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'pug')
 
-// AWS S3 Initialisation
-// app.set('s3', s3);
-// app.set('client', client);
-
 // Middleware Configuration
-
+//  cross-origin-resource-sharing
+app.use(function(req, res, next) {
+  res.header('Access-Control-Allow-Credentials', true);
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+  res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
+  if ('OPTIONS' == req.method) {
+      res.send(200);
+  } else {
+      next();
+  }
+});
+// app.use(cors())
 app.use(express.static(path.join(__dirname, 'public')))
 // app.use(favicon(path.join(__dirname, 'public/img', 'favicon.ico'))); TODO: Add Favicon.
 app.use(logger('dev'))
@@ -49,13 +85,9 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(cookieParser())
 app.use(session({ secret: 'csiro-versus', saveUninitialized: true, resave: true }))
+app.use(expressValidator())
 app.use(passport.initialize())
 app.use(passport.session())
-app.use(expressValidator())
-app.use((req, res, next) => {
-  res.locals.user = req.user
-  next()
-})
 
 // Application Routes
 const routePath = path.join(__dirname, 'routes')

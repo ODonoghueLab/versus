@@ -1,13 +1,13 @@
-const routeAuth = require('../modules/isAuth.js');
+const auth = require('../modules/auth.js');
 const tree = require('../modules/tree')
 const models = require('../models');
 // const mail = require('./modules/emailClient');
-
+const _ = require('lodash')
 
 module.exports = (app) => {
 
   // [GET] Display the UI to send invites.
-  app.get('/experiment/:id/invite', routeAuth.isAuth, (req, res) => {
+  app.get('/experiment/:id/invite', auth.isAuth, (req, res) => {
     // TODO: Ensure user owns or is collaborator on the experiment.
 
     // Retrieve the experiment from the Database and render the UI.
@@ -22,7 +22,7 @@ module.exports = (app) => {
   });
 
   // [POST] Invite form submission.
-  app.post('/experiment/invite', routeAuth.isAuth, (req, res) => {
+  app.post('/experiment/invite', auth.isAuth, (req, res) => {
     // Ensure all required fields are set.
     if (!req.body.id) { res.render('error'); return null; }
     if (!req.body.type) { res.render('error'); return null; }
@@ -99,9 +99,7 @@ module.exports = (app) => {
       });
   });
 
-  function saveResult(result, state, cb) {
-    result.update({ state }).then(cb);
-  }
+
 
   // [POST] Handle Experiment Participation
   app.post('/invites/:uuid', (req, res) => {
@@ -173,7 +171,7 @@ module.exports = (app) => {
                   const isTestImageChosen = (chosenImageIndex > state.nodes[state.nodeIndex].imageIndex);
                   tree.makeChoice(state, isTestImageChosen);
                   console.log('updated state', state)
-                  saveResult(result, state, () => {
+                  models.saveResult(result, state, () => {
                     if (state.testImageIndex === imageUrls.length) {
                       res.json({ done: true });
                     } else {

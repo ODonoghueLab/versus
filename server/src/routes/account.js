@@ -1,16 +1,16 @@
 const models = require('../models');
 const bcrypt = require('bcryptjs');
 
-const routeAuth = require('../modules/isAuth.js');
+const auth = require('../modules/auth.js');
 
 module.exports = (app) => {
   // [GET] Account Settings Form
-  app.get('/account', routeAuth.isAuth, (req, res) => {
+  app.get('/account', auth.isAuth, (req, res) => {
     res.render('account')
   });
 
   // [POST] Account Settings Submission
-  app.post('/account', routeAuth.isAuth, (req, res) => {
+  app.post('/account', auth.isAuth, (req, res) => {
     // Ensure all required fields are set and passwords match.
     if (!req.body.currentPassword) {
       res.render('error');

@@ -1,11 +1,10 @@
-
-
-const routeAuth = require('../modules/isAuth.js');
+const isAuth = require('../modules/auth.js').isAuth
 const models = require('../models');
 
 module.exports = (app) => {
   // [GET] Primary User Dashboard
-  app.get('/dashboard', routeAuth.isAuth, (req, res) => {
+  app.get('/dashboard', isAuth, (req, res) => {
+    console.log('>> /dashboard req.user', req.user)
     // Find all experiments that belong to the current user.
     models.Experiment
       .findAll({
@@ -17,29 +16,5 @@ module.exports = (app) => {
         // Render the Dashboard.
         res.render('dashboard', { username: req.user.name, experiments });
       });
-  });
-
-  function fetchExperiments (userId) {
-    return models.Experiment.findAll({
-      include: [
-        { model: models.User, where: { id: userId } }]
-    })
-  }
-
-  /**
-   * post body params {
-   *   userId: string
-   * }
-   **/
-  app.post('/api/experiments', (req, res) => {
-    if (!req.isAuthenticated) {
-      console.log('not authenticated')
-      res.json({})
-    } else {
-      fetchExperiments(req.body.userId)
-        .then(experiments => {
-          res.json({ experiments })
-        })
-    }
   });
 };
