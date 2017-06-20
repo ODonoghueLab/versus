@@ -13,12 +13,14 @@ function newState(imageUrls) {
   }
 }
 
-function makeChoice(state, isTestImageChosen) {
+function makeChoice(state, chosenImageIndex) {
   // state.testImageIndex is always larger than all previously seen imageIndex's
   // so if chosenImageIndex is larger than tree.testImageIndex, this mean 
   // state.testImageIndex was chosen, therefore the new image is better
   console.log('>> tree.makeChoice', state.testImageIndex, state.nodeIndex)
   console.log(state.nodes)
+  console.log('>> tree.makeChoice -', chosenImageIndex)
+  const isTestImageChosen = (chosenImageIndex > state.nodes[state.nodeIndex].imageIndex)
   if (isTestImageChosen) {
     // Right branch holds nodes thar are better thatn imageIndex
     if (state.nodes[state.nodeIndex].right == null) {
@@ -79,7 +81,7 @@ function rankNodes(state) {
   state.ranks = ranks;
 }
 
-function getCurrentComparison(state) {
+function getComparison(state) {
   let iNew = state.testImageIndex;
   let iNode = state.nodes[state.nodeIndex].imageIndex;
   return makeComparison(state, iNode, iNew)
@@ -91,6 +93,6 @@ module.exports = {
   newNode,
   makeChoice,
   makeComparison,
-  getCurrentComparison,
+  getComparison,
   rankNodes
 }

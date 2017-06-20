@@ -40,9 +40,8 @@ export default {
   },
   methods: {
     logout () {
-      auth.logout()
-      axios
-        .post(`${config.api}/logout`)
+      auth
+        .logout()
         .then(() => {
           this.$router.push('/login')
         })

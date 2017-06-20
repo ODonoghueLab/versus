@@ -1,5 +1,3 @@
-const path = require('path')
-
 const _ = require('lodash')
 const bcrypt = require('bcryptjs')
 
@@ -121,10 +119,6 @@ const Experiment = sequelize.define('Experiment', {
 
 /* access functions */
 
-function fetchInvite (inviteId) {
-  return Invite.findOne({ where: { inviteId } })
-}
-
 function fetchExperiment (experimentId) {
   return Experiment.find({
     where: { id: experimentId },
@@ -136,20 +130,20 @@ function fetchExperiment (experimentId) {
   })
 }
 
-function deleteExperiment(experimentId) {
+function deleteExperiment (experimentId) {
   return models.Experiment
       .destroy({ where: { id: experimentId } })
 }
 
-function saveResult(result, state, cb) {
-  result.update({ state }).then(cb);
+function saveResult (result, state, cb) {
+  result.update({ state }).then(cb)
 }
 
-function fetchInvite(inviteId) {
+function fetchInvite (inviteId) {
   return Invite.findOne({ where: { inviteId } })
 }
 
-function deleteInvite(inviteId) {
+function deleteInvite (inviteId) {
   console.log('>> models.deleteInvite', inviteId)
   return models.Invite
     .destroy(
@@ -157,6 +151,19 @@ function deleteInvite(inviteId) {
     .then(
       () => models.Result.destroy(
         { where: { inviteId } }))
+}
+
+function createInvite (experimentId, email) {
+  return models
+    .fetchExperiment(experimentId)
+    .then(experiment => {
+      return models.Invite
+        .create({ email, type: 'participate' })
+        .then((invite) => {
+          experiment.addInvite(invite)
+          return invite
+        })
+    })
 }
 
 function fetchExperiments (userId) {
@@ -168,22 +175,39 @@ function fetchResult (inviteId) {
   return models.Result.findOne({ where: { inviteId } })
 }
 
-function makeResult (invite, user, imageUrls) {
-  return new Promise((resolve, reject) => {
-    let inviteId = invite.inviteId
-    console.log('makeResult inviteId', inviteId)
-    // since Result has an external inviteId,
-    // findOrCreate is needed to overcome
-    // the clash with the default uuid generation
-    models.Result.findOrCreate({
-      where: { inviteId },
-      defaults: {
-        age: user.age,
-        gender: user.gender,
-        state: tree.newState(imageUrls)
-      }
+function saveState (inviteId, state) {
+  return fetchResult(inviteId)
+    .then(result => {
+      return result.update({ state })
     })
-    .spread(resolve)
+}
+
+function makeResult(inviteId, user) {
+  return new Promise((resolve, reject) => {
+    models
+      .fetchInvite(inviteId)
+      .then(invite => {
+        models
+          .fetchExperiment(invite.ExperimentId)
+          .then(experiment => {
+            let images = experiment.Images
+            const imageUrls = _.map(images, 'url')
+            let state = tree.newState(imageUrls)
+            // since Result has an external inviteId,
+            // findOrCreate is needed to overcome
+            // the clash with the default uuid generation
+            models.Result
+              .findOrCreate({
+                where: { inviteId },
+                defaults: {
+                  age: user.age,
+                  gender: user.gender,
+                  state 
+                }
+              })
+              .spread(resolve)
+          })
+      })
   })
 }
 
@@ -203,11 +227,10 @@ function createExperiment (
     })
 }
 
-function createUser(values) {
+function createUser (values) {
   console.log('>> createUser', values)
   return models.User.create(values)
 }
-
 
 const models = {
   sequelize,
@@ -222,10 +245,12 @@ const models = {
   deleteExperiment,
   fetchExperiments,
   fetchResult,
+  createInvite,
   fetchInvite,
   deleteInvite,
   saveResult,
   makeResult,
+  saveState,
   createExperiment,
   createUser
 }

@@ -49,12 +49,13 @@ export default {
   logout () {
     localStorage.removeItem('user')
     user.authenticated = false
+    return axios.post(`${config.api}/logout`)
   },
 
-  // if using JWT
-  getAuthHeader () {
-    return {
-      'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-    }
-  }
+  // // if using JWT
+  // getAuthHeader () {
+  //   return {
+  //     'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+  //   }
+  // }
 }
