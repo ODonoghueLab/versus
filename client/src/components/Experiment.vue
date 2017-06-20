@@ -5,18 +5,18 @@
         <h1> Experiment - {{experiment.name}} </h1>
         <div class="row">
           <div class="col-sm-12 col-md-6 col-lg-4">
-            <h3>Invites</h3>
+            <h3>participants</h3>
             <button @click="makeInvite">
-              New Invite
+              Invite participant
             </button>
             <table>
-              <tr v-for="invite in experiment.Invites">
+              <tr v-for="participant in experiment.participants">
                 <td>
-                <router-link v-bind:to="getInviteRoute(invite)">{{invite.inviteId}}</router-link>
+                <router-link v-bind:to="getInviteRoute(participant)">{{participant.inviteId}}</router-link>
                 </td>
                 <td>
                 <a class="button" 
-                   @click="deleteInvite(invite)">X</a>
+                   @click="deleteInvite(participant)">X</a>
                 </td>
               </tr>
             </table>
@@ -59,10 +59,6 @@ export default {
       let images = this.$data.experiment.Images
       return _.map( images, i => config.apiUrl + i.url)
     },
-    inviteRoutes: function () {
-      let invites = this.$data.experiment.Invites
-      return _.map(invites, i => `/invite/${i.inviteId}`)
-    }
   },
   mounted () {
     let experimentId = this.$route.params.experimentId
@@ -72,31 +68,31 @@ export default {
         { userId: auth.user.id })
       .then((res) => {
         this.$data.experiment = res.data.experiment
-        console.log('>> Experiment.mounted', this.$data.experiment)
+        console.log('>> Experiment.mounted participants', this.$data.experiment.participants)
       })
   },
   methods: {
-    getInviteRoute(invite) {
-      return `/invite/${invite.inviteId}`
+    getInviteRoute(participant) {
+      return `/participant/${participant.inviteId}`
     },
-    deleteInvite(invite) {
-      let url = `${config.api}/delete-invite/${invite.inviteId}`
+    deleteInvite(participant) {
+      let url = `${config.api}/delete-invite/${participant.inviteId}`
       axios
         .post(url)
         .then((res) => {
           console.log('>> Experiment.deleteInvite', res.data)
-          let invites = this.$data.experiment.Invites
-          util.removeItem(invites, invite, 'inviteId')
+          let participants = this.$data.experiment.participants
+          util.removeItem(participants, participant, 'inviteId')
         })
     },
     makeInvite () {
       let experimentId = this.$route.params.experimentId
-      let invites = this.$data.experiment.Invites
+      let participants = this.$data.experiment.participants
       let url = `${config.api}/participate-invite/${experimentId}`
       axios
         .post(url, { email: 'test@test.com' })
         .then((res) => {
-          invites.push(res.data.invite)
+          participants.push(res.data.participant)
         })
     }
   }

@@ -72,23 +72,17 @@ module.exports = (app) => {
   // [POST] get login form
   app.post('/api/login', (req, res, next) => {
     passport.authenticate('local', (err, user) => {
-      if (err) {
-        console.log('>> /api/login error')
+      if (err) { 
         return next(err)
       }
-
       if (!user) {
-        console.log('>> /api/login fail: user/password not found')
-        return res.json({ success: false, msg: 'user/password not found' })
+        return res.json(
+          { success: false, msg: 'user/password not found' })
       }
-
       req.logIn(user, (error) => {
         if (error) {
-          console.log('>> /api/login fail: user not found')
           return next(error)
         }
-        req.session.user = user
-        console.log('>> /api/login success', req.isAuthenticated())
         return res.json({ success: true, user: user })
       })
     })(req, res, next)
@@ -151,10 +145,47 @@ module.exports = (app) => {
 
   app.post('/api/participate-invite/:experimentId', (req, res) => {
     models
-      .createInvite(
+      .createParticipant(
         req.params.experimentId, req.body.email.trim())
-      .then((invite) => {
-        res.json({ invite })
+      .then((participant) => {
+        res.json({ participant })
+      })
+  })
+
+  app.post('/api/participate/:inviteId', (req, res) => {
+    const inviteId = req.params.inviteId
+    models.fetchParticipant(inviteId)
+      .then(participant => {
+        console.log('>> /api/participate/', participant)
+        if (participant.user === null) {
+          console.log('>> /api/participate no result found')
+          res.json({ new: true })
+        } else {
+          const state = participant.get('state')
+          if (tree.isDone(state)) {
+            console.log('>> /api/participate done')
+            res.json({ done: true })
+          } else {
+            const comparison = tree.getComparison(participant.state)
+            console.log('>> /api/participate comparison', comparison)
+            return res.json({ comparison })
+          }
+        }
+      })
+  })
+
+  app.post('/api/participate-user/:inviteId', (req, res) => {
+    let user = req.body
+    let inviteId = req.params.inviteId
+    models
+      .fetchParticipant(inviteId)
+      .then(participant => {
+        console.log('>> /api/participate-user', participant)
+        return participant.update({ user: user })
+      })
+      .then(participant => {
+        let comparison = tree.getComparison(participant.state)
+        res.json({ comparison })
       })
   })
 
@@ -169,24 +200,14 @@ module.exports = (app) => {
       })
   })
 
-  app.post('/api/participate-user/:inviteId', (req, res) => {
-    let user = req.body
-    let inviteId = req.params.inviteId
-    models
-      .makeResult(inviteId, user)
-      .then(result => {
-        let comparison = tree.getComparison(result.state)
-        res.json({ comparison })
-      })
-  })
-
   app.post('/api/participate-choose/:inviteId', (req, res) => {
     let inviteId = req.params.inviteId
     let chosenImageIndex = req.body.return
     console.log(inviteId, chosenImageIndex)
-    models.fetchResult(inviteId)
-      .then(result => {
-        const state = result.get('state')
+    models
+      .fetchParticipant(inviteId)
+      .then(participant => {
+        const state = participant.get('state')
         tree.makeChoice(state, chosenImageIndex)
         models
           .saveState(inviteId, state)
@@ -197,27 +218,6 @@ module.exports = (app) => {
               res.json({ comparison: tree.getComparison(state) })
             }
           })
-      })
-  })
-
-  app.post('/api/participate/:inviteId', (req, res) => {
-    const inviteId = req.params.inviteId
-    models.fetchResult(inviteId)
-      .then(result => {
-        if (result === null) {
-          console.log('>> /api/participate no result found')
-          res.json({ new: true })
-        } else {
-          const state = result.get('state')
-          if (tree.isDone(state)) {
-            console.log('>> /api/participate done')
-            res.json({ done: true })
-          } else {
-            const comparison = tree.getComparison(result.state)
-            console.log('>> /api/participate comparison', comparison)
-            return res.json({ comparison })
-          }
-        }
       })
   })
 }

@@ -1,6 +1,8 @@
 const _ = require('lodash')
 const bcrypt = require('bcryptjs')
 
+const tree = require('../modules/tree')
+
 // initialize database using Sequelize
 const env = process.env.NODE_ENV || 'development'
 const dbConfig = require('../config')[env]
@@ -10,8 +12,6 @@ const sequelize = new Sequelize(
   dbConfig.username,
   dbConfig.password,
   dbConfig)
-
-const tree = require('../modules/tree')
 
 /**
  * Definitions of the database for Versus
@@ -153,19 +153,6 @@ function deleteInvite (inviteId) {
         { where: { inviteId } }))
 }
 
-function createInvite (experimentId, email) {
-  return models
-    .fetchExperiment(experimentId)
-    .then(experiment => {
-      return models.Invite
-        .create({ email, type: 'participate' })
-        .then((invite) => {
-          experiment.addInvite(invite)
-          return invite
-        })
-    })
-}
-
 function fetchExperiments (userId) {
   return Experiment.findAll({
     include: [{ model: User, where: { id: userId } }] })
@@ -175,14 +162,35 @@ function fetchResult (inviteId) {
   return models.Result.findOne({ where: { inviteId } })
 }
 
-function saveState (inviteId, state) {
-  return fetchResult(inviteId)
-    .then(result => {
-      return result.update({ state })
+function createParticipant (experimentId, email) {
+  return models
+    .fetchExperiment(experimentId)
+    .then(experiment => {
+      let images = experiment.Images
+      const imageUrls = _.map(images, 'url')
+      let state = tree.newState(imageUrls)
+      return models.Participant
+        .create({ email, state })
+        .then((participant) => {
+          experiment.addParticipant(participant)
+          return participant
+        })
     })
 }
 
-function makeResult(inviteId, user) {
+function fetchParticipant (inviteId) {
+  console.log('models.fetchParticipant', inviteId)
+  return models.Participant.findOne({ where: { inviteId } })
+}
+
+function saveState (inviteId, state) {
+  return fetchParticipant(inviteId)
+    .then(participant => {
+      return participant.update({ state })
+    })
+}
+
+function makeResult (inviteId, user) {
   return new Promise((resolve, reject) => {
     models
       .fetchInvite(inviteId)
@@ -202,7 +210,7 @@ function makeResult(inviteId, user) {
                 defaults: {
                   age: user.age,
                   gender: user.gender,
-                  state 
+                  state
                 }
               })
               .spread(resolve)
@@ -245,9 +253,10 @@ const models = {
   deleteExperiment,
   fetchExperiments,
   fetchResult,
-  createInvite,
+  createParticipant,
   fetchInvite,
   deleteInvite,
+  fetchParticipant,
   saveResult,
   makeResult,
   saveState,

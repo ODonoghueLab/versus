@@ -4,7 +4,7 @@ import Router from 'vue-router'
 import UserExperiments from '@/components/UserExperiments'
 import Experiment from '@/components/Experiment'
 import CreateExperiment from '@/components/CreateExperiment'
-import Invite from '@/components/Invite'
+import Participant from '@/components/Participant'
 import Login from '@/components/Login'
 import Register from '@/components/Register'
 import auth from '../modules/auth'
@@ -49,9 +49,9 @@ let router = new Router({
       component: Experiment
     },
     {
-      path: '/invite/:inviteId',
-      name: 'invite',
-      component: Invite
+      path: '/participant/:inviteId',
+      name: 'participant',
+      component: Participant
     }
   ]
 })
