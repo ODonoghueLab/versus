@@ -1,16 +1,16 @@
-#Versus
+# Versus
 
-##Build Status:
+## Build Status:
 Master:  
 [![Build Status](https://travis-ci.com/ODonoghueLab/versus.svg?token=dvwsqpX2xpST9Mi1JGuz&branch=master)](https://travis-ci.com/ODonoghueLab/versus)
 
 Develop:  
 [![Build Status](https://travis-ci.com/ODonoghueLab/versus.svg?token=dvwsqpX2xpST9Mi1JGuz&branch=develop)](https://travis-ci.com/ODonoghueLab/versus)
 
-#Description
+## Description
 Versus is a web-based application that allows users ('requesters') to create multiple experiments based on a full 2AFC methodology (two alternative forced-choice). Participants ('workers') are presented two images side-by-side, and - without imposing a time constraint - they are now asked to choose one of the two images, see Heinrich et al. (2015, 2016).
 
-# Getting Started
+## Getting Started
 To get started working on versus there are a few prerequisites.
 
 #### Linux [Ubuntu 16.04]
