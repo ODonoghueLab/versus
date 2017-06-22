@@ -46,40 +46,6 @@ const Image = sequelize.define('Image', {
   }
 })
 
-const Invite = sequelize.define('Invite', {
-  inviteId: {
-    primaryKey: true,
-    type: Sequelize.UUID,
-    defaultValue: Sequelize.UUIDV4
-  },
-  email: Sequelize.STRING,
-  type: Sequelize.ENUM('collaborate', 'participate')
-}, {
-  classMethods: {
-    associate (models) {
-      Invite.belongsTo(
-        models.Experiment, {onDelete: 'cascade'})
-    }
-  }
-})
-
-const Result = sequelize.define('Result', {
-  inviteId: {
-    primaryKey: true,
-    type: Sequelize.UUID,
-    defaultValue: Sequelize.UUIDV4
-  },
-  age: Sequelize.INTEGER,
-  gender: Sequelize.ENUM('male', 'female', 'other'),
-  state: Sequelize.JSON
-}, {
-  classMethods: {
-    associate (models) {
-      Result.belongsTo(models.Experiment)
-    }
-  }
-})
-
 const Participant = sequelize.define('Participant', {
   inviteId: {
     primaryKey: true,
@@ -110,8 +76,6 @@ const Experiment = sequelize.define('Experiment', {
       Experiment.hasMany(models.Image, {as: 'Images'})
       Experiment.belongsToMany(
         models.User, {through: models.UserExperiment})
-      Experiment.hasMany(models.Invite, {as: 'Invites'})
-      Experiment.hasMany(models.Result, {as: 'Results'})
       Experiment.hasMany(models.Participant, {as: 'participants'})
     }
   }
@@ -185,6 +149,7 @@ function createExperiment (
           .create({ url })
           .then((image) => experiment.addImage(image))
       })
+      experiment.addUser(userId, { permission: 0 })
       return experiment.id
     })
 }
@@ -198,8 +163,6 @@ const models = {
   sequelize,
   User,
   Image,
-  Invite,
-  Result,
   Participant,
   UserExperiment,
   Experiment,

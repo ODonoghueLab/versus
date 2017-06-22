@@ -16,7 +16,7 @@ const passport = require('passport')
 
 const models = require('./models')
 // Synchronise Database | TRUE Will Wipe Database
-models.sequelize.sync({ force: true })
+models.sequelize.sync({ force: false })
 
 const bcrypt = require('bcryptjs');
 const LocalStrategy = require('passport-local').Strategy;

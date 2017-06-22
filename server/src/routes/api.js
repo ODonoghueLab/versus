@@ -98,6 +98,7 @@ module.exports = (app) => {
     models
       .fetchExperiments(req.body.userId)
       .then(experiments => {
+        console.log('/api/experiments', experiments)
         res.json({ experiments })
       })
   })
