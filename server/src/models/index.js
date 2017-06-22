@@ -161,6 +161,11 @@ function fetchParticipant (inviteId) {
   return models.Participant.findOne({ where: { inviteId } })
 }
 
+function deleteParticipant (inviteId) {
+  return models.Participant
+      .destroy({ where: { inviteId } })
+}
+
 function saveState (inviteId, state) {
   return fetchParticipant(inviteId)
     .then(participant => {
@@ -203,6 +208,7 @@ const models = {
   fetchExperiments,
   createParticipant,
   fetchParticipant,
+  deleteParticipant,
   saveState,
   createExperiment,
   createUser

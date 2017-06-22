@@ -210,7 +210,7 @@ module.exports = (app) => {
 
   app.post('/api/delete-invite/:inviteId', (req, res) => {
     models
-      .deleteInvite(req.params.inviteId)
+      .deleteParticipant(req.params.inviteId)
       .then(() => {
         res.json({ success: true })
       })
