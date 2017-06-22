@@ -37,7 +37,12 @@
         </div>
         <div v-else>
           <div v-if="comparison" class="row">
-            <h1> Participant </h1>
+            <div
+                class="col-sm-12 col-md-12 col-lg-12"
+                style="text-align: center">
+              <h1> {{comparisonTitle}} </h1>
+              <p> {{comparisonText}}</p>
+            </div>
             <div
                 class="col-sm-6 col-md-6 col-lg-6"
                 style="text-align: center">
@@ -120,7 +125,9 @@ export default {
       gender: 'female',
       done: false,
       start: false,
-      comparison: null
+      comparison: null,
+      comparisonTitle: 'Choose the better looking image',
+      comparisonText: 'Take your time',
     }
   },
   mounted() {
