@@ -72,7 +72,7 @@ module.exports = (app) => {
   // [POST] get login form
   app.post('/api/login', (req, res, next) => {
     passport.authenticate('local', (err, user) => {
-      if (err) { 
+      if (err) {
         return next(err)
       }
       if (!user) {
@@ -102,7 +102,7 @@ module.exports = (app) => {
       })
   })
 
-// [POST] Create a new Experiment for current user.
+  // [POST] Create a new Experiment for current user.
   app.post('/api/create-experiment', upload.array('experiment[images]'), (req, res) => {
     let userId = req.body.userId
     let name = req.body.experiment.name
@@ -113,8 +113,8 @@ module.exports = (app) => {
         models
           .createExperiment(
             userId, name, '', _.map(paths, getUrl))
-          .then(() => {
-            res.json({ success: true })
+          .then(experimentId => {
+            res.json({ success: true, experimentId })
           })
       })
   })
@@ -140,6 +140,25 @@ module.exports = (app) => {
       .then(experiment => {
         console.log('>> /api/experiment', experiment.get({ plain: true }))
         res.json({ experiment })
+      })
+  })
+
+  app.post('/api/experiment-results/:experimentId', (req, res) => {
+    models
+      .fetchExperiment(req.params.experimentId)
+      .then((experiment) => {
+        let participants = experiment.Participants
+        let payload = _.map(participants, participant => {
+          return {
+            user: participant.get('user'),
+            ranks: participant.get('state').ranks,
+            time: {
+              start: participant.createdAt,
+              end: participant.updatedAt
+            }
+          }
+        })
+        res.json(JSON.stringify(payload, null, 2))
       })
   })
 

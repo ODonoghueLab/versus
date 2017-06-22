@@ -65,6 +65,12 @@ function makeComparison (state, imageIndexA, imageIndexB) {
   }
 }
 
+function getComparison (state) {
+  let iNew = state.testImageIndex
+  let iNode = state.nodes[state.nodeIndex].imageIndex
+  return makeComparison(state, iNode, iNew)
+}
+
 function rankNodes (state) {
   // Perform Pre Order Search
   // binary search with the deepest right branch
@@ -81,18 +87,11 @@ function rankNodes (state) {
   state.ranks = ranks
 }
 
-function getComparison (state) {
-  let iNew = state.testImageIndex
-  let iNode = state.nodes[state.nodeIndex].imageIndex
-  return makeComparison(state, iNode, iNew)
-}
-
 module.exports = {
   isDone,
   newState,
   newNode,
   makeChoice,
-  makeComparison,
   getComparison,
   rankNodes
 }

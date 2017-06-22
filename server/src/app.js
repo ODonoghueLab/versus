@@ -6,7 +6,7 @@ const _ = require('lodash')
 const express = require('express')
 const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
-const cors = require('cors') // allow cross-origin-resource-sharing
+
 // const favicon = require('serve-favicon'); TODO: Add Favicon.
 
 // Authentication Middleware and Strategies.
@@ -14,12 +14,39 @@ const expressValidator = require('express-validator')
 const session = require('express-session')
 const passport = require('passport')
 
-// Synchronise Database | TRUE Will Wipe Database
 const models = require('./models')
+// Synchronise Database | TRUE Will Wipe Database
 models.sequelize.sync({ force: false })
 
 const bcrypt = require('bcryptjs');
 const LocalStrategy = require('passport-local').Strategy;
+
+// Begin Application
+const app = express()
+
+// Middleware Configuration
+
+// Cross-origin-resource-sharing
+app.use(function(req, res, next) {
+  res.header('Access-Control-Allow-Credentials', true);
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+  res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
+  if ('OPTIONS' == req.method) {
+      res.send(200);
+  } else {
+      next();
+  }
+});
+
+app.use(express.static(path.join(__dirname, 'public')))
+// app.use(favicon(path.join(__dirname, 'public/img', 'favicon.ico'))); TODO: Add Favicon.
+app.use(logger('dev'))
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(cookieParser())
+app.use(session({ secret: 'csiro-versus', saveUninitialized: true, resave: true }))
+app.use(expressValidator())
 
 // Session : Serialization
 passport.serializeUser((user, done) => {
@@ -56,36 +83,6 @@ passport.use(new LocalStrategy((email, password, done) => {
   }
 ));
 
-
-// Begin Application
-const app = express()
-
-// View Engine Initialisation
-app.set('views', path.join(__dirname, 'views'))
-app.set('view engine', 'pug')
-
-// Middleware Configuration
-//  cross-origin-resource-sharing
-app.use(function(req, res, next) {
-  res.header('Access-Control-Allow-Credentials', true);
-  res.header('Access-Control-Allow-Origin', req.headers.origin);
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-  res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
-  if ('OPTIONS' == req.method) {
-      res.send(200);
-  } else {
-      next();
-  }
-});
-// app.use(cors())
-app.use(express.static(path.join(__dirname, 'public')))
-// app.use(favicon(path.join(__dirname, 'public/img', 'favicon.ico'))); TODO: Add Favicon.
-app.use(logger('dev'))
-app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(cookieParser())
-app.use(session({ secret: 'csiro-versus', saveUninitialized: true, resave: true }))
-app.use(expressValidator())
 app.use(passport.initialize())
 app.use(passport.session())
 

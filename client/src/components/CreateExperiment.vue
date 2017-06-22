@@ -57,28 +57,20 @@ export default {
       this.$data.fileStr = `${this.$data.files.length} files`
     },
     submit () {
-      console.log('>> CreateExperiment.submit', this.$data.name)
-      console.log('>> CreateExperiment.submit', this.$data.targetName)
-      console.log('>> CreateExperiment.submit', this.$data.files)
       let formData = new FormData()
       formData.append("experiment[name]", this.$data.name)
       formData.append("userId", auth.user.id)
       _.each(this.$data.files, file => {
         formData.append(this.$data.targetNname, file, file.name)
       })
-      for (var key of formData.entries()) {
-        console.log('>> CreateExperiment.submit', key[0] + ', ' + key[1]);
-      }
       const url = `${config.api}/create-experiment`
-      const formConfig = {
-          headers: { 'content-type': 'multipart/form-data' }
-      }      
       console.log('>> CreateExperiment.submit url', url)
       return axios
-        .post(url, formData, formConfig)
+        .post(url, formData)
         .then(res => {
-          console.log('>> CreateExperiment.submit res', res.data)
-          this.$router.push('/experiments')
+          console.log('>> CreateExperiment.submit', res.data)
+          let experimentId = res.data.experimentId
+          this.$router.push('/experiment/' + experimentId)
         })
     }
   }

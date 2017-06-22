@@ -124,7 +124,7 @@ function fetchExperiment (experimentId) {
     where: { id: experimentId },
     include: [
       { model: Image, as: 'Images' },
-      { model: Invite, as: 'Invites' },
+      { model: User, as: 'Users' },
       { model: Participant, as: 'participants' }
     ]
   })
@@ -135,31 +135,9 @@ function deleteExperiment (experimentId) {
       .destroy({ where: { id: experimentId } })
 }
 
-function saveResult (result, state, cb) {
-  result.update({ state }).then(cb)
-}
-
-function fetchInvite (inviteId) {
-  return Invite.findOne({ where: { inviteId } })
-}
-
-function deleteInvite (inviteId) {
-  console.log('>> models.deleteInvite', inviteId)
-  return models.Invite
-    .destroy(
-      { where: { inviteId } })
-    .then(
-      () => models.Result.destroy(
-        { where: { inviteId } }))
-}
-
 function fetchExperiments (userId) {
   return Experiment.findAll({
     include: [{ model: User, where: { id: userId } }] })
-}
-
-function fetchResult (inviteId) {
-  return models.Result.findOne({ where: { inviteId } })
 }
 
 function createParticipant (experimentId, email) {
@@ -190,35 +168,6 @@ function saveState (inviteId, state) {
     })
 }
 
-function makeResult (inviteId, user) {
-  return new Promise((resolve, reject) => {
-    models
-      .fetchInvite(inviteId)
-      .then(invite => {
-        models
-          .fetchExperiment(invite.ExperimentId)
-          .then(experiment => {
-            let images = experiment.Images
-            const imageUrls = _.map(images, 'url')
-            let state = tree.newState(imageUrls)
-            // since Result has an external inviteId,
-            // findOrCreate is needed to overcome
-            // the clash with the default uuid generation
-            models.Result
-              .findOrCreate({
-                where: { inviteId },
-                defaults: {
-                  age: user.age,
-                  gender: user.gender,
-                  state
-                }
-              })
-              .spread(resolve)
-          })
-      })
-  })
-}
-
 function createExperiment (
     userId, name, description, imageUrls) {
   /* todo do proper promise chain */
@@ -231,7 +180,7 @@ function createExperiment (
           .create({ url })
           .then((image) => experiment.addImage(image))
       })
-      return experiment.addUser(userId, { permission: 0 })
+      return experiment.id
     })
 }
 
@@ -252,13 +201,8 @@ const models = {
   fetchExperiment,
   deleteExperiment,
   fetchExperiments,
-  fetchResult,
   createParticipant,
-  fetchInvite,
-  deleteInvite,
   fetchParticipant,
-  saveResult,
-  makeResult,
   saveState,
   createExperiment,
   createUser

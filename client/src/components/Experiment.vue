@@ -9,6 +9,9 @@
             <button @click="makeInvite">
               Invite participant
             </button>
+            <button @click="downloadResults">
+              Download Results
+            </button>
             <table>
               <tr v-for="participant in experiment.participants">
                 <td>
@@ -47,6 +50,8 @@ import config from '../config'
 import auth from '../modules/auth'
 import util from '../modules/util'
 
+
+
 export default {
   name: 'experiment',
   data() {
@@ -67,11 +72,14 @@ export default {
         `${config.api}/experiment/${experimentId}`,
         { userId: auth.user.id })
       .then((res) => {
+        console.log('>> Experiment.mounted', res.data.experiment)
         this.$data.experiment = res.data.experiment
-        console.log('>> Experiment.mounted participants', this.$data.experiment.participants)
       })
   },
   methods: {
+    downloadResults() {
+      util.downloadObject('results.json', this.$data.experiment)
+    },
     getInviteRoute(participant) {
       return `/participant/${participant.inviteId}`
     },
