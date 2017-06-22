@@ -2,9 +2,6 @@
   <div class="container">
     <div class="row">
       <div class="col-sm-12 col-md-12 col-lg-12">
-        <h1> Participant </h1>
-      </div>
-      <div class="col-sm-12 col-md-12 col-lg-12">
         <div v-if="start">
           <h2>Welcome to Versus!</h2>
           <p>
@@ -35,11 +32,12 @@
             </button>
           </form>
         </div>
-        <div v-else-if="done">
+        <div v-else-if="done" class="done">
           Your tests are done. Thank You
         </div>
         <div v-else>
           <div v-if="comparison" class="row">
+            <h1> Participant </h1>
             <div
                 class="col-sm-6 col-md-6 col-lg-6"
                 style="text-align: center">
@@ -67,6 +65,36 @@
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style scoped>
+@import 'https://fonts.googleapis.com/css?family=Lato:100';
+.done {
+    width: calc(100vw - 30px);
+    height: 100vh;
+    background-image: -webkit-linear-gradient(55deg, #FF5F6D -10%, #FFC371);
+    background-image: linear-gradient(35deg, #FF5F6D -10%, #FFC371);
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    -webkit-flex-direction: column;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    -webkit-box-pack: center;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    -webkit-box-align: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    color: white;
+    text-transform: uppercase;
+    font-family: "Lato";
+}
+.done {
+    font-size: 70px;
+}
 .choice {
   border: 1px solid rgba(255, 255, 255, 0.0);
 }
