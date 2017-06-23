@@ -229,7 +229,7 @@ module.exports = (app) => {
         const state = participant.get('state')
         tree.makeChoice(state, chosenImageIndex)
         models
-          .saveState(inviteId, state)
+          .saveParticipant(inviteId, {state})
           .then(() => {
             if (tree.isDone(state)) {
               res.json({ done: true })

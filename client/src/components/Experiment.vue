@@ -100,6 +100,7 @@ export default {
       axios
         .post(url, { email: 'test@test.com' })
         .then((res) => {
+          console.log('>> Experiment.makeInvite', res.data)
           participants.push(res.data.participant)
         })
     }

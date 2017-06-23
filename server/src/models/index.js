@@ -83,6 +83,10 @@ const Experiment = sequelize.define('Experiment', {
 
 /* access functions */
 
+function unwrapInstance (instance) {
+  return instance.get({ plain: true })
+}
+
 function fetchExperiment (experimentId) {
   return Experiment.find({
     where: { id: experimentId },
@@ -114,7 +118,9 @@ function createParticipant (experimentId, email) {
       return models.Participant
         .create({ email, state })
         .then((participant) => {
-          return experiment.addParticipant(participant)
+          return experiment
+            .addParticipant(participant)
+            .then(() => participant)
         })
     })
 }
@@ -127,16 +133,9 @@ function deleteParticipant (inviteId) {
   return models.Participant.destroy({ where: { inviteId } })
 }
 
-function saveState (inviteId, state) {
+function saveParticipant (inviteId, values) {
   return fetchParticipant(inviteId)
-    .then(participant => {
-      return participant.update({ state })
-    })
-}
-
-function unwrapModel(instance) {
-  console.log('models.unwrap' ,instance)
-  return instance.get({ plain: true })
+    .then(participant => participant.update(values))
 }
 
 function createExperiment (userId, name, description, imageUrls) {
@@ -144,30 +143,28 @@ function createExperiment (userId, name, description, imageUrls) {
     .create(
       { name, description })
     .then((experiment) => {
-      let promise = null
+      let chainedPromise = null
       for (let url of imageUrls) {
-        let newPromise = models.Image
+        let promise = models.Image
           .create({ url })
           .then(image => experiment.addImage(image))
-        if (promise === null) {
-          promise = newPromise
+        if (chainedPromise === null) {
+          chainedPromise = promise
         } else {
-          promise = promise.then(() => newPromise)
+          chainedPromise = chainedPromise.then(() => promise)
         }
       }
-      promise
+      chainedPromise
         .then(() => {
           experiment.addUser(userId, { permission: 0 })
           return experiment
         })
-        .then(unwrapModel)
-
-      return promise
+        .then(unwrapInstance)
+      return chainedPromise
     })
 }
 
 function createUser (values) {
-  console.log('>> createUser', values)
   return models.User.create(values)
 }
 
@@ -184,7 +181,7 @@ const models = {
   createParticipant,
   fetchParticipant,
   deleteParticipant,
-  saveState,
+  saveParticipant,
   createExperiment,
   createUser
 }
