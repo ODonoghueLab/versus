@@ -86,14 +86,7 @@ passport.use(new LocalStrategy((email, password, done) => {
 app.use(passport.initialize())
 app.use(passport.session())
 
-// Application Routes
-const routePath = path.join(__dirname, 'routes')
-fs.readdirSync(routePath).forEach((file) => {
-  const route = path.join(routePath, file)
-  if (_.endsWith(route, '.js')) {
-    require(route)(app); // eslint-disable-line
-  }
-})
+require('./api')(app)
 
 // Catch 404 and forward to Error Handler
 app.use((req, res, next) => {

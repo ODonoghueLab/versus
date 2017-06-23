@@ -78,7 +78,22 @@ export default {
   },
   methods: {
     downloadResults() {
-      util.downloadObject('results.json', this.$data.experiment)
+      console.log('>> Experiment.downloadResults')
+      let experiment = this.$data.experiment
+      let participants = experiment.participants
+      let payload = _.map(participants, participant => {
+        return {
+          user: participant.user,
+          ranks: participant.state.ranks,
+          time: {
+            start: participant.createdAt,
+            end: participant.updatedAt
+          }
+        }
+      })
+      console.log(payload)
+      // payload = this.$data.experiment
+      util.downloadObject('results.json', payload)
     },
     getInviteRoute(participant) {
       return `/participant/${participant.inviteId}`
