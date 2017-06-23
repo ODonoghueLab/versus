@@ -113,8 +113,7 @@ function createParticipant (experimentId, email) {
     .fetchExperiment(experimentId)
     .then(experiment => {
       const images = experiment.Images
-      const imageUrls = _.map(images, 'url')
-      const state = tree.newState(imageUrls)
+      const state = tree.newState(_.map(images, 'url'))
       return models.Participant
         .create({ email, state })
         .then((participant) => {

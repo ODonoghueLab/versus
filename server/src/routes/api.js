@@ -198,10 +198,7 @@ module.exports = (app) => {
     let inviteId = req.params.inviteId
     models
       .fetchParticipant(inviteId)
-      .then(participant => {
-        console.log('>> /api/participate-user', participant)
-        return participant.update({ user: user })
-      })
+      .then(participant => models.saveParticipant(inviteId, { user: user }))
       .then(participant => {
         let comparison = tree.getComparison(participant.state)
         res.json({ comparison })
