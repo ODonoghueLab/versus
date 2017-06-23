@@ -1,59 +1,59 @@
-const logger = require('morgan')
 const path = require('path')
-const fs = require('fs')
-const _ = require('lodash')
 
-const express = require('express')
-const cookieParser = require('cookie-parser')
-const bodyParser = require('body-parser')
-
-// const favicon = require('serve-favicon'); TODO: Add Favicon.
-
-// Authentication Middleware and Strategies.
-const expressValidator = require('express-validator')
-const session = require('express-session')
-
-// Modify here to clear database
+// Reset database `force: true -> wipes database
 const models = require('./models')
-// Synchronise Database | TRUE Will Wipe Database
 models.sequelize.sync({ force: false })
 
 // Begin Application
+const express = require('express')
 const app = express()
+module.exports = app
 
 // Middleware Configuration
 
 // Cross-origin-resource-sharing
 app.use(function (req, res, next) {
-  res.header('Access-Control-Allow-Credentials', true);
-  res.header('Access-Control-Allow-Origin', req.headers.origin);
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-  res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
-  if ('OPTIONS' == req.method) {
-      res.send(200);
+  res.header('Access-Control-Allow-Credentials', true)
+  res.header('Access-Control-Allow-Origin', req.headers.origin)
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
+  res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept')
+  if (req.method === 'OPTIONS') {
+    res.send(200)
   } else {
-      next();
+    next()
   }
-});
+})
 
 // Load production client
-app.use(express.static(path.join(__dirname, '..', 'client', 'public')))
+const clientDir = path.join(__dirname, '..', 'client', 'public')
+app.use(express.static(clientDir))
 
 // Generate favicon
 const favicon = require('serve-favicon')
-app.use(favicon(path.join(__dirname, 'public/img', 'favicon.ico'))); 
+const faviconFname = path.join(__dirname, 'public/img', 'favicon.ico')
+app.use(favicon(faviconFname))
 
 // Logger
+const logger = require('morgan')
 app.use(logger('dev'))
 
 // parse Json in body
+const bodyParser = require('body-parser')
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 
+const cookieParser = require('cookie-parser')
 app.use(cookieParser())
-app.use(session({ secret: 'csiro-versus', saveUninitialized: true, resave: true }))
 
-// Form validator in handlers
+const session = require('express-session')
+app.use(session({ 
+  secret: 'csiro-versus', 
+  saveUninitialized: true, 
+  resave: true 
+}))
+
+// Check form validation in handlers
+const expressValidator = require('express-validator')
 app.use(expressValidator())
 
 // Initialize authentication with passport
@@ -86,4 +86,3 @@ app.use((err, req, res) => {
     .render('error', { message: err.message, error: {} })
 })
 
-module.exports = app
