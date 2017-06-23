@@ -98,7 +98,6 @@ module.exports = (app) => {
     models
       .fetchExperiments(req.body.userId)
       .then(experiments => {
-        console.log('/api/experiments', experiments)
         res.json({ experiments })
       })
   })
@@ -114,8 +113,8 @@ module.exports = (app) => {
         models
           .createExperiment(
             userId, name, '', _.map(paths, getUrl))
-          .then(experimentId => {
-            res.json({ success: true, experimentId })
+          .then(experiment => {
+            res.json({ success: true, experimentId: experiment.id })
           })
       })
   })

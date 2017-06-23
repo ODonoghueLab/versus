@@ -108,26 +108,23 @@ function createParticipant (experimentId, email) {
   return models
     .fetchExperiment(experimentId)
     .then(experiment => {
-      let images = experiment.Images
+      const images = experiment.Images
       const imageUrls = _.map(images, 'url')
-      let state = tree.newState(imageUrls)
+      const state = tree.newState(imageUrls)
       return models.Participant
         .create({ email, state })
         .then((participant) => {
-          experiment.addParticipant(participant)
-          return participant
+          return experiment.addParticipant(participant)
         })
     })
 }
 
 function fetchParticipant (inviteId) {
-  console.log('models.fetchParticipant', inviteId)
   return models.Participant.findOne({ where: { inviteId } })
 }
 
 function deleteParticipant (inviteId) {
-  return models.Participant
-      .destroy({ where: { inviteId } })
+  return models.Participant.destroy({ where: { inviteId } })
 }
 
 function saveState (inviteId, state) {
@@ -137,20 +134,35 @@ function saveState (inviteId, state) {
     })
 }
 
-function createExperiment (
-    userId, name, description, imageUrls) {
-  /* todo do proper promise chain */
+function unwrapModel(instance) {
+  console.log('models.unwrap' ,instance)
+  return instance.get({ plain: true })
+}
+
+function createExperiment (userId, name, description, imageUrls) {
   return models.Experiment
-    .create({ name, description })
+    .create(
+      { name, description })
     .then((experiment) => {
-      console.log('createExperiment', userId, name, imageUrls)
-      imageUrls.forEach((url) => {
-        models.Image
+      let promise = null
+      for (let url of imageUrls) {
+        let newPromise = models.Image
           .create({ url })
-          .then((image) => experiment.addImage(image))
-      })
-      experiment.addUser(userId, { permission: 0 })
-      return experiment.id
+          .then(image => experiment.addImage(image))
+        if (promise === null) {
+          promise = newPromise
+        } else {
+          promise = promise.then(() => newPromise)
+        }
+      }
+      promise
+        .then(() => {
+          experiment.addUser(userId, { permission: 0 })
+          return experiment
+        })
+        .then(unwrapModel)
+
+      return promise
     })
 }
 
