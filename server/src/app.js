@@ -86,7 +86,7 @@ passport.use(new LocalStrategy((email, password, done) => {
 app.use(passport.initialize())
 app.use(passport.session())
 
-app.use('/api', require('./api'))
+app.use('/', require('./api'))
 
 // Catch 404 and forward to Error Handler
 app.use((req, res, next) => {
