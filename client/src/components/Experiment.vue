@@ -4,36 +4,65 @@
       <div class="col-sm-12 col-md-12 col-lg-12">
         <h1> Experiment - {{experiment.name}} </h1>
         <div class="row">
-          <div class="col-sm-12 col-md-6 col-lg-4">
-            <h3>participants</h3>
-            <button @click="makeInvite">
-              Invite participant
-            </button>
-            <button @click="downloadResults">
-              Download Results
-            </button>
-            <table>
-              <tr v-for="participant in experiment.participants">
-                <td>
-                <router-link v-bind:to="getInviteRoute(participant)">{{participant.inviteId}}</router-link>
-                </td>
-                <td>
-                <a class="button" 
-                   @click="deleteInvite(participant)">X</a>
-                </td>
-              </tr>
-            </table>
-          </div>
-          <div class="col-sm-12 col-md-6 col-lg-8">
-            <h3>Images</h3>
-            <div class="row">
-              <img 
-                  class="small card"
-                  v-for="url in imageUrls"
-                  v-bind:src="url">
-            </div>
-          </div>
+          <h3>Participants</h3>
+          <button @click="makeInvite">
+            Invite participant
+          </button>
+          <button @click="downloadResults">
+            Download Results
+          </button>
         </div>
+        <div class="row">
+          <table class="left-margin">
+            <tr>
+              <th>Invite</th>
+              <th>Age</th>
+              <th>Gender</th>
+              <th>Best Image</th>
+              <th>X</th>
+            </tr>
+            <tr v-for="participant in experiment.participants">
+              <td>
+                <router-link 
+                    class="button" 
+                    v-bind:to="getInviteRoute(participant)">
+                  invite
+                </router-link>
+              </td>
+              <td>
+                <span v-if="participant.user">
+                  {{participant.user.age}}
+                </span>
+              </td>
+              <td>
+                <span v-if="participant.user">
+                  {{participant.user.gender}}
+                </span>
+              </td>
+              <td>
+                <span v-if="participant.state.ranks">
+                  {{participant.state.ranks[0]}}
+                </span>
+              </td>
+              <td>
+              <a class="button" 
+                  @click="deleteInvite(participant)">X</a>
+              </td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="row">
+          <h3>Images</h3>
+        </div>
+
+        <div class="row">
+          <img 
+              class="small card"
+              v-for="url in imageUrls"
+              v-bind:src="url">
+        </div>
+
       </div>
     </div>
   </div>
@@ -41,16 +70,16 @@
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style scoped>
+.left-margin {
+  margin-left: 10px
+}
 </style>
 
 <script>
 import axios from 'axios'
-
 import config from '../config'
 import auth from '../modules/auth'
 import util from '../modules/util'
-
-
 
 export default {
   name: 'experiment',
@@ -91,21 +120,19 @@ export default {
           }
         }
       })
-      console.log(payload)
-      // payload = this.$data.experiment
       util.downloadObject('results.json', payload)
     },
     getInviteRoute(participant) {
-      return `/participant/${participant.inviteId}`
+      return `/participant/${participant.participateId}`
     },
     deleteInvite(participant) {
-      let url = `${config.api}/delete-invite/${participant.inviteId}`
+      let url = `${config.api}/delete-invite/${participant.participateId}`
       axios
         .post(url)
         .then((res) => {
           console.log('>> Experiment.deleteInvite', res.data)
           let participants = this.$data.experiment.participants
-          util.removeItem(participants, participant, 'inviteId')
+          util.removeItem(participants, participant, 'participateId')
         })
     },
     makeInvite () {

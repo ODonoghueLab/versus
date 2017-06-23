@@ -131,9 +131,9 @@ export default {
     }
   },
   mounted() {
-    let inviteId = this.$route.params.inviteId
+    let participateId = this.$route.params.participateId
     axios
-      .post(`${config.api}/participate/${inviteId}`)
+      .post(`${config.api}/participate/${participateId}`)
       .then(this.handleRes)
   },
   methods: {
@@ -164,8 +164,8 @@ export default {
       } 
     },
     choose (item){
-      let inviteId = this.$route.params.inviteId
-      let url = `${config.api}/participate-choose/${inviteId}`
+      let participateId = this.$route.params.participateId
+      let url = `${config.api}/participate-choose/${participateId}`
       let payload = { return: item.value }
       console.log('>> Invite.handleRes send', util.jstr(payload))
       axios
@@ -176,8 +176,8 @@ export default {
       return config.apiUrl + item.url
     },
     enterUser() {
-      let inviteId = this.$route.params.inviteId
-      let url = `${config.api}/participate-user/${inviteId}`
+      let participateId = this.$route.params.participateId
+      let url = `${config.api}/participate-user/${participateId}`
       let payload = {
         age: this.$data.age,
         gender: this.$data.gender

@@ -49,7 +49,7 @@ let router = new Router({
       component: Experiment
     },
     {
-      path: '/participant/:inviteId',
+      path: '/participant/:participateId',
       name: 'participant',
       component: Participant
     }
