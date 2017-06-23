@@ -3,18 +3,16 @@
     <div class="row">
       <div class="col-sm-12 col-md-12 col-lg-12">
         <h1>
-          Experiments created by user
+          Your experiments
         </h1>
       </div>
       <div class="col-sm-12 col-md-12 col-lg-12">
-        <table>
+        <table class="left-margin">
           <thead>
             <tr>
               <th>Name</th>
               <th>Description</th>
               <th>View</th>
-              <th>Results</th>
-              <th>Invite</th>
               <th>Delete</th>
             </tr>
           </thead>
@@ -30,8 +28,6 @@
                 view
               </router-link>
             </td>
-            <td></td>
-            <td></td>
             <td>
               <button @click="deleteExperiment(experiment)">X</button>
             </td>
@@ -53,7 +49,9 @@
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style scoped>
-
+.left-margin {
+  margin-left: 10px
+}
 </style>
 
 <script>

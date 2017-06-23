@@ -19,6 +19,8 @@
               <th>Age</th>
               <th>Gender</th>
               <th>Best Image</th>
+              <th>Created</th>
+              <th>Updated</th>
               <th>X</th>
             </tr>
             <tr v-for="participant in experiment.participants">
@@ -42,6 +44,16 @@
               <td>
                 <span v-if="participant.state.ranks">
                   {{participant.state.ranks[0]}}
+                </span>
+              </td>
+              <td>
+                <span v-if="participant.createdAt">
+                  {{participant.createdAt}}
+                </span>
+              </td>
+              <td>
+                <span v-if="participant.updatedAt">
+                  {{participant.updatedAt}}
                 </span>
               </td>
               <td>
