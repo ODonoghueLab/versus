@@ -12,14 +12,11 @@ const bodyParser = require('body-parser')
 // Authentication Middleware and Strategies.
 const expressValidator = require('express-validator')
 const session = require('express-session')
-const passport = require('passport')
 
+// Modify here to clear database
 const models = require('./models')
 // Synchronise Database | TRUE Will Wipe Database
 models.sequelize.sync({ force: false })
-
-const bcrypt = require('bcryptjs');
-const LocalStrategy = require('passport-local').Strategy;
 
 // Begin Application
 const app = express()
@@ -39,54 +36,32 @@ app.use(function (req, res, next) {
   }
 });
 
-app.use(express.static(path.join(__dirname, 'public')))
-// app.use(favicon(path.join(__dirname, 'public/img', 'favicon.ico'))); TODO: Add Favicon.
+// Load production client
+app.use(express.static(path.join(__dirname, '..', 'client', 'public')))
+
+// Generate favicon
+const favicon = require('serve-favicon')
+app.use(favicon(path.join(__dirname, 'public/img', 'favicon.ico'))); 
+
+// Logger
 app.use(logger('dev'))
+
+// parse Json in body
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
+
 app.use(cookieParser())
 app.use(session({ secret: 'csiro-versus', saveUninitialized: true, resave: true }))
+
+// Form validator in handlers
 app.use(expressValidator())
 
-// Session : Serialization
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
+// Initialize authentication with passport
+const auth = require('./modules/auth')
+auth.init(app)
 
-// Session : Deserialization
-passport.deserializeUser((id, done) => {
-  models.User.findOne({ where: { id } })
-    .then(user => done(null, user.dataValues))
-    .catch(error => done(error, null));
-});
-
-// Passport Configuration : Local Strategy.
-passport.use(new LocalStrategy((email, password, done) => {
-  models.User
-    .findOne({ where: { email } })
-    .then((user) => { //eslint-disable-line
-      if (user === null) { return done(null, false); }
-      bcrypt.compare(password, user.password, (err, isMatch) => {
-        if (err) {
-          throw err;
-        }
-        if (isMatch) {
-          return done(null, user.dataValues, { name: user.name });
-        } else {
-          return done(null, false);
-        } //eslint-disable-line
-      });
-    })
-    .catch(() => {
-      done(null, false);
-    });
-  }
-));
-
-app.use(passport.initialize())
-app.use(passport.session())
-
-app.use('/', require('./api'))
+// Load routes
+app.use('/', require('./routes'))
 
 // Catch 404 and forward to Error Handler
 app.use((req, res, next) => {
