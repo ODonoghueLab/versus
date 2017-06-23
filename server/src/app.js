@@ -57,11 +57,12 @@ app.use(session({ secret: 'csiro-versus', saveUninitialized: true, resave: true 
 app.use(expressValidator())
 
 // Initialize authentication with passport
-const auth = require('./modules/auth')
-auth.init(app)
+const authenticate = require('./modules/authenticate')
+authenticate.initExpressApp(app)
 
 // Load routes
-app.use('/', require('./routes'))
+const routes = require('./routes')
+app.use(routes)
 
 // Catch 404 and forward to Error Handler
 app.use((req, res, next) => {
