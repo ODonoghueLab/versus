@@ -2,7 +2,7 @@ const path = require('path')
 const del = require('del')
 const fs = require('fs')
 const _ = require('lodash')
-const config = require('../config')
+
 const filesDir = require('../config').filesDir
 
 module.exports = {
@@ -51,6 +51,7 @@ module.exports = {
           }
         }
       }
+
       if (err) {
         reject(err)
       } else {

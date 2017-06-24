@@ -1,8 +1,7 @@
 const path = require('path')
 
-// Reset database `force: true -> wipes database
-const models = require('./models')
-models.sequelize.sync({ force: false })
+// Reset database `force: true` -> wipes database
+// require('./models').sequelize.sync({ force: true })
 
 // Begin Application
 const express = require('express')
@@ -30,10 +29,10 @@ app.use(express.static(clientDir))
 
 // Generate favicon
 const favicon = require('serve-favicon')
-const faviconFname = path.join(__dirname, 'public/img', 'favicon.ico')
+const faviconFname = path.join(__dirname, 'public','img', 'favicon.ico')
 app.use(favicon(faviconFname))
 
-// Logger
+// Logs all requests
 const logger = require('morgan')
 app.use(logger('dev'))
 
@@ -47,9 +46,9 @@ app.use(cookieParser())
 
 const session = require('express-session')
 app.use(session({ 
-  secret: 'csiro-versus', 
-  saveUninitialized: true, 
-  resave: true 
+  secret: 'csiro-versus',
+  saveUninitialized: true,
+  resave: true
 }))
 
 // Check form validation in handlers
