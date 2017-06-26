@@ -204,19 +204,19 @@ router.post('/api/participate-choose/:participateId', (req, res) => {
   models
     .fetchParticipant(participateId)
     .then(participant => {
+      let payload
       let state = participant.state
       tree.makeChoice(state, chosenImageIndex)
       if (tree.isDone(state)) {
         tree.rankNodes(state)
+        payload = { done: true }
+      } else {
+        payload = { comparison: tree.getComparison(state) }
       }
       models
         .saveParticipant(participateId, {state})
         .then(() => {
-          if (tree.isDone(state)) {
-            res.json({ done: true })
-          } else {
-            res.json({ comparison: tree.getComparison(state) })
-          }
+          res.json(payload)
         })
     })
 })
