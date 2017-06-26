@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs')
 
 const tree = require('./modules/tree')
 
+const gmailSend = require('gmail-send')()
+
 // initialize database using Sequelize
 const env = process.env.NODE_ENV || 'development'
 const dbConfig = require('./config')[env]
@@ -105,7 +107,9 @@ function createParticipant (experimentId, email) {
         .then((participant) => {
           return experiment
             .addParticipant(participant)
-            .then(() => participant)
+            .then(() => {
+              return unwrapInstance(participant)
+            })
         })
     })
 }

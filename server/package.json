@@ -38,6 +38,7 @@
     "express": "~4.13.4",
     "express-session": "*",
     "express-validator": "*",
+    "gmail-send": "^1.2.10",
     "morgan": "~1.7.0",
     "multer": "*",
     "node-ses": "^2.0.1",
@@ -46,7 +47,6 @@
     "passport-local": "*",
     "pg": "^6.1.0",
     "pg-hstore": "^2.3.2",
-    "sendmail": "^1.1.1",
     "sequelize": "^3.24.3"
   },
   "devDependencies": {

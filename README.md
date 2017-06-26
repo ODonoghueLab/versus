@@ -52,7 +52,7 @@ To get started working on versus there are a few prerequisites (Windows is not s
        # \q
        ```
 
-     -  Create the versus database
+     - Create the versus database
 
          ```bash
          createdb versus
@@ -66,13 +66,23 @@ To get started working on versus there are a few prerequisites (Windows is not s
     git clone https://github.com/ODonoghueLab/versus.git
     ```
 
-3. Start the server (JSON api served on `http://localhost:3000`)
+3. The Versus code-base consists of two node packages, one for the server and one for the client. You need to install this via the node package manager `npm` 
+
+    ```bash
+    cd <versus>/server
+    npm install
+    cd <versus>/client
+    npm install
+    ```
+
+4. Start the server `http://localhost:3000`,  which serves a JSON api
+
     ```bash
     cd <versus>/server
     ./run_server.sh
     ```
 
-4. Start the client, hot reload web-client on `http://localhost:8080`
+5. Start the client, hot reload web-client on `http://localhost:8080`
 
     ```bash
     cd <versus>/client
