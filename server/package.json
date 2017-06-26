@@ -48,6 +48,7 @@
     "pg-hstore": "^2.3.2",
     "pug": "^2.0.0-beta5",
     "s3": "*",
+    "sendmail": "^1.1.1",
     "sequelize": "^3.24.3",
     "serve-favicon": "~2.3.0"
   },

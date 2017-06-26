@@ -27,11 +27,6 @@ app.use(function (req, res, next) {
 const clientDir = path.join(__dirname, '..', 'client', 'public')
 app.use(express.static(clientDir))
 
-// Generate favicon
-const favicon = require('serve-favicon')
-const faviconFname = path.join(__dirname, 'public','img', 'favicon.ico')
-app.use(favicon(faviconFname))
-
 // Logs all requests
 const logger = require('morgan')
 app.use(logger('dev'))

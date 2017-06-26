@@ -125,7 +125,11 @@ function deleteParticipant (participateId) {
 
 function saveParticipant (participateId, values) {
   return findParticipant(participateId)
-    .then(participant => participant.update(values))
+    .then(participant => {
+      return participant
+        .update(values)
+        .then(unwrapInstance)
+    })
 }
 
 function createExperiment (userId, name, description, imageUrls) {
@@ -147,9 +151,8 @@ function createExperiment (userId, name, description, imageUrls) {
       chainedPromise
         .then(() => {
           experiment.addUser(userId, { permission: 0 })
-          return experiment
+          return unwrapInstance(experiment)
         })
-        .then(unwrapInstance)
       return chainedPromise
     })
 }
@@ -158,9 +161,9 @@ function createUser (values) {
   return User.create(values)
 }
 
-function fetchUser(values) {
+function fetchUser (values) {
   return User
-    .findOne({ where: values})
+    .findOne({ where: values })
     .then(unwrapInstance)
 }
 
@@ -177,4 +180,3 @@ module.exports = {
   saveParticipant,
   deleteParticipant
 }
-

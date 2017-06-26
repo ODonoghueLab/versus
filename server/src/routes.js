@@ -179,8 +179,7 @@ router.post('/api/participate-user/:participateId', (req, res) => {
   let user = req.body
   let participateId = req.params.participateId
   models
-    .fetchParticipant(participateId)
-    .then(participant => models.saveParticipant(participateId, { user: user }))
+    .saveParticipant(participateId, { user: user })
     .then(participant => {
       let comparison = tree.getComparison(participant.state)
       res.json({ comparison })

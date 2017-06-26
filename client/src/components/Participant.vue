@@ -69,8 +69,11 @@
 </template>
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
-<style scoped>
+<style>
 @import 'https://fonts.googleapis.com/css?family=Lato:100';
+</style>
+
+<style scoped>
 .done {
     width: calc(100vw - 30px);
     height: 100vh;
