@@ -12,7 +12,7 @@ Versus is a web-based application that allows users ('requesters') to create mul
 
 ## Getting Started
 
-To get started working on versus there are a few prerequisites (Windows is not supproted)
+To get started working on versus there are a few prerequisites (Windows is not supported)
 
 1. Installing Postgres
    - Linux - [Digital Ocean Guide](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-16-04)
@@ -49,6 +49,7 @@ To get started working on versus there are a few prerequisites (Windows is not s
        psql
        # \du # list users to check if postgres exists
        # CREATE USER postgres WITH SUPERUSER;
+       # \q
        ```
 
      -  Create the versus database
@@ -77,6 +78,18 @@ To get started working on versus there are a few prerequisites (Windows is not s
     cd <versus>/client/src
     ./run_client.sh
     ```
+
+
+# Running Experiments
+
+1. Once the server and client are running, goto `http://localhost:8080/#/register`.
+2. Create a user
+3. Create a new experiment, during which, you will need a collection of images to upload.
+4. Once the experiment is created, you need to invite participants, click `Invite Participant`
+5. When the participant appears in the table, click on the `invite` button to go to the page to run the experiment.
+6. Carry out the experiment.
+7. Download results by clicking on the button `Download Results`
+
 
 
 # Development Workflow

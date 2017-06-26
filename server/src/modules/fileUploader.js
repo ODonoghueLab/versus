@@ -8,9 +8,8 @@ const filesDir = require('../config').filesDir
 module.exports = {
 
   uploadFiles (files) {
-    const stamp = String(new Date().getTime())
-
     return new Promise((resolve, reject) => {
+      const stamp = String(new Date().getTime())
       let err = ''
 
       function rollback (msg) {

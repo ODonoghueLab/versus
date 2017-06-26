@@ -43,7 +43,11 @@
               </td>
               <td>
                 <span v-if="participant.state.ranks">
-                  {{participant.state.ranks[0]}}
+                  <a 
+                      class="button"
+                      v-bind:href="participant.state.ranks[0]">
+                    Image
+                  </a>
                 </span>
               </td>
               <td>
@@ -113,8 +117,16 @@ export default {
         `${config.api}/experiment/${experimentId}`,
         { userId: auth.user.id })
       .then((res) => {
-        console.log('>> Experiment.mounted', res.data.experiment)
-        this.$data.experiment = res.data.experiment
+        let experiment = res.data.experiment
+        let participants = experiment.participants
+        _.each(participants, participant => {
+          let state = participant.state
+          if ('ranks' in state) {
+            state.ranks = _.map(state.ranks, r => config.apiUrl + r)
+          }
+        })
+        console.log('>> Experiment.mounted', experiment)
+        this.$data.experiment = experiment
       })
   },
   methods: {
