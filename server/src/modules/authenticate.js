@@ -12,22 +12,19 @@ function initExpressApp (app) {
 
   // Session : Deserialization
   passport.deserializeUser((id, done) => {
-    console.log('>> deserializeUser id', id)
-    models.fetchUser({ id })
+    models
+      .fetchUser({ id })
       .then(user => done(null, user))
       .catch(error => done(error, null))
   })
 
   // Passport Configuration : Local Strategy.
   passport.use(new LocalStrategy((email, password, done) => {
-    console.log('>> local.strategy init', email, password)
     models.fetchUser({ email })
       .then((user) => {
-        console.log('>> local.strategy found', user)
         if (user === null) { return done(null, false) }
         bcrypt.compare(password, user.password, (err, isMatch) => {
           if (err) {
-            console.log('>> bcrypt fail', password, user.password)
             throw err
           }
           if (isMatch) {

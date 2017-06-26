@@ -73,6 +73,32 @@ router.post('/api/register', (req, res) => {
   }
 })
 
+router.post('/api/update', (req, res) => {
+  // Sanitization
+  const varNames = ['id', 'firstName', 'lastName', 'email', 'password', 'passwordv']
+  let values = {}
+  for (let varName of varNames) {
+    if (req.body[varName]) {
+      values[varName] = req.body[varName]
+    }
+  }
+
+  console.log('>> /api/update', values)
+  if (values) {
+    models
+      .updateUser(values)
+      .then(() => {
+        res.json({ success: true })
+      })
+      .catch(err => {
+        console.log(`>> \\api\\update`, err)
+        values.errors = ['Couldn\' register, is your email already in use?']
+        values.success = false
+        res.json(values)
+      })
+  }
+})
+
 // [POST] get login form
 router.post('/api/login', (req, res, next) => {
   passport.authenticate('local', (err, user) => {

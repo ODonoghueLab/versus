@@ -36,6 +36,7 @@ export default {
   },
 
   update (user) {
+    console.log('>> auth.update', user)
     return axios.post(config.api + '/update', user)
   },
 

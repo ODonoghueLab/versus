@@ -23,7 +23,7 @@
               placeholder='Password'>
           </input>
           <br>
-          <button @click='submit'>login</button>
+          <button>login</button>
           <div v-if="msg" class="card error">
             {{ msg }}
           </div>

@@ -41,7 +41,7 @@
               placeholder='Password'>
           </input>
           <br>
-          <button @click='submit'>register</button>
+          <button>register</button>
           <div v-if="errors.length" class="card error">
             <ul>
               <li v-for="err in errors">

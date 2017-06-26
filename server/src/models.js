@@ -180,11 +180,18 @@ function updateUser (values) {
   console.log('>> models.updateUser', values)
   return User
     .findOne({ where: { id: values.id } })
-    .update(values)
+    .then(user => {
+      if (user) {
+        return user
+          .update(values)
+          .then(unwrapInstance)
+      } else {
+        return null
+      }
+    })
 }
 
 function fetchUser (values) {
-  console.log('>> models.fetchUser', values)
   return User
     .findOne({ where: values })
     .then(unwrapInstance)
