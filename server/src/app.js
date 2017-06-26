@@ -1,7 +1,7 @@
 const path = require('path')
 
 // Reset database `force: true` -> wipes database
-// require('./models').sequelize.sync({ force: true })
+require('./models').sequelize.sync({ force: false })
 
 // Begin Application
 const express = require('express')

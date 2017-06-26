@@ -65,7 +65,11 @@ Participant.belongsTo(Experiment)
 /* access functions - only returns JSON literals */
 
 function unwrapInstance (instance) {
-  return instance.get({ plain: true })
+  if (instance === null) {
+    return null
+  } else {
+    return instance.get({ plain: true })
+  }
 }
 
 function findExperiment (experimentId) {
@@ -162,10 +166,25 @@ function createExperiment (userId, name, description, imageUrls) {
 }
 
 function createUser (values) {
-  return User.create(values)
+  return User
+    .findOne({where: {id: values.id}})
+    .then(user => {
+      if (user === null) {
+        console.log('>> models.createUser', values)
+        return User.create(values)
+      }
+    })
+}
+
+function updateUser (values) {
+  console.log('>> models.updateUser', values)
+  return User
+    .findOne({ where: { id: values.id } })
+    .update(values)
 }
 
 function fetchUser (values) {
+  console.log('>> models.fetchUser', values)
   return User
     .findOne({ where: values })
     .then(unwrapInstance)
@@ -175,6 +194,7 @@ module.exports = {
   sequelize,
   createUser,
   fetchUser,
+  updateUser,
   createExperiment,
   fetchExperiment,
   fetchExperiments,

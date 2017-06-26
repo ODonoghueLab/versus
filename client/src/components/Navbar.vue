@@ -10,6 +10,9 @@
       <span class="user">
         {{user.email}}
       </span>
+      <router-link to='/edit-user' class='button'>
+        Edit
+      </router-link>
       <button @click="logout">Logout</button>
     </span>
 

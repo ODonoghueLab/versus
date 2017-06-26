@@ -64,7 +64,8 @@ router.post('/api/register', (req, res) => {
       .then(() => {
         res.json({ success: true })
       })
-      .catch(() => {
+      .catch(err => {
+        console.log('>> \api\register', err)
         values.errors = ['Couldn\' register, is your email already in use?']
         values.success = false
         res.json(values)
@@ -76,14 +77,17 @@ router.post('/api/register', (req, res) => {
 router.post('/api/login', (req, res, next) => {
   passport.authenticate('local', (err, user) => {
     if (err) {
+      console.log('>> /api/login error', err)
       return next(err)
     }
+    console.log('>> /api/login user', user)
     if (!user) {
       return res.json(
         { success: false, msg: 'user/password not found' })
     }
     req.logIn(user, (error) => {
       if (error) {
+        console.log('>> /api/login error', err)
         return next(error)
       }
       return res.json({ success: true, user: user })

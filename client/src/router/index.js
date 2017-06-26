@@ -7,6 +7,7 @@ import CreateExperiment from '@/components/CreateExperiment'
 import Participant from '@/components/Participant'
 import Login from '@/components/Login'
 import Register from '@/components/Register'
+import EditUser from '@/components/EditUser'
 import auth from '../modules/auth'
 
 Vue.use(Router)
@@ -32,6 +33,11 @@ let router = new Router({
       path: '/register',
       name: 'register',
       component: Register
+    },
+    {
+      path: '/edit-user',
+      name: 'editUser',
+      component: EditUser
     },
     {
       path: '/experiments',

@@ -59,6 +59,7 @@ export default {
         username: this.$data.username,
         password: this.$data.password
       }
+      console.log('>> Login.submit', credentials)
       auth
         .login(credentials)
         .then((res) => {

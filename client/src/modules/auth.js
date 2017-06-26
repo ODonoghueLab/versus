@@ -35,6 +35,10 @@ export default {
     return axios.post(config.api + '/register', newUser)
   },
 
+  update (user) {
+    return axios.post(config.api + '/update', user)
+  },
+
   restoreLastUser () {
     return new Promise((resolve, reject) => {
       let lastUser = JSON.parse(localStorage.getItem('user'))
