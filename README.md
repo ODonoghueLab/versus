@@ -68,14 +68,14 @@ To get started working on versus there are a few prerequisites (Windows is not s
 
 3. Start the server (JSON api served on `http://localhost:3000`)
     ```bash
-    cd <versus>/server/src
+    cd <versus>/server
     ./run_server.sh
     ```
 
 4. Start the client, hot reload web-client on `http://localhost:8080`
 
     ```bash
-    cd <versus>/client/src
+    cd <versus>/client
     ./run_client.sh
     ```
 
