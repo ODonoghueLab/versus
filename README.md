@@ -11,80 +11,76 @@ Develop:
 Versus is a web-based application that allows users ('requesters') to create multiple experiments based on a full 2AFC methodology (two alternative forced-choice). Participants ('workers') are presented two images side-by-side, and - without imposing a time constraint - they are now asked to choose one of the two images, see Heinrich et al. (2015, 2016).
 
 ## Getting Started
-To get started working on versus there are a few prerequisites.
 
-#### Linux [Ubuntu 16.04]
-0. Make Sure to Update and Install PostgreSQL
-    - Update.
-    ```
-    sudo apt-get update
-    ```
-    - Install.
-    ```
-    sudo apt-get install postgresql postgresql-contrib
-    ```
-1. Configure PostgreSQL - [Digital Ocean Guide](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-16-04)
-    - Create the `versus` Database.
+To get started working on versus there are a few prerequisites (Windows is not supproted)
+
+1. Installing Postgres
+   - Linux - [Digital Ocean Guide](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-16-04)
+     - Install with  `apt-get`
+
+       ```bash
+       sudo apt-get update
+       sudo apt-get install postgresql postgresql-contrib
+       ```
+     - a postgres superuser may already be defined on your file system, in that case, set password to `postgres`
+
+       ```bash
+         sudo -u postgres psql postgres
+         # \password postgres
+         # \q
+       ```
+
+     - Create the `versus` Database.
+
         ```bash
         sudo -u postgres createdb versus
         ```
-    - Set default password.
-        ```bash
-        sudo -u postgres psql postgres
-        # \password postgres
-        ```
+   - Mac
+     - Install with `brew`
 
-2. Install Node Version Manager - [GitHub Repository](https://github.com/creationix/nvm)
-    ```bash
-    wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.32.0/install.sh | bash
-    nvm install 6.5
-    nvm use 6.5
-    ```
-3. Clone the Repository!
+       ```bash
+       brew update
+       brew install postgres
+       ```
+
+     - Create a user within postgres
+
+       ```bash
+       psql
+       # \du # list users to check if postgres exists
+       # CREATE USER postgres WITH SUPERUSER;
+       ```
+
+     -  Create the versus database
+
+         ```bash
+         createdb versus
+         ```
+
+         ​
+
+2. Clone the Repository!
+
     ```bash
     git clone https://github.com/ODonoghueLab/versus.git
     ```
-4. Modify configuration files as needed.
+
+3. Start the server (JSON api served on `http://localhost:3000`)
     ```bash
-    /config
-    ```
-5. Verify branch integrity and run project.
-    ```bash
-    npm test
-    npm start
+    cd <versus>/server/src
+    ./run_server.sh
     ```
 
-#### Mac
-1. Install and Configure PostgreSQL
+4. Start the client, hot reload web-client on `http://localhost:8080`
+
     ```bash
-    brew install postgres
+    cd <versus>/client/src
+    ./run_client.sh
     ```
 
-2. Install Node Version Manager - [GitHub Repository](https://github.com/creationix/nvm)
-    ```bash
-    brew install nvm
-    nvm use 6.5
-    ```
-3. Clone the Repository!
-    ```bash
-    git clone https://github.com/ODonoghueLab/versus.git
-    ```
-4. Modify configuration files as needed.
 
-    `note: postgres default configuration for mac is your username with no password.`
-    ```bash
-    /config
-    ```
-5. Verify branch integrity and run project.
-    ```bash
-    npm test
-    npm start
-    ```
+# Development Workflow
 
-#### Windows
-Windows is not actively supported due to module dependencies. Results may vary.
-
-#Development Workflow
 * Write Code
 ```
 npm test
@@ -92,7 +88,7 @@ npm test
 * If tests pass, branch and make merge requests
 * Travis will block you if your branch build fails
 
-##Git Issue Codes
+## Git Issue Codes
 * FN - Fix Now - Issues That Halt Progress
 * CBT - Come Back To - Issues That Need Fixing But Not Urgent
 * WLT - Would Like To - More Feature Idea/s Than Needed Fix

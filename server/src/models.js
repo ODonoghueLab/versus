@@ -22,14 +22,8 @@ const User = sequelize.define('User', {
   lastName: Sequelize.STRING,
   email: { type: Sequelize.STRING, unique: true },
   password: Sequelize.STRING
-}, {
-  classMethods: {
-    associate (models) {
-      User.belongsToMany(
-        models.Experiment, { through: models.UserExperiment })
-    }
-  }
 })
+
 User.beforeValidate((user) => {
   user.password = bcrypt.hashSync(
     user.password, bcrypt.genSaltSync(10))
@@ -37,13 +31,6 @@ User.beforeValidate((user) => {
 
 const Image = sequelize.define('Image', {
   url: Sequelize.STRING
-}, {
-  classMethods: {
-    associate (models) {
-      Image.belongsTo(
-        models.Experiment, {onDelete: 'cascade'})
-    }
-  }
 })
 
 const Participant = sequelize.define('Participant', {
@@ -55,12 +42,6 @@ const Participant = sequelize.define('Participant', {
   email: Sequelize.STRING,
   user: Sequelize.JSON,
   state: Sequelize.JSON
-}, {
-  classMethods: {
-    associate (models) {
-      Participant.belongsTo(models.Experiment)
-    }
-  }
 })
 
 const UserExperiment = sequelize.define('UserExperiment', {
@@ -70,16 +51,14 @@ const UserExperiment = sequelize.define('UserExperiment', {
 const Experiment = sequelize.define('Experiment', {
   name: Sequelize.STRING,
   description: Sequelize.STRING
-}, {
-  classMethods: {
-    associate (models) {
-      Experiment.hasMany(models.Image, {as: 'Images'})
-      Experiment.belongsToMany(
-        models.User, {through: models.UserExperiment})
-      Experiment.hasMany(models.Participant, {as: 'participants'})
-    }
-  }
 })
+
+Experiment.hasMany(Image, {as: 'Images'})
+Experiment.belongsToMany(User, {through: UserExperiment})
+Experiment.hasMany(Participant, {as: 'participants'})
+User.belongsToMany(Experiment, { through: UserExperiment })
+Image.belongsTo(Experiment, {onDelete: 'cascade'})
+Participant.belongsTo(Experiment)
 
 /* access functions - only returns JSON literals */
 
@@ -104,7 +83,7 @@ function fetchExperiment (experimentId) {
 }
 
 function deleteExperiment (experimentId) {
-  return models.Experiment
+  return Experiment
       .destroy({ where: { id: experimentId } })
 }
 
@@ -121,7 +100,7 @@ function createParticipant (experimentId, email) {
     .then(experiment => {
       const images = experiment.Images
       const state = tree.newState(_.map(images, 'url'))
-      return models.Participant
+      return Participant
         .create({ email, state })
         .then((participant) => {
           return experiment
@@ -132,7 +111,7 @@ function createParticipant (experimentId, email) {
 }
 
 function findParticipant (participateId) {
-  return models.Participant
+  return Participant
     .findOne({ where: { participateId } })
 }
 
@@ -141,7 +120,7 @@ function fetchParticipant (participateId) {
 }
 
 function deleteParticipant (participateId) {
-  return models.Participant.destroy({ where: { participateId } })
+  return Participant.destroy({ where: { participateId } })
 }
 
 function saveParticipant (participateId, values) {
@@ -150,13 +129,13 @@ function saveParticipant (participateId, values) {
 }
 
 function createExperiment (userId, name, description, imageUrls) {
-  return models.Experiment
+  return Experiment
     .create(
       { name, description })
     .then((experiment) => {
       let chainedPromise = null
       for (let url of imageUrls) {
-        let promise = models.Image
+        let promise = Image
           .create({ url })
           .then(image => experiment.addImage(image))
         if (chainedPromise === null) {
@@ -176,31 +155,26 @@ function createExperiment (userId, name, description, imageUrls) {
 }
 
 function createUser (values) {
-  return models.User.create(values)
+  return User.create(values)
 }
 
-const models = {
+function fetchUser(values) {
+  return User
+    .findOne({ where: values})
+    .then(unwrapInstance)
+}
+
+module.exports = {
   sequelize,
-  User,
-  Image,
-  Participant,
-  UserExperiment,
-  Experiment,
+  createUser,
+  fetchUser,
+  createExperiment,
   fetchExperiment,
-  deleteExperiment,
   fetchExperiments,
+  deleteExperiment,
   createParticipant,
   fetchParticipant,
-  deleteParticipant,
   saveParticipant,
-  createExperiment,
-  createUser
+  deleteParticipant
 }
 
-_.each(_.values(models), model => {
-  if (model.associate) {
-    model.associate(models)
-  }
-})
-
-module.exports = models

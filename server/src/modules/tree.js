@@ -1,4 +1,20 @@
 
+/**
+ * Implementation of the binary-tree method for
+ * efficient paired comparions "Efficient method
+ * for paired comparison", Silverstein & Farrell
+ * Journal of Electronic Imaging (2001) 10(2), 394–398
+ *
+ * This algorithm was used for aesthethics comparisons
+ * "Evaluating the Effectiveness of Color to Convey
+ * Alignment Quality in Macromolecular Structures"
+ * Heinrich, Kaur, O'Donoghue (2015) Big Data Visual
+ * Analytics
+ *
+ * This implementation written by (c) 2017 Bosco K. Ho,
+ * based on the work of Tylor Stewart
+ */
+
 function newNode (imageIndex, left, right) {
   return { imageIndex, left, right }
 }

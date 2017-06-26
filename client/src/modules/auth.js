@@ -50,7 +50,7 @@ export default {
     localStorage.removeItem('user')
     user.authenticated = false
     return axios.post(`${config.api}/logout`)
-  },
+  }
 
   // // if using JWT
   // getAuthHeader () {
