@@ -27,7 +27,7 @@
               <option value="female">female</option>
               <option value="other">other</option>
             </select>
-            <button @click="enterUser">
+            <button>
               Start Experiment
             </button>
           </form>
@@ -120,6 +120,8 @@ import axios from 'axios'
 import auth from '../modules/auth'
 import config from '../config'
 import util from '../modules/util'
+import rpc from '../modules/rpc'
+
 export default {
   name: 'invite',
   data() {
@@ -135,8 +137,8 @@ export default {
   },
   mounted() {
     let participateId = this.$route.params.participateId
-    axios
-      .post(`${config.api}/participate/${participateId}`)
+    rpc
+      .rpcRun('getParticipant', participateId)
       .then(this.handleRes)
   },
   methods: {
@@ -168,11 +170,8 @@ export default {
     },
     choose (item){
       let participateId = this.$route.params.participateId
-      let url = `${config.api}/participate-choose/${participateId}`
-      let payload = { return: item.value }
-      console.log('>> Invite.handleRes send', util.jstr(payload))
-      axios
-        .post(url, payload)
+      rpc
+        .rpcRun('chooseItem', participateId, item.value)
         .then(this.handleRes)
     },
     getImageUrl (item) {
@@ -180,14 +179,13 @@ export default {
     },
     enterUser() {
       let participateId = this.$route.params.participateId
-      let url = `${config.api}/participate-user/${participateId}`
-      let payload = {
+      let details = {
         age: this.$data.age,
         gender: this.$data.gender
       }
-      console.log('>> Invite.handleRes new user', payload)
-      axios
-        .post(url, payload)
+      rpc
+        .rpcRun(
+          'saveParticipantUserDetails', participateId, details)
         .then(this.handleRes)
     }
   }

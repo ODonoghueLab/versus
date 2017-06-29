@@ -12,7 +12,7 @@ export default {
   },
   downloadObject (fname, obj) {
     let s = JSON.stringify(obj, null, 2)
-    let data = "text/json;charset=utf-8," + encodeURIComponent(s);
+    let data = 'text/json;charset=utf-8,' + encodeURIComponent(s);
 
     let a = document.createElement('a');
     a.href = 'data:' + data;

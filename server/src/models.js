@@ -3,8 +3,6 @@ const bcrypt = require('bcryptjs')
 
 const tree = require('./modules/tree')
 
-const gmailSend = require('gmail-send')()
-
 // initialize database using Sequelize
 const env = process.env.NODE_ENV || 'development'
 const dbConfig = require('./config')[env]
@@ -90,7 +88,7 @@ function fetchExperiment (experimentId) {
 
 function deleteExperiment (experimentId) {
   return Experiment
-      .destroy({ where: { id: experimentId } })
+    .destroy({ where: { id: experimentId } })
 }
 
 function fetchExperiments (userId) {
@@ -170,16 +168,16 @@ function createUser (values) {
     .findOne({where: {id: values.id}})
     .then(user => {
       if (user === null) {
-        console.log('>> models.createUser', values)
-        return User.create(values)
+        return User
+          .create(values)
+          .then(unwrapInstance)
       }
     })
 }
 
 function updateUser (values) {
-  console.log('>> models.updateUser', values)
   return User
-    .findOne({ where: { id: values.id } })
+    .findOne({where: {id: values.id}})
     .then(user => {
       if (user) {
         return user

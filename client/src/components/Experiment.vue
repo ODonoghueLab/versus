@@ -42,7 +42,7 @@
                 </span>
               </td>
               <td>
-                <span v-if="participant.state.ranks">
+                <span v-if="participant.state.ranks.length">
                   <a 
                       class="button"
                       v-bind:href="participant.state.ranks[0]">
@@ -96,6 +96,7 @@ import axios from 'axios'
 import config from '../config'
 import auth from '../modules/auth'
 import util from '../modules/util'
+import rpc from '../modules/rpc'
 
 export default {
   name: 'experiment',
@@ -112,10 +113,8 @@ export default {
   },
   mounted () {
     let experimentId = this.$route.params.experimentId
-    axios
-      .post(
-        `${config.api}/experiment/${experimentId}`,
-        { userId: auth.user.id })
+    rpc
+      .rpcRun('getExperiment', experimentId)
       .then((res) => {
         let experiment = res.data.experiment
         let participants = experiment.participants
@@ -150,9 +149,8 @@ export default {
       return `/participant/${participant.participateId}`
     },
     deleteInvite(participant) {
-      let url = `${config.api}/delete-invite/${participant.participateId}`
-      axios
-        .post(url)
+      rpc
+        .rpcRun('deleteParticipant', participant.participateId)
         .then((res) => {
           console.log('>> Experiment.deleteInvite', res.data)
           let participants = this.$data.experiment.participants
@@ -162,9 +160,8 @@ export default {
     makeInvite () {
       let experimentId = this.$route.params.experimentId
       let participants = this.$data.experiment.participants
-      let url = `${config.api}/participate-invite/${experimentId}`
-      axios
-        .post(url, { email: 'test@test.com' })
+      rpc
+        .rpcRun('inviteParticipant', experimentId, 'test@test.com')
         .then((res) => {
           console.log('>> Experiment.makeInvite', res.data)
           participants.push(res.data.participant)

@@ -74,7 +74,6 @@ router.post('/api/register', (req, res) => {
 })
 
 router.post('/api/update', (req, res) => {
-  // Sanitization
   const varNames = ['id', 'firstName', 'lastName', 'email', 'password', 'passwordv']
   let values = {}
   for (let varName of varNames) {
@@ -127,126 +126,148 @@ router.post('/api/logout', (req, res) => {
   res.json({ success: true })
 })
 
-router.post('/api/experiments', (req, res) => {
-  models
-    .fetchExperiments(req.body.userId)
-    .then(experiments => {
-      console.log('>> /experiments', experiments)
-      res.json({ experiments })
-    })
-})
+// Public functions for json-rpc-api
 
-// [POST] Create a new Experiment for current user.
-router.post('/api/create-experiment', upload.array('experiment[images]'), (req, res) => {
-  let userId = req.body.userId
-  let name = req.body.experiment.name
-  fileUploader
-    .uploadFiles(req.files)
-    .then((paths) => {
-      let getUrl = f => '/image/' + path.basename(f)
-      models
-        .createExperiment(
-          userId, name, '', _.map(paths, getUrl))
-        .then(experiment => {
-          res.json({ success: true, experimentId: experiment.id })
-        })
-    })
-})
+let publicRunFns = {
 
-// [POST] Create a new Experiment for current user.
-router.post('/api/delete-experiment/:experimentId', (req, res) => {
-  console.log('>> /delete-experiment', req.params.experimentId)
-  models
-      .deleteExperiment(req.params.experimentId)
+  getExperiments (userId) {
+    return models
+      .fetchExperiments(userId)
+      .then(experiments => {
+        return { experiments }
+      })
+  },
+
+  getExperiment (experimentId) {
+    return models
+      .fetchExperiment(experimentId)
+      .then(experiment => {
+        return { experiment }
+      })
+  },
+
+  deleteExperiment (experimentId) {
+    return models
+      .deleteExperiment(experimentId)
       .then(() => {
-        res.json({ success: true })
+        return { success: true }
       })
       .catch(err => {
-        res.json({ success: false, error: err })
+        return { success: false, error: err }
       })
-})
+  },
 
-router.post('/api/experiment/:experimentId', (req, res) => {
-  models
-    .fetchExperiment(req.params.experimentId)
-    .then(experiment => {
-      res.json({ experiment })
-    })
-})
+  inviteParticipant (experimentId, email) {
+    return models
+      .createParticipant(
+        experimentId, email)
+      .then((participant) => {
+        return { participant }
+      })
+  },
 
-router.post('/api/participate-invite/:experimentId', (req, res) => {
-  models
-    .createParticipant(
-      req.params.experimentId, req.body.email.trim())
-    .then((participant) => {
-      res.json({ participant })
-    })
-})
+  deleteParticipant (participantId) {
+    return models
+      .deleteParticipant(participantId)
+      .then(() => {
+        return { success: true }
+      })
+      .catch(err => {
+        return { success: false, error: err }
+      })
+  },
 
-router.post('/api/participate/:participateId', (req, res) => {
-  const participateId = req.params.participateId
-  models.fetchParticipant(participateId)
-    .then(participant => {
-      console.log('>> /participate/', participant)
-      if (participant.user === null) {
-        console.log('>> /participate no result found')
-        res.json({ new: true })
-      } else {
-        const state = participant.state
-        if (tree.isDone(state)) {
-          console.log('>> /participate done')
-          res.json({ done: true })
+  getParticipant (participateId) {
+    return models
+      .fetchParticipant(participateId)
+      .then(participant => {
+        console.log('>> /participate/', participant)
+        if (participant.user === null) {
+          console.log('>> /participate no result found')
+          return { new: true }
         } else {
-          const comparison = tree.getComparison(participant.state)
-          console.log('>> /participate comparison', comparison)
-          return res.json({ comparison })
+          const state = participant.state
+          if (tree.isDone(state)) {
+            console.log('>> /participate done')
+            return { done: true }
+          } else {
+            const comparison = tree.getComparison(participant.state)
+            console.log('>> /participate comparison', comparison)
+            return { comparison }
+          }
         }
-      }
-    })
+      })
+  },
+
+  chooseItem (participateId, chosenImageIndex) {
+    return models
+      .fetchParticipant(participateId)
+      .then(participant => {
+        let payload
+        let state = participant.state
+        tree.makeChoice(state, chosenImageIndex)
+        if (tree.isDone(state)) {
+          tree.rankNodes(state)
+          payload = { done: true }
+        } else {
+          payload = { comparison: tree.getComparison(state) }
+        }
+        return models
+          .saveParticipant(participateId, {state})
+          .then(() => {
+            return payload
+          })
+      })    
+  },
+
+  saveParticipantUserDetails (participateId, details) {
+    return models
+      .saveParticipant(participateId, { user: details })
+      .then(participant => {
+        return {
+          comparison: tree.getComparison(participant.state) 
+        }
+      })
+  }
+}
+
+router.post('/api/rpc-run', (req, res) => {
+  let args = req.body.args
+  let name = req.body.name
+  if (name in publicRunFns) {
+    const runFn = publicRunFns[name]
+    runFn(...args).then(result => { res.json(result) })
+  } else {
+    throw new Error(`Remote proc ${name} not found`)
+  }
 })
 
-router.post('/api/participate-user/:participateId', (req, res) => {
-  let user = req.body
-  let participateId = req.params.participateId
-  models
-    .saveParticipant(participateId, { user: user })
-    .then(participant => {
-      let comparison = tree.getComparison(participant.state)
-      res.json({ comparison })
-    })
-})
+let publicUploadFns = {
 
-router.post('/api/delete-invite/:participateId', (req, res) => {
-  models
-    .deleteParticipant(req.params.participateId)
-    .then(() => {
-      res.json({ success: true })
-    })
-    .catch(err => {
-      res.json({ success: false, error: err })
-    })
-})
+  uploadImages (paths, name, userId) {
+    let getUrl = f => '/image/' + path.basename(f)
+    return models
+      .createExperiment(
+        userId, name, '', _.map(paths, getUrl))
+      .then(experiment => {
+        return { success: true, experimentId: experiment.id }
+      })
+  }
 
-router.post('/api/participate-choose/:participateId', (req, res) => {
-  let participateId = req.params.participateId
-  let chosenImageIndex = req.body.return
-  console.log(participateId, chosenImageIndex)
-  models
-    .fetchParticipant(participateId)
-    .then(participant => {
-      let payload
-      let state = participant.state
-      tree.makeChoice(state, chosenImageIndex)
-      if (tree.isDone(state)) {
-        tree.rankNodes(state)
-        payload = { done: true }
-      } else {
-        payload = { comparison: tree.getComparison(state) }
-      }
-      models
-        .saveParticipant(participateId, {state})
-        .then(() => {
-          res.json(payload)
-        })
-    })
+}
+
+router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
+  let fnName = req.body.fnName
+  let args = JSON.parse(req.body.args)
+  if (fnName in publicUploadFns) {
+    const uploadFn = publicUploadFns[fnName]
+    fileUploader
+      .uploadFiles(req.files)
+      .then((paths) => {
+        args = _.concat([paths], args)
+        uploadFn(...args).then(result => { res.json(result) })
+      })
+  } else {
+    throw new Error(`Remote uploadFn ${fnName} not found`)
+  }
 })

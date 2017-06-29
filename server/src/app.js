@@ -79,4 +79,3 @@ app.use((err, req, res) => {
   res.status(err.status || 500)
     .render('error', { message: err.message, error: {} })
 })
-

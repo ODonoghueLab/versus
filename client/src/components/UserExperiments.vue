@@ -59,10 +59,9 @@ import axios from 'axios'
 import auth from '../modules/auth'
 import config from '../config'
 import util from '../modules/util'
+import rpc from '../modules/rpc'
+import _ from 'lodash'
 
-// really important for using with passport.js 
-// https://stackoverflow.com/questions/40941118/axios-wont-send-cookie-ajax-xhrfields-does-just-fine
-axios.defaults.withCredentials = true
 
 export default {
   name: 'experiments',
@@ -72,25 +71,17 @@ export default {
     }
   },
   mounted() {
-    let payload = { 
-      userId: auth.user.id, 
-    }
-    console.log('>> UserExperiments.mounted', payload)
-    axios
-      .post(config.api + '/experiments', payload)
+    rpc.rpcRun('getExperiments', auth.user.id)
       .then((res) => {
         this.$data.experiments = res.data.experiments
       })
   },
   methods: {
     deleteExperiment(experiment) {
-      console.log('>> UserExperiments.deleteExperiment', experiment)
-      axios
-        .post(
-          `${config.api}/delete-experiment/${experiment.id}`,
-          { withCredentials: true})
+      rpc.rpcRun('deleteExperiment', experiment.id)
         .then((res) => {
-          util.removeItem(this.$data.experiments, experiment, 'id')
+          util.removeItem(
+            this.$data.experiments, experiment, 'id')
         })
     },
     getExperimentRoute(experimentId) {
