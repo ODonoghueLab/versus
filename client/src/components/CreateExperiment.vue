@@ -54,7 +54,7 @@ export default {
   methods: {
     filesChange ($event) {
       this.$data.target = $event.target
-      this.$data.fileStr = `${this.$data.target.files.length} files`
+      this.$data.fileStr = `${event.target.files.length} files`
     },
     submit ($event) {
       rpc.rpcUpload(

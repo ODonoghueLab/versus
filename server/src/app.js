@@ -23,8 +23,10 @@ app.use(function (req, res, next) {
   }
 })
 
+app.engine('.html', require('ejs').renderFile);
+
 // Load production client
-const clientDir = path.join(__dirname, '..', 'client', 'public')
+const clientDir = path.join(__dirname, '..', '..', 'client', 'dist')
 app.use(express.static(clientDir))
 
 // Logs all requests
@@ -57,6 +59,9 @@ authenticate.initExpressApp(app)
 // Load routes
 const routes = require('./routes')
 app.use(routes)
+
+const htmlFile = path.join(clientDir, "index.html")
+app.get("*", (req, res) => res.sendFile(htmlFile));
 
 // Catch 404 and forward to Error Handler
 app.use((req, res, next) => {

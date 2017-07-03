@@ -128,7 +128,7 @@ router.post('/api/logout', (req, res) => {
 
 // Public functions for json-rpc-api
 
-let publicRunFns = {
+let remoteRunFns = {
 
   getExperiments (userId) {
     return models
@@ -233,39 +233,47 @@ let publicRunFns = {
 
 router.post('/api/rpc-run', (req, res) => {
   let args = req.body.args
-  let name = req.body.name
-  if (name in publicRunFns) {
-    const runFn = publicRunFns[name]
-    runFn(...args).then(result => { res.json(result) })
+  let fnName = req.body.fnName
+  if (fnName in remoteRunFns) {
+    const runFn = remoteRunFns[fnName]
+    runFn(...args).then(result => {
+      res.json(result)
+    })
   } else {
-    throw new Error(`Remote proc ${name} not found`)
+    throw new Error(`Remote runFn ${fnName} not found`)
   }
 })
 
-let publicUploadFns = {
-
+let remoteUploadFns = {
   uploadImages (paths, name, userId) {
-    let getUrl = f => '/image/' + path.basename(f)
     return models
       .createExperiment(
-        userId, name, '', _.map(paths, getUrl))
+        userId,
+        name,
+        '',
+        _.map(paths, f => '/image/' + path.basename(f)))
       .then(experiment => {
-        return { success: true, experimentId: experiment.id }
+        return { 
+          success: true, 
+          experimentId: experiment.id
+        }
       })
   }
-
 }
 
 router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
   let fnName = req.body.fnName
   let args = JSON.parse(req.body.args)
-  if (fnName in publicUploadFns) {
-    const uploadFn = publicUploadFns[fnName]
+  if (fnName in remoteUploadFns) {
+    const uploadFn = remoteUploadFns[fnName]
     fileUploader
       .uploadFiles(req.files)
       .then((paths) => {
         args = _.concat([paths], args)
-        uploadFn(...args).then(result => { res.json(result) })
+        uploadFn(...args)
+          .then(result => { 
+            res.json(result) 
+          })
       })
   } else {
     throw new Error(`Remote uploadFn ${fnName} not found`)
