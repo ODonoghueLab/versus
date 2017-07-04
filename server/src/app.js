@@ -53,11 +53,16 @@ authenticate.initExpressApp(app)
 // Load routes for api
 app.use(require('./routes'))
 
-// Load production client
+// Load compiled production client
 const clientDir = path.join(__dirname, '..', '..', 'client', 'dist')
 app.use(express.static(clientDir))
 const htmlFile = path.join(clientDir, 'index.html')
-app.get('/', (req, res) => res.sendFile(htmlFile));
+app.get('/', (req, res) => {
+  res.sendFile(htmlFile)
+})
+app.get('*', (req, res) => {
+  res.redirect('/')
+})
 
 // Catch 404 and forward to Error Handler
 app.use((req, res, next) => {

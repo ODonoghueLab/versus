@@ -57,8 +57,9 @@ export default {
       this.$data.fileStr = `${event.target.files.length} files`
     },
     submit ($event) {
-      rpc.rpcUpload(
-        'uploadImages', this.$data.target, this.$data.name, auth.user.id)
+      rpc
+        .rpcUpload(
+          'uploadImages', this.$data.target, this.$data.name, auth.user.id)
         .then(res => {
           console.log('>> CreateExperiment.submit', res.data)
           let experimentId = res.data.experimentId

@@ -2,6 +2,10 @@ import axios from 'axios'
 import _ from 'lodash'
 import config from '../config'
 
+// really important for using with passport.js 
+// https://stackoverflow.com/questions/40941118/axios-wont-send-cookie-ajax-xhrfields-does-just-fine
+axios.defaults.withCredentials = true
+
 let user = {
   authenticated: false
 }
@@ -13,22 +17,19 @@ export default {
 
   // Send a request to the login URL and save the returned JWT
   login (newUser) {
-    return new Promise((resolve, reject) => {
-      axios
-        .post(config.apiUrl + '/api/login', newUser)
-        .then(
-          (res) => {
-            if (res.data.success) {
-              localStorage.setItem('user', JSON.stringify(newUser))
-              let returnUser = res.data.user
-              user.authenticated = true
-              _.assign(user, returnUser)
-              console.log('>> auth.login user', user)
-            }
-            resolve(res)
-          },
-          reject)
-    })
+    return axios
+      .post(config.apiUrl + '/api/login', newUser)
+      .then(
+        (res) => {
+          if (res.data.success) {
+            localStorage.setItem('user', JSON.stringify(newUser))
+            let returnUser = res.data.user
+            user.authenticated = true
+            _.assign(user, returnUser)
+            console.log('>> auth.login user', user)
+          }
+          return res
+        })
   },
 
   register (newUser) {
@@ -41,13 +42,9 @@ export default {
   },
 
   restoreLastUser () {
-    return new Promise((resolve, reject) => {
-      let lastUser = JSON.parse(localStorage.getItem('user'))
-      console.log('>> auth.restoreLastUser', lastUser)
-      this
-        .login(lastUser)
-        .then(resolve)
-    })
+    let lastUser = JSON.parse(localStorage.getItem('user'))
+    console.log('>> auth.restoreLastUser', lastUser)
+    return this.login(lastUser)
   },
 
   // To log out, we just need to remove the token
@@ -56,11 +53,4 @@ export default {
     user.authenticated = false
     return axios.post(`${config.apiUrl}/api/logout`)
   }
-
-  // // if using JWT
-  // getAuthHeader () {
-  //   return {
-  //     'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-  //   }
-  // }
 }
