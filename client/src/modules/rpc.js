@@ -23,7 +23,9 @@ export default {
     let formData = new FormData()
     formData.append('fnName', fnName)
     formData.append('args', JSON.stringify(args))
-    _.each(files, f => { formData.append('uploadFiles', f, f.name) })
+    _.each(files, f => { 
+      formData.append('uploadFiles', f, f.name) 
+    })
     console.log('>> rpc.rpcUpoad', fnName, args, _.map(files, 'name'))
     return axios.post(`${config.apiUrl}/api/rpc-upload`, formData)
   }

@@ -38,7 +38,7 @@
           <input 
               type='password'
               v-model='passwordv'
-              placeholder='Password'>
+              placeholder='Confirm Password'>
           </input>
           <br>
           <button>register</button>
@@ -76,7 +76,7 @@ export default {
   },
   methods: {
     submit(e) {
-      let credentials = {
+      let payload = {
         firstName: this.$data.firstName,
         lastName: this.$data.lastName,
         email: this.$data.email,
@@ -84,13 +84,13 @@ export default {
         passwordv: this.$data.password
       }
       auth
-        .register(credentials)
+        .register(payload)
         .then((res) => {
           if (res.data.success) {
             console.log('>> Register.submit success: login')
             return auth.login({
-              email: credentials.email,
-              password: credentials.password
+              email: payload.email,
+              password: payload.password
             })
           } else {
             console.log('>> Register.submit fail', res.data)

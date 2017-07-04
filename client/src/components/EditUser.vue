@@ -77,22 +77,23 @@ export default {
   },
   methods: {
     submit(e) {
-      let credentials = {}
-      let keys = ['id', 'firstName', 'lastName', 'email', 'password', 'passwordv']
-      _.each(keys, key => {
-        if (this.$data[key]) {
-          credentials[key] = this.$data[key]
-        }
-      })
-      console.log('>> EditUser.submit', credentials)
+      let payload = {
+        id: this.$data.id,
+        firstName: this.$data.firstName,
+        lastName: this.$data.lastName,
+        email: this.$data.email,
+        password: this.$data.password,
+        passwordv: this.$data.password
+      }
+      console.log('>> EditUser.submit', payload)
       auth
-        .update(credentials)
+        .update(payload)
         .then((res) => {
           if (res.data.success) {
             console.log('>> Register.submit success: login')
             return auth.login({
-              email: credentials.email,
-              password: credentials.password
+              email: payload.email,
+              password: payload.password
             })
           } else {
             console.log('>> Register.submit fail', res.data)

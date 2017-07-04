@@ -49,19 +49,18 @@ export default {
       title: 'Welcome to Versus',
       email: '',
       password: '',
-      user: auth.user,
       msg: ''
     }
   },
   methods: {
     submit(e) {
-      let credentials = {
+      let payload = {
         email: this.$data.email,
         password: this.$data.password
       }
-      console.log('>> Login.submit', credentials)
+      console.log('>> Login.submit', payload)
       auth
-        .login(credentials)
+        .login(payload)
         .then((res) => {
           if (res.data.success) {
             this.$router.push('/experiments')

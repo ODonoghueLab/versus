@@ -25,13 +25,13 @@ module.exports = router
 
 router.post('/api/register', (req, res) => {
   // Sanitization
-  const varNames = ['firstName', 'lastName', 'email', 'password', 'passwordv']
-  for (let varName of varNames) {
-    req.sanitize(varName).escape()
-    req.sanitize(varName).trim()
+  const keys = ['firstName', 'lastName', 'email', 'password', 'passwordv']
+  for (let key of keys) {
+    req.sanitize(key).escape()
+    req.sanitize(key).trim()
   }
 
-  // Validation
+  // Server-side validation using expressValidator
   req.checkBody('firstName', 'Please Enter Your First Name').notEmpty()
   req.checkBody('lastName', 'Please Enter Your Last Name').notEmpty()
   req.checkBody('email', 'Please Enter Your Email').notEmpty()
@@ -69,14 +69,13 @@ router.post('/api/register', (req, res) => {
 })
 
 router.post('/api/update', (req, res) => {
-  const varNames = ['id', 'firstName', 'lastName', 'email', 'password', 'passwordv']
+  const keys = ['id', 'firstName', 'lastName', 'email', 'password']
   let values = {}
-  for (let varName of varNames) {
-    if (req.body[varName]) {
-      values[varName] = req.body[varName]
+  for (let key of keys) {
+    if (req.body[key]) {
+      values[key] = req.body[key]
     }
   }
-
   console.log('>> /api/update', values)
   if (values) {
     models
@@ -263,7 +262,7 @@ let remoteUploadFns = {
         '',
         _.map(paths, f => '/image/' + path.basename(f)))
       .then(experiment => {
-        return { 
+        return {
           success: true, 
           experimentId: experiment.id
         }
