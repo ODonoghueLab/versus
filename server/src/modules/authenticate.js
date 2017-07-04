@@ -35,11 +35,9 @@ function initExpressApp (app) {
       passwordField: 'password'
     },
     (email, password, done) => {
-      console.log('>> authenticate.LocalStrategy', email, password)
       models
         .fetchUser({ email })
         .then((user) => {
-          console.log('>> authenticate.LocalStrategy user', user)
           if (user === null) { return done(null, false) }
           bcrypt.compare(password, user.password, (err, isMatch) => {
             if (err) {

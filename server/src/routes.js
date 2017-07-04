@@ -99,11 +99,11 @@ router.post('/api/login', (req, res, next) => {
       console.log('>> /api/login error', err)
       return next(err)
     }
-    console.log('>> /api/login user', user)
     if (!user) {
       return res.json(
         { success: false, msg: 'user/password not found' })
     }
+    console.log('>> /api/login user', user)
     req.logIn(user, (error) => {
       if (error) {
         console.log('>> /api/login error', err)
@@ -257,6 +257,7 @@ function storeFiles (uploadedFiles) {
       err = msg
     }
 
+    console.log('>> routes.storeFiles', uploadedFiles)
     const inputPaths = []
     const targetPaths = []
 
@@ -308,6 +309,7 @@ router.get('/image/:basename', (req, res) => {
 
 let remoteUploadFns = {
   uploadImages (paths, name, userId) {
+    console.log('>> routes.remoteUploadFns', paths, name, userId)
     return models
       .createExperiment(
         userId,
@@ -324,11 +326,12 @@ let remoteUploadFns = {
 }
 
 router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
+  console.log('>> /api/rpc-upload')
   let fnName = req.body.fnName
   let args = JSON.parse(req.body.args)
   if (fnName in remoteUploadFns) {
     const uploadFn = remoteUploadFns[fnName]
-    storeFiles(req.uploadedFiles)
+    storeFiles(req.files)
       .then((paths) => {
         args = _.concat([paths], args)
         uploadFn(...args)
