@@ -44,21 +44,22 @@ const Participant = sequelize.define('Participant', {
   state: Sequelize.JSON
 })
 
-const UserExperiment = sequelize.define('UserExperiment', {
-  permission: Sequelize.INTEGER
-})
-
 const Experiment = sequelize.define('Experiment', {
   name: Sequelize.STRING,
   description: Sequelize.STRING
 })
 
+const UserExperiment = sequelize.define('UserExperiment', {
+  permission: Sequelize.INTEGER
+})
+
 Experiment.hasMany(Image, {as: 'Images'})
 Experiment.belongsToMany(User, {through: UserExperiment})
 Experiment.hasMany(Participant, {as: 'participants'})
-User.belongsToMany(Experiment, { through: UserExperiment })
 Image.belongsTo(Experiment, {onDelete: 'cascade'})
 Participant.belongsTo(Experiment)
+
+User.belongsToMany(Experiment, { through: UserExperiment })
 
 /* access functions - only returns JSON literals */
 

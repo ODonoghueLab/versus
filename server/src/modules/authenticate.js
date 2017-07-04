@@ -19,26 +19,31 @@ function initExpressApp (app) {
   })
 
   // Passport Configuration : Local Strategy.
-  passport.use(new LocalStrategy((email, password, done) => {
-    models.fetchUser({ email })
-      .then((user) => {
-        if (user === null) { return done(null, false) }
-        bcrypt.compare(password, user.password, (err, isMatch) => {
-          if (err) {
-            throw err
-          }
-          if (isMatch) {
-            return done(null, user, { name: user.name })
-          } else {
-            return done(null, false)
-          }
+  passport.use(new LocalStrategy(
+    {
+      usernameField: 'email',
+      passwordField: 'password'
+    },
+    (email, password, done) => {
+      models.fetchUser({ email })
+        .then((user) => {
+          if (user === null) { return done(null, false) }
+          bcrypt.compare(password, user.password, (err, isMatch) => {
+            if (err) {
+              throw err
+            }
+            if (isMatch) {
+              return done(null, user, { name: user.name })
+            } else {
+              return done(null, false)
+            }
+          })
         })
-      })
-      .catch((err) => {
-        console.log('>> local.strategy fail', err)
-        done(null, false)
-      })
-  }
+        .catch((err) => {
+          console.log('>> local.strategy fail', err)
+          done(null, false)
+        })
+    }
   ))
 
   app.use(passport.initialize())

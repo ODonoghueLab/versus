@@ -7,7 +7,7 @@ const filesDir = require('./config').filesDir
 const mime = require('mime')
 const multer = require('multer')
 const upload = multer({ dest: filesDir })
-const fileUploader = require('./modules/fileUploader.js')
+const fileStorage = require('./modules/fileStorage.js')
 
 const passport = require('passport')
 
@@ -19,14 +19,9 @@ const router = express.Router()
 
 module.exports = router
 
-router.get('/image/:basename', (req, res) => {
-  let basename = req.params.basename
-  let filename = path.join(filesDir, basename)
-  let mimeType = mime.lookup(filename)
-  res.setHeader('Content-disposition', `attachment; filename=${basename}`)
-  res.setHeader('Content-type', mimeType)
-  fs.createReadStream(filename).pipe(res)
-})
+/**
+ * User routes - login/register etc.
+ */
 
 router.post('/api/register', (req, res) => {
   // Sanitization
@@ -126,7 +121,9 @@ router.post('/api/logout', (req, res) => {
   res.json({ success: true })
 })
 
-// Public functions for json-rpc-api
+/**
+ *  Public functions for json-rpc-api
+ */
 
 let remoteRunFns = {
 
@@ -244,6 +241,19 @@ router.post('/api/rpc-run', (req, res) => {
   }
 })
 
+/**
+ * Uploading file-handler and generic file return
+ */
+
+router.get('/image/:basename', (req, res) => {
+  let basename = req.params.basename
+  let filename = path.join(filesDir, basename)
+  let mimeType = mime.lookup(filename)
+  res.setHeader('Content-disposition', `attachment; filename=${basename}`)
+  res.setHeader('Content-type', mimeType)
+  fs.createReadStream(filename).pipe(res)
+})
+
 let remoteUploadFns = {
   uploadImages (paths, name, userId) {
     return models
@@ -266,8 +276,7 @@ router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
   let args = JSON.parse(req.body.args)
   if (fnName in remoteUploadFns) {
     const uploadFn = remoteUploadFns[fnName]
-    fileUploader
-      .uploadFiles(req.files)
+    fileStorage(req.files)
       .then((paths) => {
         args = _.concat([paths], args)
         uploadFn(...args)

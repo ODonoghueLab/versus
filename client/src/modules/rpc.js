@@ -7,7 +7,7 @@ import config from '../config'
  * api with the server
  */
 
-// really important for using with passport.js 
+// really important for using with passport.js
 // https://stackoverflow.com/questions/40941118/axios-wont-send-cookie-ajax-xhrfields-does-just-fine
 axios.defaults.withCredentials = true
 

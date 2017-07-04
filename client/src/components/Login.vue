@@ -13,7 +13,7 @@
           <h2>{{ title }}</h2>
           <input 
               type='text'
-              v-model='username'
+              v-model='email'
               placeholder='E-mail address'>
           </input>
           <br>
@@ -47,7 +47,7 @@ export default {
   data() {
     return {
       title: 'Welcome to Versus',
-      username: '',
+      email: '',
       password: '',
       user: auth.user,
       msg: ''
@@ -56,7 +56,7 @@ export default {
   methods: {
     submit(e) {
       let credentials = {
-        username: this.$data.username,
+        email: this.$data.email,
         password: this.$data.password
       }
       console.log('>> Login.submit', credentials)

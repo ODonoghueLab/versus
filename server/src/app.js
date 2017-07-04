@@ -56,9 +56,8 @@ app.use(require('./routes'))
 // Load compiled production client
 const clientDir = path.join(__dirname, '..', '..', 'client', 'dist')
 app.use(express.static(clientDir))
-const htmlFile = path.join(clientDir, 'index.html')
 app.get('/', (req, res) => {
-  res.sendFile(htmlFile)
+  res.sendFile(path.join(clientDir, 'index.html'))
 })
 app.get('*', (req, res) => {
   res.redirect('/')

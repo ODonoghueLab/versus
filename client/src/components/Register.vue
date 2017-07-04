@@ -89,7 +89,7 @@ export default {
           if (res.data.success) {
             console.log('>> Register.submit success: login')
             return auth.login({
-              username: credentials.email,
+              email: credentials.email,
               password: credentials.password
             })
           } else {

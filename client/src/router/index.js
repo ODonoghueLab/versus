@@ -1,6 +1,10 @@
 import _ from 'lodash'
+
 import Vue from 'vue'
 import Router from 'vue-router'
+
+import auth from '../modules/auth'
+
 import UserExperiments from '@/components/UserExperiments'
 import Experiment from '@/components/Experiment'
 import CreateExperiment from '@/components/CreateExperiment'
@@ -8,7 +12,6 @@ import Participant from '@/components/Participant'
 import Login from '@/components/Login'
 import Register from '@/components/Register'
 import EditUser from '@/components/EditUser'
-import auth from '../modules/auth'
 
 Vue.use(Router)
 
