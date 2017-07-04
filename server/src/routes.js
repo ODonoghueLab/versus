@@ -3,16 +3,16 @@ const fs = require('fs')
 
 const _ = require('lodash')
 
-const filesDir = require('./config').filesDir
-const mime = require('mime')
-const multer = require('multer')
-const upload = multer({ dest: filesDir })
-const fileStorage = require('./modules/fileStorage.js')
-
-const passport = require('passport')
-
+const config = require('./config')
 const models = require('./models')
 const tree = require('./modules/tree')
+
+const mime = require('mime')
+const multer = require('multer')
+const upload = multer({ dest: config.filesDir })
+const del = require('del')
+
+const passport = require('passport')
 
 const express = require('express')
 const router = express.Router()
@@ -30,7 +30,6 @@ router.post('/api/register', (req, res) => {
     req.sanitize(key).escape()
     req.sanitize(key).trim()
   }
-
   // Server-side validation using expressValidator
   req.checkBody('firstName', 'Please Enter Your First Name').notEmpty()
   req.checkBody('lastName', 'Please Enter Your Last Name').notEmpty()
@@ -39,16 +38,13 @@ router.post('/api/register', (req, res) => {
   req.checkBody('passwordv', 'Please Enter Both Password Fields').notEmpty()
   // req.checkBody('password', 'Please Enter A Longer Password').len(6);
   req.checkBody('password', 'Passwords Do Not Match').equals(req.body.passwordv)
-
   const errors = req.validationErrors()
-
   let values = {
     firstName: req.body.firstName,
     lastName: req.body.lastName,
     email: req.body.email,
     password: req.body.password
   }
-
   if (errors) {
     values.errors = errors.map(obj => obj.msg)
     values.success = false
@@ -70,6 +66,10 @@ router.post('/api/register', (req, res) => {
 
 router.post('/api/update', (req, res) => {
   const keys = ['id', 'firstName', 'lastName', 'email', 'password']
+  for (let key of keys) {
+    req.sanitize(key).escape()
+    req.sanitize(key).trim()
+  }
   let values = {}
   for (let key of keys) {
     if (req.body[key]) {
@@ -244,9 +244,62 @@ router.post('/api/rpc-run', (req, res) => {
  * Uploading file-handler and generic file return
  */
 
+function storeFiles (uploadedFiles) {
+
+  return new Promise((resolve, reject) => {
+    const stamp = String(new Date().getTime())
+    let err = ''
+
+    function rollback (msg) {
+      for (let i = 0; i < uploadedFiles.length; i += 1) {
+        del(uploadedFiles[i].path)
+      }
+      err = msg
+    }
+
+    const inputPaths = []
+    const targetPaths = []
+
+    if (uploadedFiles.length < 2) {
+      err = 'Minimum two images.'
+    } else {
+      for (let i = 0; i < uploadedFiles.length; i += 1) {
+        let file = uploadedFiles[i]
+        const extname = path.extname(file.originalname).toLowerCase()
+        // handle formats
+        if (!_.includes(['.png', '.jpg', '.gif'], extname)) {
+          rollback(`only png's, jpg's, gif's`)
+          break
+        }
+        // size checking
+        if (file.size / 1000000 > 2) {
+          rollback('Please Keep Images Under 2MB')
+          break
+        }
+        let basename = String(stamp) + String(i) + extname
+        inputPaths.push(file.path)
+        targetPaths.push(path.join(config.filesDir, basename))
+        try {
+          fs.renameSync(inputPaths[i], targetPaths[i])
+          console.log('uploadFiles', path.basename(inputPaths[i]), '->', basename)
+        } catch (err) {
+          rollback(err)
+          break
+        }
+      }
+    }
+
+    if (err) {
+      reject(err)
+    } else {
+      resolve(targetPaths)
+    }
+  })
+}
+
 router.get('/image/:basename', (req, res) => {
   let basename = req.params.basename
-  let filename = path.join(filesDir, basename)
+  let filename = path.join(config.filesDir, basename)
   let mimeType = mime.lookup(filename)
   res.setHeader('Content-disposition', `attachment; filename=${basename}`)
   res.setHeader('Content-type', mimeType)
@@ -275,7 +328,7 @@ router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
   let args = JSON.parse(req.body.args)
   if (fnName in remoteUploadFns) {
     const uploadFn = remoteUploadFns[fnName]
-    fileStorage(req.files)
+    storeFiles(req.uploadedFiles)
       .then((paths) => {
         args = _.concat([paths], args)
         uploadFn(...args)

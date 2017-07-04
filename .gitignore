@@ -11,3 +11,8 @@ app/config/keys.json
 app/files
 npm-debug.log
 npm-debug.log.*
+
+# Server files
+server/files
+server/yarn.lock
+client/yarn.lock
