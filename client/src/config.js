@@ -1,4 +1,7 @@
+const ip = '0.0.0.0'
+const port = '3000'
 export default {
-  api: 'http://localhost:3000/api',
-  apiUrl: 'http://localhost:3000'
+  ip: ip,
+  port: port,
+  apiUrl: `http://${ip}:${port}`
 }

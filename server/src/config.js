@@ -1,7 +1,10 @@
 const path = require('path')
 
 module.exports = {
-  'development': {
+  filesDir: path.join(__dirname, '..', 'files'),
+  ip: '0.0.0.0',
+  port: 3000,
+  development: {
     'username': 'postgres',
     'password': 'postgres',
     'database': 'versus',
@@ -9,7 +12,7 @@ module.exports = {
     'port': 5432,
     'dialect': 'postgres'
   },
-  'production': {
+  production: {
     'username': '',
     'password': '',
     'database': '',
@@ -17,11 +20,4 @@ module.exports = {
     'port': 5432,
     'dialect': 'postgres'
   },
-  's3': {
-    'id': '',
-    'secret': '',
-    'region': '',
-    'bucket': ''
-  },
-  filesDir: path.join(__dirname, '..', 'files')
 }

@@ -98,6 +98,10 @@ import auth from '../modules/auth'
 import util from '../modules/util'
 import rpc from '../modules/rpc'
 
+function getFullUrl (url) {
+  return config.apiUrl + url
+}
+
 export default {
   name: 'experiment',
   data() {
@@ -107,8 +111,8 @@ export default {
   },
   computed: {
     imageUrls: function () {
-      let images = this.$data.experiment.Images
-      return _.map( images, i => config.apiUrl + i.url)
+      let urls = _.map(this.$data.experiment.Images, 'url')
+      return _.map(urls, getFullUrl)
     },
   },
   mounted () {
@@ -121,7 +125,7 @@ export default {
         _.each(participants, participant => {
           let state = participant.state
           if ('ranks' in state) {
-            state.ranks = _.map(state.ranks, r => config.apiUrl + r)
+            state.ranks = _.map(state.ranks, getFullUrl)
           }
         })
         console.log('>> Experiment.mounted', experiment)

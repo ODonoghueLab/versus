@@ -23,8 +23,6 @@ app.use(function (req, res, next) {
   }
 })
 
-app.engine('.html', require('ejs').renderFile);
-
 // Logs all requests
 const logger = require('morgan')
 app.use(logger('dev'))
@@ -52,15 +50,14 @@ app.use(expressValidator())
 const authenticate = require('./modules/authenticate')
 authenticate.initExpressApp(app)
 
-// Load routes
-const routes = require('./routes')
-app.use(routes)
+// Load routes for api
+app.use(require('./routes'))
 
 // Load production client
 const clientDir = path.join(__dirname, '..', '..', 'client', 'dist')
 app.use(express.static(clientDir))
 const htmlFile = path.join(clientDir, 'index.html')
-app.get("*", (req, res) => res.sendFile(htmlFile));
+app.get('/', (req, res) => res.sendFile(htmlFile));
 
 // Catch 404 and forward to Error Handler
 app.use((req, res, next) => {

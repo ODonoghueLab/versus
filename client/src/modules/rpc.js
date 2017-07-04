@@ -14,7 +14,7 @@ export default {
       args: _.takeRight(args, n - 1)
     }
     console.log('>> rpc.rpcRun', args)
-    return axios.post(`${config.api}/rpc-run`, payload)
+    return axios.post(`${config.apiUrl}/api/rpc-run`, payload)
   },
 
   rpcUpload (fnName, inputEventTarget, ...args) {
@@ -25,8 +25,8 @@ export default {
     _.each(files, file => {
       formData.append('uploadFiles', file, file.name)
     })
-    console.log('>> rpcUpoad ', fnName, args, _.map(files, 'name'))
-    return axios.post(`${config.api}/rpc-upload`, formData)
+    console.log('>> rpc.rpcUpoad', fnName, args, _.map(files, 'name'))
+    return axios.post(`${config.apiUrl}/api/rpc-upload`, formData)
   }
 
 }

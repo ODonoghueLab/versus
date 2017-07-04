@@ -15,7 +15,7 @@ export default {
   login (newUser) {
     return new Promise((resolve, reject) => {
       axios
-        .post(config.api + '/login', newUser)
+        .post(config.apiUrl + '/api/login', newUser)
         .then(
           (res) => {
             if (res.data.success) {
@@ -32,12 +32,12 @@ export default {
   },
 
   register (newUser) {
-    return axios.post(config.api + '/register', newUser)
+    return axios.post(config.apiUrl + '/api/register', newUser)
   },
 
   update (user) {
     console.log('>> auth.update', user)
-    return axios.post(config.api + '/update', user)
+    return axios.post(config.apiUrl + '/api/update', user)
   },
 
   restoreLastUser () {
@@ -54,7 +54,7 @@ export default {
   logout () {
     localStorage.removeItem('user')
     user.authenticated = false
-    return axios.post(`${config.api}/logout`)
+    return axios.post(`${config.apiUrl}/api/logout`)
   }
 
   // // if using JWT
