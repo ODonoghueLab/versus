@@ -11,7 +11,7 @@
         </md-table-row>
       </md-table-header>
       <md-table-body>
-        <md-table-row v-for="experiment in experiments">
+        <md-table-row v-for="(experiment, index) in experiments" :key="index">
           <md-table-cell style="width: 100%">
             <a @click="getExperimentRoute(experiment.id)">
               {{experiment.name}}

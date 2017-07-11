@@ -19,8 +19,7 @@ export default {
     return axios.post(`${config.apiUrl}/api/rpc-run`, {fnName, args})
   },
 
-  rpcUpload (fnName, inputEventTarget, ...args) {
-    let files = inputEventTarget.files
+  rpcUpload (fnName, files, ...args) {
     let formData = new FormData()
     formData.append('fnName', fnName)
     formData.append('args', JSON.stringify(args))

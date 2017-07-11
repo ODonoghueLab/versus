@@ -1,30 +1,33 @@
 <template>
-  <div class="container">
-    <div class="row">
-      <div class="col-sm-12 col-md-12 col-lg-12">
-        <h1> Create Experiment </h1>
-        <form v-on:submit.prevent="submit">
-          <label>Name</label>
-          <input 
-              type="text"
-              name="uploadFiles"
-              v-model="name">
-              </input>
-          <input 
-              type="file" 
-              id="file-input"
-              multiple
-              @change="filesChange($event)">
-              </input>
-          <label for="file-input" class="button">
-            Upload files
-          </label>          
-          {{fileStr}}
-          <br>
-          <button type="submit">Submit</button>
-        </form>
-      </div>
-    </div>
+  <div style="padding-left: 1em; padding-right: 1em; text-align: left">
+    <h2 class="md-display-2">
+      Create Experiment
+    </h2>
+
+    <form v-on:submit.prevent="submit">
+      <md-input-container>
+        <label>Name</label>
+        <md-input
+            type="text"
+            name="uploadFiles"
+            v-model="name">
+        </md-input>
+      </md-input-container>
+      <md-input-container>
+        <md-file
+            id="file-input"
+            multiple
+            v-model="multipleFiles"
+            @selected="selectFiles">
+        </md-file>
+        <label for="file-input" class="button">
+          Upload files
+        </label>
+        {{fileStr}}
+      </md-input-container>
+      <br>
+      <md-button @click="submit" class="md-raised md-primary">Submit</md-button>
+    </form>
   </div>
 </template>
 
@@ -33,40 +36,41 @@
 </style>
 
 <script>
-import axios from 'axios'
-import _ from 'lodash'
+  import axios from 'axios'
+  import _ from 'lodash'
 
-import config from '../config'
-import auth from '../modules/auth'
-import util from '../modules/util'
-import rpc from '../modules/rpc'
+  import config from '../config'
+  import auth from '../modules/auth'
+  import util from '../modules/util'
+  import rpc from '../modules/rpc'
 
-export default {
-  name: 'createExperiment',
-  data() {
-    return {
-      target: null,
-      name: '',
-      files: '',
-      fileStr: ''
-    }
-  },
-  methods: {
-    filesChange ($event) {
-      this.$data.target = $event.target
-      this.$data.fileStr = `${event.target.files.length} files`
+  export default {
+    name: 'createExperiment',
+    data() {
+      return {
+        target: null,
+        name: '',
+        files: '',
+        fileStr: '',
+        multipleFiles: null
+      }
     },
-    submit ($event) {
-      rpc
-        .rpcUpload(
-          'uploadImages', this.$data.target, this.$data.name, auth.user.id)
-        .then(res => {
-          console.log('>> CreateExperiment.submit', res.data)
-          let experimentId = res.data.experimentId
-          this.$router.push('/experiment/' + experimentId)
-        })
+    methods: {
+      selectFiles (files) {
+        this.$data.files = files
+        this.$data.fileStr = `${files.length} files`
+      },
+      submit ($event) {
+        rpc
+          .rpcUpload(
+            'uploadImages', this.$data.files, this.$data.name, auth.user.id)
+          .then(res => {
+            console.log('>> CreateExperiment.submit', res.data)
+            let experimentId = res.data.experimentId
+            this.$router.push('/experiment/' + experimentId)
+          })
+      }
     }
   }
-}
 </script>
 

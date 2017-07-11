@@ -22,7 +22,7 @@
         </md-table-row>
       </md-table-header>
       <md-table-body>
-        <md-table-row v-for="participant in experiment.participants">
+        <md-table-row v-for="(participant, index) in experiment.participants" :key="index">
           <md-table-cell>
             <router-link
                 class="button"
@@ -31,23 +31,23 @@
             </router-link>
           </md-table-cell>
           <md-table-cell>
-                <span v-if="participant.user">
-                  {{participant.user.age}}
-                </span>
+            <span v-if="participant.user">
+              {{participant.user.age}}
+            </span>
           </md-table-cell>
           <md-table-cell>
-                <span v-if="participant.user">
-                  {{participant.user.gender}}
-                </span>
+            <span v-if="participant.user">
+              {{participant.user.gender}}
+            </span>
           </md-table-cell>
           <md-table-cell>
-                <span v-if="participant.state.ranks.length">
-                  <a
-                      class="button"
-                      v-bind:href="participant.state.ranks[0]">
-                    Image
-                  </a>
-                </span>
+            <span v-if="participant.state.ranks.length">
+              <a
+                  class="button"
+                  v-bind:href="participant.state.ranks[0]">
+                Image
+              </a>
+            </span>
           </md-table-cell>
           <md-table-cell>
             {{reformatDate(participant, 'createdAt')}}
@@ -67,10 +67,10 @@
 
     <h3>Images</h3>
 
-    <md-layout md-gutter :md-gutter="15">
-      <md-layout>
-        <md-card v-for="url in imageUrls">
-          <img v-bind:src="url">
+    <md-layout md-gutter :md-gutter="40">
+      <md-layout  md-gutter :md-gutter="40">
+        <md-card v-for="(url, index) in imageUrls" :key="index">
+          <img style="width: 100px" v-bind:src="url">
         </md-card>
       </md-layout>
     </md-layout>
