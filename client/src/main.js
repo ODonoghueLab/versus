@@ -7,7 +7,8 @@ import auth from './modules/auth'
 
 Vue.config.productionTip = false
 
-auth.restoreLastUser()
+auth
+  .restoreLastUser()
   .then(() => {
     /* eslint-disable no-new */
     new Vue({

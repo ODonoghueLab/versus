@@ -20,7 +20,7 @@ const sequelize = new Sequelize(
 const User = sequelize.define('User', {
   firstName: Sequelize.STRING,
   lastName: Sequelize.STRING,
-  email: { type: Sequelize.STRING, unique: true },
+  email: {type: Sequelize.STRING, unique: true},
   password: Sequelize.STRING
 })
 
@@ -59,7 +59,7 @@ Experiment.hasMany(Participant, {as: 'participants'})
 Image.belongsTo(Experiment, {onDelete: 'cascade'})
 Participant.belongsTo(Experiment)
 
-User.belongsToMany(Experiment, { through: UserExperiment })
+User.belongsToMany(Experiment, {through: UserExperiment})
 
 /* access functions - only returns JSON literals */
 
@@ -67,17 +67,17 @@ function unwrapInstance (instance) {
   if (instance === null) {
     return null
   } else {
-    return instance.get({ plain: true })
+    return instance.get({plain: true})
   }
 }
 
 function findExperiment (experimentId) {
   return Experiment.findOne({
-    where: { id: experimentId },
+    where: {id: experimentId},
     include: [
-      { model: Image, as: 'Images' },
-      { model: User, as: 'Users' },
-      { model: Participant, as: 'participants' }
+      {model: Image, as: 'Images'},
+      {model: User, as: 'Users'},
+      {model: Participant, as: 'participants'}
     ]
   })
 }
@@ -89,13 +89,13 @@ function fetchExperiment (experimentId) {
 
 function deleteExperiment (experimentId) {
   return Experiment
-    .destroy({ where: { id: experimentId } })
+    .destroy({where: {id: experimentId}})
 }
 
 function fetchExperiments (userId) {
   return Experiment
     .findAll(
-      { include: [{ model: User, where: { id: userId } }] })
+      {include: [{model: User, where: {id: userId}}]})
     .then(
       experiments => _.map(experiments, unwrapInstance))
 }
@@ -106,7 +106,7 @@ function createParticipant (experimentId, email) {
       const images = experiment.Images
       const state = tree.newState(_.map(images, 'url'))
       return Participant
-        .create({ email, state })
+        .create({email, state})
         .then((participant) => {
           return experiment
             .addParticipant(participant)
@@ -119,7 +119,7 @@ function createParticipant (experimentId, email) {
 
 function findParticipant (participateId) {
   return Participant
-    .findOne({ where: { participateId } })
+    .findOne({where: {participateId}})
 }
 
 function fetchParticipant (participateId) {
@@ -127,7 +127,7 @@ function fetchParticipant (participateId) {
 }
 
 function deleteParticipant (participateId) {
-  return Participant.destroy({ where: { participateId } })
+  return Participant.destroy({where: {participateId}})
 }
 
 function saveParticipant (participateId, values) {
@@ -142,12 +142,12 @@ function saveParticipant (participateId, values) {
 function createExperiment (userId, name, description, imageUrls) {
   return Experiment
     .create(
-      { name, description })
+      {name, description})
     .then((experiment) => {
       let chainedPromise = null
       for (let url of imageUrls) {
         let promise = Image
-          .create({ url })
+          .create({url})
           .then(image => experiment.addImage(image))
         if (chainedPromise === null) {
           chainedPromise = promise
@@ -157,7 +157,7 @@ function createExperiment (userId, name, description, imageUrls) {
       }
       chainedPromise
         .then(() => {
-          experiment.addUser(userId, { permission: 0 })
+          experiment.addUser(userId, {permission: 0})
           return unwrapInstance(experiment)
         })
       return chainedPromise
@@ -192,7 +192,7 @@ function updateUser (values) {
 
 function fetchUser (values) {
   return User
-    .findOne({ where: values })
+    .findOne({where: values})
     .then(unwrapInstance)
 }
 

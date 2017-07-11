@@ -1,9 +1,8 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-a visual client
-
-a visual server
+a pycharm client
+a pycharm server
 
 osascript 2>/dev/null <<EOF
 

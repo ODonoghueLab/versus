@@ -47,7 +47,6 @@ export default {
     return this.login(lastUser)
   },
 
-  // To log out, we just need to remove the token
   logout () {
     localStorage.removeItem('user')
     user.authenticated = false

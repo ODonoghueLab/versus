@@ -1,4 +1,4 @@
-const ip = '0.0.0.0'
+const ip = 'localhost'
 const port = '3000'
 
 export default {

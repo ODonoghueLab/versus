@@ -1,4 +1,3 @@
-
 export default {
 
   jstr (o) {
@@ -23,8 +22,8 @@ export default {
 
   /**
    * Saves
-   * @param {*} fname 
-   * @param {*} obj 
+   * @param {*} fname
+   * @param {*} obj
    */
   downloadObject (fname, obj) {
     let s = JSON.stringify(obj, null, 2)

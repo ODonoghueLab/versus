@@ -15,7 +15,7 @@ export default {
 
   rpcRun (fnName, ...args) {
     console.log('>> rpc.rpcRun', fnName, args)
-    return axios.post(`${config.apiUrl}/api/rpc-run`, { fnName, args })
+    return axios.post(`${config.apiUrl}/api/rpc-run`, {fnName, args})
   },
 
   rpcUpload (fnName, inputEventTarget, ...args) {
@@ -23,8 +23,8 @@ export default {
     let formData = new FormData()
     formData.append('fnName', fnName)
     formData.append('args', JSON.stringify(args))
-    _.each(files, f => { 
-      formData.append('uploadFiles', f, f.name) 
+    _.each(files, f => {
+      formData.append('uploadFiles', f, f.name)
     })
     console.log('>> rpc.rpcUpoad', fnName, args, _.map(files, 'name'))
     return axios.post(`${config.apiUrl}/api/rpc-upload`, formData)

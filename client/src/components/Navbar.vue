@@ -30,26 +30,26 @@
 
 <script>
 
-import auth from '../modules/auth'
-import axios from 'axios'
-import config from '../config'
+  import axios from 'axios'
+  import config from '../config'
+  import auth from '../modules/auth'
 
-export default {
-  name: 'navbar',
-  data() {
-    return {
-      user: auth.user
-    }
-  },
-  methods: {
-    logout () {
-      auth
-        .logout()
-        .then(() => {
-          this.$router.push('/login')
-        })
+  export default {
+    name: 'navbar',
+    data () {
+      return {
+        user: auth.user
+      }
+    },
+    methods: {
+      logout () {
+        auth
+          .logout()
+          .then(() => {
+            this.$router.push('/login')
+          })
+      }
     }
   }
-}
 </script>
 

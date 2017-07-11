@@ -2,7 +2,7 @@ const path = require('path')
 
 module.exports = {
   filesDir: path.join(__dirname, '..', 'files'),
-  ip: '0.0.0.0',
+  ip: 'localhost',
   port: 3000,
   development: {
     'username': 'postgres',
