@@ -9,12 +9,14 @@ const tree = require('./modules/tree')
 
 const mime = require('mime')
 const multer = require('multer')
-const upload = multer({ dest: config.filesDir })
+const upload = multer({dest: config.filesDir})
 const del = require('del')
 
 const passport = require('passport')
+const jwt = require('jwt-simple')
 
 const express = require('express')
+
 const router = express.Router()
 
 module.exports = router
@@ -22,6 +24,36 @@ module.exports = router
 /**
  * User routes - login/register etc.
  */
+
+function getJwtToken (user) {
+  let payload = {id: user.id}
+  let token = jwt.encode(payload, config.jwtSecret)
+  return token
+}
+
+router.post('/api/token', function(req, res) {
+  if (req.body.email && req.body.password) {
+    let email = req.body.email
+    let password = req.body.password
+    models
+      .fetchUser({email})
+      .then(user => {
+        models.checkUserWithPassword(user, password)
+          .then((user) => {
+            if (user === null) {
+              res.sendStatus(401)
+            } else {
+              let payload = {id: user.id}
+              let token = jwt.encode(payload, config.jwtSecret)
+              res.json({token})
+            }
+          })
+      })
+      .catch(() => {
+        res.sendStatus(401)
+      })
+  }
+})
 
 router.post('/api/register', (req, res) => {
   // Sanitization
@@ -53,7 +85,7 @@ router.post('/api/register', (req, res) => {
     models
       .createUser(values)
       .then(() => {
-        res.json({ success: true })
+        res.json({success: true})
       })
       .catch(err => {
         console.log('>> \api\register', err)
@@ -81,7 +113,7 @@ router.post('/api/update', (req, res) => {
     models
       .updateUser(values)
       .then(() => {
-        res.json({ success: true })
+        res.json({success: true})
       })
       .catch(err => {
         console.log(`>> \\api\\update`, err)
@@ -101,7 +133,7 @@ router.post('/api/login', (req, res, next) => {
     }
     if (!user) {
       return res.json(
-        { success: false, msg: 'user/password not found' })
+        {success: false, msg: 'user/password not found'})
     }
     console.log('>> /api/login user', user)
     req.logIn(user, (error) => {
@@ -109,7 +141,7 @@ router.post('/api/login', (req, res, next) => {
         console.log('>> /api/login error', err)
         return next(error)
       }
-      return res.json({ success: true, user: user })
+      return res.json({success: true, user: user, jwtToken: getJwtToken(user)})
     })
   })(req, res, next)
 })
@@ -117,7 +149,7 @@ router.post('/api/login', (req, res, next) => {
 router.post('/api/logout', (req, res) => {
   req.session.destroy()
   req.logout()
-  res.json({ success: true })
+  res.json({success: true})
 })
 
 /**
@@ -130,7 +162,7 @@ let remoteRunFns = {
     return models
       .fetchExperiments(userId)
       .then(experiments => {
-        return { experiments }
+        return {experiments}
       })
   },
 
@@ -138,7 +170,7 @@ let remoteRunFns = {
     return models
       .fetchExperiment(experimentId)
       .then(experiment => {
-        return { experiment }
+        return {experiment}
       })
   },
 
@@ -146,10 +178,10 @@ let remoteRunFns = {
     return models
       .deleteExperiment(experimentId)
       .then(() => {
-        return { success: true }
+        return {success: true}
       })
       .catch(err => {
-        return { success: false, error: err }
+        return {success: false, error: err}
       })
   },
 
@@ -158,7 +190,7 @@ let remoteRunFns = {
       .createParticipant(
         experimentId, email)
       .then((participant) => {
-        return { participant }
+        return {participant}
       })
   },
 
@@ -166,10 +198,10 @@ let remoteRunFns = {
     return models
       .deleteParticipant(participantId)
       .then(() => {
-        return { success: true }
+        return {success: true}
       })
       .catch(err => {
-        return { success: false, error: err }
+        return {success: false, error: err}
       })
   },
 
@@ -180,16 +212,16 @@ let remoteRunFns = {
         console.log('>> /participate/', participant)
         if (participant.user === null) {
           console.log('>> /participate no result found')
-          return { new: true }
+          return {new: true}
         } else {
           const state = participant.state
           if (tree.isDone(state)) {
             console.log('>> /participate done')
-            return { done: true }
+            return {done: true}
           } else {
             const comparison = tree.getComparison(participant.state)
             console.log('>> /participate comparison', comparison)
-            return { comparison }
+            return {comparison}
           }
         }
       })
@@ -204,24 +236,24 @@ let remoteRunFns = {
         tree.makeChoice(state, chosenImageIndex)
         if (tree.isDone(state)) {
           tree.rankNodes(state)
-          payload = { done: true }
+          payload = {done: true}
         } else {
-          payload = { comparison: tree.getComparison(state) }
+          payload = {comparison: tree.getComparison(state)}
         }
         return models
           .saveParticipant(participateId, {state})
           .then(() => {
             return payload
           })
-      })    
+      })
   },
 
   saveParticipantUserDetails (participateId, details) {
     return models
-      .saveParticipant(participateId, { user: details })
+      .saveParticipant(participateId, {user: details})
       .then(participant => {
         return {
-          comparison: tree.getComparison(participant.state) 
+          comparison: tree.getComparison(participant.state)
         }
       })
   }
@@ -318,7 +350,7 @@ let remoteUploadFns = {
         _.map(paths, f => '/image/' + path.basename(f)))
       .then(experiment => {
         return {
-          success: true, 
+          success: true,
           experimentId: experiment.id
         }
       })
@@ -335,8 +367,8 @@ router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
       .then((paths) => {
         args = _.concat([paths], args)
         uploadFn(...args)
-          .then(result => { 
-            res.json(result) 
+          .then(result => {
+            res.json(result)
           })
       })
   } else {

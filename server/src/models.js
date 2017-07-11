@@ -193,13 +193,34 @@ function updateUser (values) {
 function fetchUser (values) {
   return User
     .findOne({where: values})
-    .then(unwrapInstance)
+    .then(user => {
+      if (user) {
+        return unwrapInstance(user)
+      } else {
+        return null
+      }
+    })
+}
+
+function checkUserWithPassword(user, password) {
+  return new Promise((resolve) => {
+    bcrypt.compare(password, user.password, (err, isMatch) => {
+      if (err) {
+        resolve(null)
+      } else if (isMatch) {
+        resolve(user)
+      } else {
+        resolve(null)
+      }
+    })
+  })
 }
 
 module.exports = {
   sequelize,
   createUser,
   fetchUser,
+  checkUserWithPassword,
   updateUser,
   createExperiment,
   fetchExperiment,

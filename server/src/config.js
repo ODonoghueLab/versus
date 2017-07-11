@@ -20,4 +20,8 @@ module.exports = {
     'port': 5432,
     'dialect': 'postgres'
   },
+  jwtSecret: 'MyS3cr3tK3Y',
+  jwtSession: {
+    session: false
+  }
 }

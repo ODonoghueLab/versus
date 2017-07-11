@@ -47,8 +47,8 @@ const expressValidator = require('express-validator')
 app.use(expressValidator())
 
 // Initialize authentication with passport
-const authenticate = require('./modules/authenticate')
-authenticate.initExpressApp(app)
+const auth = require('./modules/auth')
+auth.initExpressApp(app)
 
 // Load routes for api
 app.use(require('./routes'))
