@@ -41,60 +41,68 @@
           </md-input-container>
         </div>
 
-          <md-button
-              @click="enterUser"
-              class="md-raised md-primary"
-              style="margin-left: 1em">
-            Start Experiment
-          </md-button>
+        <md-button
+            @click="enterUser"
+            class="md-raised md-primary"
+            style="margin-left: 1em">
+          Start Experiment
+        </md-button>
       </form>
     </div>
 
     <div v-else-if="done" class="done">
-      Your tests are done. Thank You
+      <div class="md-display-2" style="text-align: center">
+        Your tests are done
+        <br>
+        Thank You
+      </div>
     </div>
 
     <div v-else>
-      <div v-if="comparison" class="row">
+      <div v-if="comparison">
         <h2 class="md-display-2"> {{comparisonTitle}} </h2>
         <p> {{comparisonText}}</p>
-      </div>
-      <md-layout>
         <md-layout>
-          <img
-              class="choice"
-              @click="choose(comparison.itemA)"
-              v-bind:src="getImageUrl(comparison.itemA)">
-          {{comparison.itemA.value}}
-          <md-spinner
+          <md-layout>
+            <img
+                class="choice"
+                @click="choose(comparison.itemA)"
+                v-bind:class="[loadingA ? 'choice-loading' : '']"
+                v-bind:src="getImageUrl(comparison.itemA)">
+            <div style="width: 100%; text-align: center">
+              {{comparison.itemA.value}}
+            </div>
+            <md-spinner
               v-if="loadingA"
               md-indeterminate
               style="
                 position: absolute;
                 top: 50%;
                 left: 25%;
-                transform: translate(-50%, -50%);">
-          </md-spinner>
-        </md-layout>
-        <md-layout
-            class="col-sm-6 col-md-6 col-lg-6"
-            style="text-align: center">
-          <img
-              class="choice"
-              @click="choose(comparison.itemB)"
-              v-bind:src="getImageUrl(comparison.itemB)">
-          {{comparison.itemB.value}}
-          <md-spinner
+                transform: translate(-25%, -50%);">
+            </md-spinner>
+          </md-layout>
+          <md-layout>
+            <img
+                class="choice"
+                @click="choose(comparison.itemB)"
+                v-bind:class="[loadingB ? 'choice-loading' : '']"
+                v-bind:src="getImageUrl(comparison.itemB)">
+            <div style="width: 100%; text-align: center">
+              {{comparison.itemB.value}}
+            </div>
+            <md-spinner
               v-if="loadingB"
               md-indeterminate
               style="
                 position: absolute;
                 top: 50%;
                 left: 75%;
-                transform: translate(-50%, -50%);">
-          </md-spinner>
+                transform: translate(-75%, -50%);">
+            </md-spinner>
+          </md-layout>
         </md-layout>
-      </md-layout>
+      </div>
     </div>
   </div>
 
@@ -102,13 +110,14 @@
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style>
-  @import 'https://fonts.googleapis.com/css?family=Lato:100';
+  @import 'https://fonts.googleapis.com/css?family=Lato:300';
 </style>
 
 <style scoped>
   .done {
-    width: calc(100vw - 30px);
+    width: 100vw;
     height: 100vh;
+    margin-left: -14px;
     background-image: -webkit-linear-gradient(55deg, #FF5F6D -10%, #FFC371);
     background-image: linear-gradient(35deg, #FF5F6D -10%, #FFC371);
     display: -webkit-box;
@@ -132,20 +141,13 @@
     text-transform: uppercase;
     font-family: "Lato";
   }
-
-  .done {
-    font-size: 70px;
-  }
-
   .choice {
     border: 1px solid rgba(255, 255, 255, 0.0);
   }
-
   .choice:hover {
     border: 1px solid #EEBBBB;
   }
-
-  .choice:active {
+  .choice:active, .choice-loading {
     border: 1px solid #EEBBBB;
     background-color: #FFEEEE;
   }

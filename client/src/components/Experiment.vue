@@ -1,5 +1,5 @@
 <template>
-  <div style="padding-left: 1em; text-align: left">
+  <div style="padding-left: 1em; padding-right: 1em; text-align: left">
     <h2 class="md-display-2">
       Experiment: {{experiment.name}}
     </h2>
@@ -10,7 +10,7 @@
     <md-button class="md-raised" @click="downloadResults">
       Download Results
     </md-button>
-    <md-table v-if="experiment.participants.length">
+    <md-table v-if="experiment.participants && experiment.participants.length">
       <md-table-header>
         <md-table-row>
           <md-table-head>Invite</md-table-head>
@@ -50,10 +50,10 @@
                 </span>
           </md-table-cell>
           <md-table-cell>
-              {{reformatDate(participant, 'createdAt')}}
+            {{reformatDate(participant, 'createdAt')}}
           </md-table-cell>
           <md-table-cell>
-              {{reformatDate(participant, 'updatedAt')}}
+            {{reformatDate(participant, 'updatedAt')}}
           </md-table-cell>
           <md-table-cell>
             <md-button class="md-icon-button md-raised"
@@ -65,16 +65,15 @@
       </md-table-body>
     </md-table>
 
-    <div class="row">
-      <h3>Images</h3>
-    </div>
+    <h3>Images</h3>
 
-    <div class="row">
-      <img
-          class="small card"
-          v-for="url in imageUrls"
-          v-bind:src="url">
-    </div>
+    <md-layout md-gutter :md-gutter="15">
+      <md-layout>
+        <md-card v-for="url in imageUrls">
+          <img v-bind:src="url">
+        </md-card>
+      </md-layout>
+    </md-layout>
 
   </div>
 </template>
