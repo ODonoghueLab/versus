@@ -11,30 +11,42 @@
       <p>
         Experiments on Versus are super simple, all you need to do is view the two images and click on the one you beleive is better.
       </p>
-      To participate in this experiment, enter your age and gender below and click start.
+      <p>
+        To participate in this experiment, enter your age and gender below and click start.
       </p>
-      <br>
+
       <form v-on:submit.prevent="enterUser">
-        <md-input-container style="width: 5em">
-          <label> Age</label>
-          <md-input
-              type="number"
-              v-model.number="age"
-              min="1"
-              max="100">
-          </md-input>
-        </md-input-container>
-        <md-input-container style="width: 5em">
-          <label> Gender</label>
-          <md-select v-model="gender">
-            <md-option value="male">male</md-option>
-            <md-option value="female">female</md-option>
-            <md-option value="other">other</md-option>
-          </md-select>
-        </md-input-container>
-        <md-button @click="enterUser" class="md-raised md-primary">
-          Start Experiment
-        </md-button>
+        <div style="display: flex">
+          <md-input-container
+              style="width: 3em">
+            <label for="age"> Age</label>
+            <md-input
+                type="number"
+                v-model.number="age"
+                min="1"
+                max="100">
+            </md-input>
+          </md-input-container>
+          <md-input-container
+              style="width: 10em; margin-left: 1em;">
+            <label for="gender"> Gender</label>
+            <md-select
+                name="gender"
+                v-model="gender"
+                id="gender">
+              <md-option value="male">male</md-option>
+              <md-option value="female">female</md-option>
+              <md-option value="other">other</md-option>
+            </md-select>
+          </md-input-container>
+        </div>
+
+          <md-button
+              @click="enterUser"
+              class="md-raised md-primary"
+              style="margin-left: 1em">
+            Start Experiment
+          </md-button>
       </form>
     </div>
 
@@ -54,6 +66,15 @@
               @click="choose(comparison.itemA)"
               v-bind:src="getImageUrl(comparison.itemA)">
           {{comparison.itemA.value}}
+          <md-spinner
+              v-if="loadingA"
+              md-indeterminate
+              style="
+                position: absolute;
+                top: 50%;
+                left: 25%;
+                transform: translate(-50%, -50%);">
+          </md-spinner>
         </md-layout>
         <md-layout
             class="col-sm-6 col-md-6 col-lg-6"
@@ -63,6 +84,15 @@
               @click="choose(comparison.itemB)"
               v-bind:src="getImageUrl(comparison.itemB)">
           {{comparison.itemB.value}}
+          <md-spinner
+              v-if="loadingB"
+              md-indeterminate
+              style="
+                position: absolute;
+                top: 50%;
+                left: 75%;
+                transform: translate(-50%, -50%);">
+          </md-spinner>
         </md-layout>
       </md-layout>
     </div>
@@ -134,6 +164,8 @@
     name: 'invite',
     data() {
       return {
+        loadingA: false,
+        loadingB: false,
         age: 18,
         gender: 'female',
         done: false,
@@ -174,10 +206,17 @@
             }
           }
           this.$data.comparison = newComparison
+          this.$data.loadingA = false
+          this.$data.loadingB = false
         }
       },
       choose (item){
         let participateId = this.$route.params.participateId
+        if (item.value === this.$data.comparison.itemA.value) {
+          this.$data.loadingA = true
+        } else {
+          this.$data.loadingB = true
+        }
         rpc
           .rpcRun('chooseItem', participateId, item.value)
           .then(this.handleRes)

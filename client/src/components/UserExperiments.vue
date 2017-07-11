@@ -13,14 +13,11 @@
       <md-table-body>
         <md-table-row v-for="experiment in experiments">
           <md-table-cell style="width: 100%">
-            {{experiment.name}}
+            <a @click="getExperimentRoute(experiment.id)">
+              {{experiment.name}}
+            </a>
           </md-table-cell>
           <md-table-cell>
-            <md-button class="md-icon-button md-raised"
-                       @click="getExperimentRoute(experiment.id)">
-              <md-icon>explore</md-icon>
-            </md-button>
-            &nbsp;
             <md-button class="md-icon-button md-raised"
                        @click="deleteExperiment(experiment)">
               <md-icon>delete</md-icon>

@@ -10,12 +10,12 @@ let user = {
   authenticated: false
 }
 
-let jwtToken = null
+// let jwtToken = null
 
 export default {
 
   user: user,
-  jwtToken: jwtToken,
+  // jwtToken: jwtToken,
 
   login (newUser) {
     console.log('>> auth.login', newUser)
@@ -25,8 +25,8 @@ export default {
         (res) => {
           if (res.data.success) {
             localStorage.setItem('user', JSON.stringify(newUser))
-            localStorage.setItem('jwtToken', res.data.jwtToken)
-            jwtToken = res.data.jwtToken
+            // localStorage.setItem('jwtToken', res.data.jwtToken)
+            // jwtToken = res.data.jwtToken
             user.authenticated = true
             _.assign(user, res.data.user)
             console.log('>> auth.login data', res.data)
@@ -47,14 +47,14 @@ export default {
 
   restoreLastUser () {
     let lastUser = JSON.parse(localStorage.getItem('user'))
-    let jwtToken = localStorage.getItem('jwtToken')
+    // let jwtToken = localStorage.getItem('jwtToken')
     console.log('>> auth.restoreLastUser', lastUser)
     return this.login(lastUser)
   },
 
   logout () {
     localStorage.removeItem('user')
-    localStorage.removeItem('jwtToken')
+    // localStorage.removeItem('jwtToken')
     user.authenticated = false
     return axios.post(`${config.apiUrl}/api/logout`)
   }

@@ -8,10 +8,11 @@ import VueMaterial from 'vue-material'
 Vue.use(VueMaterial)
 
 import App from './App'
-import auth from './modules/auth'
 
 import router from './router.js'
 
+import auth from './modules/auth.js'
+console.log(auth)
 auth
   .restoreLastUser()
   .then(() => {
