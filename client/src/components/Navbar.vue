@@ -1,28 +1,34 @@
 <template>
-  <header class="sticky">
+  <md-toolbar class="md-dense">
 
-    <span class="logo">Versus</span>
+    <md-icon md-src="./static/logo.png"></md-icon>
+
+    <h2 class="md-title" style="padding-left: 1em; flex: 1" >Versus</h2>
 
     <span v-if="user.authenticated">
-      <router-link to='/experiments' class='button'>
+      <router-link to='/experiments' class="md-button">
         Experiments
       </router-link>
-      <span class="user">
-        {{user.email}}
-      </span>
-      <router-link to='/edit-user' class='button'>
-        Edit
-      </router-link>
-      <button @click="logout">Logout</button>
+
+      <md-menu >
+
+        <md-button md-menu-trigger>
+            {{user.firstName}} {{user.lastName}}
+        </md-button>
+
+        <md-menu-content>
+          <md-menu-item @click="editUser">Edit User
+          </md-menu-item>
+          <md-menu-item @click="logout">Logout</md-menu-item>
+        </md-menu-content>
+      </md-menu>
     </span>
 
-    <span v-else>
-      <router-link to='/login' class='button'>
-        Login
-      </router-link>
-    </span>
+    <router-link v-else to='/login' class='md-button'>
+      Login
+    </router-link>
 
-  </header>
+  </md-toolbar>
 </template>
 
 <style scoped>
@@ -33,6 +39,7 @@
   import axios from 'axios'
   import config from '../config'
   import auth from '../modules/auth'
+  import router from '../router'
 
   export default {
     name: 'navbar',
@@ -42,6 +49,9 @@
       }
     },
     methods: {
+      editUser () {
+        router.push('/edit-user')
+      },
       logout () {
         auth
           .logout()

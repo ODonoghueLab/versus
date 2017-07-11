@@ -1,59 +1,60 @@
 <template>
-  <div class="container">
-    <div class="row">
-      <div 
-          class="
-            col-sm-6 col-sm-offset-3 
-            col-md-6 col-md-3-offset 
-            col-lg-4 col-lg-offset-4"
-          style="
-            padding-top: 4em">
-        <form class="login-screen"
-              v-on:submit.prevent="submit">
-          <h2>{{ title }}</h2>
-          <input 
-              type='text'
-              v-model='firstName'
-              placeholder='First name'>
-          </input>
-          <br>
-          <input 
-              type='text'
-              v-model='lastName'
-              placeholder='Last name'>
-          </input>
-          <br>
-          <input 
-              type='text'
-              v-model='email'
-              placeholder='E-mail address'>
-          </input>
-          <br>
-          <input 
-              type='password'
-              v-model='password'
-              placeholder='New Password'>
-          </input>
-          <br>
-          <input 
-              type='password'
-              v-model='passwordv'
-              placeholder='New Password Confirm'>
-          </input>
-          <br>
-          <button>
-            Update
-          </button>
-          <div v-if="errors.length" class="card error">
-            <ul>
-              <li v-for="err in errors">
-                {{ err }}
-              </li>
-            </ul>
-          </div>
-        </form>
+  <div style="width: 15em; margin: auto; padding-top: 2em; text-align: left">
+    <h2 class="md-display-2">
+      {{ title }}
+    </h2>
+    <form v-on:submit.prevent="submit">
+      <md-input-container>
+        <label>First name</label>
+        <md-input
+            type='text'
+            v-model='firstName'
+            placeholder='First name'>
+        </md-input>
+      </md-input-container>
+      <md-input-container>
+        <label>Last name</label>
+        <md-input
+            type='text'
+            v-model='lastName'
+            placeholder='Last name'>
+        </md-input>
+      </md-input-container>
+      <md-input-container>
+        <label>E-mail address</label>
+        <md-input
+            type='text'
+            v-model='email'
+            placeholder='E-mail address'>
+        </md-input>
+      </md-input-container>
+      <md-input-container>
+        <label>New Password</label>
+        <md-input
+            type='password'
+            v-model='password'
+            placeholder='New Password'>
+        </md-input>
+      </md-input-container>
+      <md-input-container>
+        <label>New Password</label>
+        <md-input
+            type='password'
+            v-model='passwordv'
+            placeholder='Confirm Password'>
+        </md-input>
+      </md-input-container>
+      <md-button @click="submit" class="md-raised md-primary">
+        Update
+      </md-button>
+      <div v-if="errors.length" class="card error">
+        <ul>
+          <li v-for="err in errors">
+            {{ err }}
+          </li>
+        </ul>
       </div>
-    </div>
+    </form>
   </div>
 </template>
 
