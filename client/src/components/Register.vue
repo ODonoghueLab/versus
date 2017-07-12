@@ -5,19 +5,11 @@
     </h2>
     <form v-on:submit.prevent="submit">
       <md-input-container>
-        <label>First name</label>
+        <label>User name</label>
         <md-input
             type='text'
-            v-model='firstName'
-            placeholder='First name'>
-        </md-input>
-      </md-input-container>
-      <md-input-container>
-        <label>Last name</label>
-        <md-input
-            type='text'
-            v-model='lastName'
-            placeholder='Last name'>
+            v-model='name'
+            placeholder='User name'>
         </md-input>
       </md-input-container>
       <md-input-container>
@@ -68,8 +60,7 @@ export default {
   data() {
     return {
       title: 'Please register to Versus',
-      firstName: '',
-      lastName: '',
+      name: '',
       email: '',
       password: '',
       passwordv: '',
@@ -80,8 +71,7 @@ export default {
   methods: {
     submit(e) {
       let payload = {
-        firstName: this.$data.firstName,
-        lastName: this.$data.lastName,
+        name: this.$data.name,
         email: this.$data.email,
         password: this.$data.password,
         passwordv: this.$data.password

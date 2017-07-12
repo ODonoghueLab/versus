@@ -63,14 +63,19 @@ function initExpressApp (app) {
       models
         .fetchUser({email: email})
         .then(user => {
-          return models.checkUserWithPassword(user, password)
-            .then((user) => {
-              if (user === null) {
-                done(null, false)
-              } else {
-                done(null, user, {name: user.name})
-              }
-            })
+          if (user) {
+            models
+              .checkUserWithPassword(user, password)
+              .then((user) => {
+                if (user === null) {
+                  done(null, false)
+                } else {
+                  done(null, user, {name: user.name})
+                }
+              })
+          } else {
+            done(null, false)
+          }
         })
     })
 

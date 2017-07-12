@@ -5,19 +5,11 @@
     </h2>
     <form v-on:submit.prevent="submit">
       <md-input-container>
-        <label>First name</label>
+        <label>User name</label>
         <md-input
             type='text'
-            v-model='firstName'
-            placeholder='First name'>
-        </md-input>
-      </md-input-container>
-      <md-input-container>
-        <label>Last name</label>
-        <md-input
-            type='text'
-            v-model='lastName'
-            placeholder='Last name'>
+            v-model='name'
+            placeholder='User name'>
         </md-input>
       </md-input-container>
       <md-input-container>

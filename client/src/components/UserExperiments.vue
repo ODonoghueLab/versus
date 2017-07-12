@@ -71,7 +71,7 @@
     methods: {
       title () {
         let user = auth.user
-        return `Experiments for: ${user.firstName} ${user.lastName}`
+        return `Experiments for: ${user.name}`
       },
       deleteExperiment(experiment) {
         rpc.rpcRun('deleteExperiment', experiment.id)

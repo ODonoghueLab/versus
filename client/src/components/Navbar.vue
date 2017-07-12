@@ -13,7 +13,7 @@
       <md-menu >
 
         <md-button md-menu-trigger>
-            {{user.firstName}} {{user.lastName}}
+            {{user.name}}
         </md-button>
 
         <md-menu-content>

@@ -63,8 +63,7 @@ router.post('/api/register', (req, res) => {
     req.sanitize(key).trim()
   }
   // Server-side validation using expressValidator
-  req.checkBody('firstName', 'Please Enter Your First Name').notEmpty()
-  req.checkBody('lastName', 'Please Enter Your Last Name').notEmpty()
+  req.checkBody('name', 'Please Enter Your User Name').notEmpty()
   req.checkBody('email', 'Please Enter Your Email').notEmpty()
   req.checkBody('password', 'Please Enter Both Password Fields').notEmpty()
   req.checkBody('passwordv', 'Please Enter Both Password Fields').notEmpty()
@@ -72,8 +71,7 @@ router.post('/api/register', (req, res) => {
   req.checkBody('password', 'Passwords Do Not Match').equals(req.body.passwordv)
   const errors = req.validationErrors()
   let values = {
-    firstName: req.body.firstName,
-    lastName: req.body.lastName,
+    name: req.body.name,
     email: req.body.email,
     password: req.body.password
   }
@@ -135,7 +133,6 @@ router.post('/api/login', (req, res, next) => {
       return res.json(
         {success: false, msg: 'user/password not found'})
     }
-    console.log('>> /api/login user', user)
     req.logIn(user, (error) => {
       if (error) {
         console.log('>> /api/login error', err)

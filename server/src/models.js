@@ -18,8 +18,7 @@ const sequelize = new Sequelize(
  */
 
 const User = sequelize.define('User', {
-  firstName: Sequelize.STRING,
-  lastName: Sequelize.STRING,
+  name: Sequelize.STRING,
   email: {type: Sequelize.STRING, unique: true},
   password: Sequelize.STRING
 })
