@@ -29,7 +29,8 @@ User.beforeValidate((user) => {
 })
 
 const Image = sequelize.define('Image', {
-  url: Sequelize.STRING
+  url: Sequelize.STRING,
+  filename: Sequelize.STRING
 })
 
 const Participant = sequelize.define('Participant', {

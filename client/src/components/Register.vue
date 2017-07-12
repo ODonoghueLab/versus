@@ -1,5 +1,5 @@
 <template>
-  <div style="width: 15em; margin: auto; padding-top: 2em; text-align: left">
+  <div style="padding: 1em">
     <h2 class="md-display-2">
       {{ title }}
     </h2>
@@ -37,7 +37,7 @@
         </md-input>
       </md-input-container>
       <md-button type="submit" class="md-raised md-primary">
-        Update
+        Register
       </md-button>
       <div v-if="errors.length" class="card error">
         <ul>

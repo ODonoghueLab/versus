@@ -67,16 +67,20 @@
 
     <h3>Images</h3>
 
-    <md-layout md-gutter="true">
-      <md-layout md-gutter="true">
+    <md-layout>
         <md-whiteframe
+            v-for="(image, index) in experiment.Images"
+            :key="index"
             md-elevation="10"
-            style="margin-right: 1rem; margin-bottom: 1rem"
-            v-for="(url, index) in imageUrls"
-            :key="index">
-          <img v-bind:src="url">
+            style="
+                padding: 1em;
+                text-align: center;
+                margin-right: 1rem;
+                margin-bottom: 1rem">
+          <img v-bind:src="getFullUrl(image.url)">
+          <br clear="all">
+          Image {{ index+1 }} - {{ getBaseUrl(image.url) }}
         </md-whiteframe>
-      </md-layout>
     </md-layout>
 
   </div>
@@ -90,15 +94,12 @@
 </style>
 
 <script>
+  import path from 'path'
   import axios from 'axios'
   import config from '../config'
   import auth from '../modules/auth'
   import util from '../modules/util'
   import rpc from '../modules/rpc'
-
-  function getFullUrl (url) {
-    return config.apiUrl + url
-  }
 
   export default {
     name: 'experiment',
@@ -110,6 +111,7 @@
     computed: {
       imageUrls: function() {
         let urls = _.map(this.$data.experiment.Images, 'url')
+        console.log('> Experiment.imageUrls', urls)
         return _.map(urls, getFullUrl)
       },
     },
@@ -123,7 +125,7 @@
           _.each(participants, participant => {
             let state = participant.state
             if ('ranks' in state) {
-              state.ranks = _.map(state.ranks, getFullUrl)
+              state.ranks = _.map(state.ranks, this.getFullUrl)
             }
           })
           console.log('>> Experiment.mounted', experiment)
@@ -131,6 +133,12 @@
         })
     },
     methods: {
+      getFullUrl (url) {
+        return config.apiUrl + url
+      },
+      getBaseUrl (url) {
+        return path.basename(url)
+      },
       downloadResults() {
         console.log('>> Experiment.downloadResults')
         let experiment = this.$data.experiment

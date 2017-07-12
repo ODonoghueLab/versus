@@ -57,7 +57,7 @@ router.post('/api/token', function(req, res) {
 
 router.post('/api/register', (req, res) => {
   // Sanitization
-  const keys = ['firstName', 'lastName', 'email', 'password', 'passwordv']
+  const keys = ['name', 'email', 'password', 'passwordv']
   for (let key of keys) {
     req.sanitize(key).escape()
     req.sanitize(key).trim()
@@ -95,7 +95,7 @@ router.post('/api/register', (req, res) => {
 })
 
 router.post('/api/update', (req, res) => {
-  const keys = ['id', 'firstName', 'lastName', 'email', 'password']
+  const keys = ['id', 'name', 'email', 'password']
   for (let key of keys) {
     req.sanitize(key).escape()
     req.sanitize(key).trim()
@@ -281,7 +281,12 @@ router.post('/api/rpc-run', (req, res) => {
 function storeFiles (uploadedFiles) {
 
   return new Promise((resolve, reject) => {
-    const stamp = String(new Date().getTime())
+    const experimentDir = String(new Date().getTime())
+    const fullExperimentDir = path.join(config.filesDir, experimentDir)
+    if (!fs.existsSync(fullExperimentDir)) {
+        fs.mkdirSync(fullExperimentDir, 0744);
+    }
+
     let err = ''
 
     function rollback (msg) {
@@ -311,12 +316,12 @@ function storeFiles (uploadedFiles) {
           rollback('Please Keep Images Under 2MB')
           break
         }
-        let basename = String(stamp) + String(i) + extname
         inputPaths.push(file.path)
-        targetPaths.push(path.join(config.filesDir, basename))
+        let basename = path.basename(file.originalname)
+        targetPaths.push(path.join(experimentDir, basename))
         try {
-          fs.renameSync(inputPaths[i], targetPaths[i])
-          console.log('uploadFiles', path.basename(inputPaths[i]), '->', basename)
+          console.log('uploadFiles', path.basename(inputPaths[i]), '->', targetPaths[i])
+          fs.renameSync(inputPaths[i], path.join(config.filesDir, targetPaths[i]))
         } catch (err) {
           rollback(err)
           break
@@ -332,9 +337,11 @@ function storeFiles (uploadedFiles) {
   })
 }
 
-router.get('/image/:basename', (req, res) => {
+router.get('/image/:experimentDir/:basename', (req, res) => {
   let basename = req.params.basename
-  let filename = path.join(config.filesDir, basename)
+  let experimentDir = req.params.experimentDir
+  console.log('> /image/', experimentDir, basename)
+  let filename = path.join(config.filesDir, experimentDir, basename)
   let mimeType = mime.lookup(filename)
   res.setHeader('Content-disposition', `attachment; filename=${basename}`)
   res.setHeader('Content-type', mimeType)
@@ -342,19 +349,23 @@ router.get('/image/:basename', (req, res) => {
 })
 
 let remoteUploadFns = {
-  uploadImages (paths, name, userId) {
-    console.log('>> routes.remoteUploadFns', paths, name, userId)
-    return models
-      .createExperiment(
-        userId,
-        name,
-        '',
-        _.map(paths, f => '/image/' + path.basename(f)))
-      .then(experiment => {
-        return {
-          success: true,
-          experimentId: experiment.id
-        }
+  uploadImages (files, name, userId) {
+    console.log('>> routes.remoteUploadFns', files, name, userId)
+    return storeFiles(files)
+      .then((paths) => {
+        console.log('>> routes.uploadImages', paths)
+        return models
+          .createExperiment(
+            userId,
+            name,
+            '',
+            _.map(paths, f => '/image/' + f))
+          .then(experiment => {
+            return {
+              success: true,
+              experimentId: experiment.id
+            }
+          })
       })
   }
 }
@@ -365,13 +376,10 @@ router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
   let args = JSON.parse(req.body.args)
   if (fnName in remoteUploadFns) {
     const uploadFn = remoteUploadFns[fnName]
-    storeFiles(req.files)
-      .then((paths) => {
-        args = _.concat([paths], args)
-        uploadFn(...args)
-          .then(result => {
-            res.json(result)
-          })
+    args = _.concat([req.files], args)
+    uploadFn(...args)
+      .then(result => {
+        res.json(result)
       })
   } else {
     throw new Error(`Remote uploadFn ${fnName} not found`)

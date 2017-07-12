@@ -1,5 +1,5 @@
 <template>
-  <div style="width: 15em; margin: auto; padding-top: 2em; text-align: left">
+  <div style="padding: 1em">
     <h2 class="md-display-2">
       {{ title }}
     </h2>
@@ -62,7 +62,7 @@ export default {
   data() {
     let payload = _.assign({}, auth.user)
     _.assign(payload, {
-      title: 'Edit User Details',
+      title: 'Edit Your Details',
       password: '',
       passwordv: '',
       errors: []
@@ -73,7 +73,7 @@ export default {
   methods: {
     submit(e) {
       let payload = {}
-      const keys = ['firstName', 'lastName', 'email', 'password', 'passwordv']
+      const keys = ['name', 'email', 'password', 'passwordv']
       for (let key of keys) {
         if (this.$data[key]) {
           payload[key] = this.$data[key]

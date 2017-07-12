@@ -1,5 +1,5 @@
 <template>
-  <div style="width: 25em; margin: auto; padding-top: 2em; text-align: left">
+  <div style="padding: 1em">
 
     <h2 class="md-display-2">
       {{ title }}
@@ -26,14 +26,14 @@
         </md-input>
       </md-input-container>
 
-      <md-layout style="padding-top: 2em;">
-        <md-layout md-align="start" md-vertical-align="end">
-          New to Versus? &nbsp;
-          <router-link to="/register">Register</router-link>
-        </md-layout>
-        <md-layout md-align="end">
-          <md-button type="submit" class="md-raised md-primary">login</md-button>
-        </md-layout>
+      <md-button type="submit" class="md-raised md-primary">login</md-button>
+
+      <br>
+      <br>
+      <br>
+      New to Versus? &nbsp;
+      <router-link to="/register">Register</router-link>
+
       </md-layout>
 
 
