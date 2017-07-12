@@ -21,18 +21,17 @@ export default {
     console.log('>> auth.login', newUser)
     return axios
       .post(config.apiUrl + '/api/login', newUser)
-      .then(
-        (res) => {
-          if (res.data.success) {
-            localStorage.setItem('user', JSON.stringify(newUser))
-            // localStorage.setItem('jwtToken', res.data.jwtToken)
-            // jwtToken = res.data.jwtToken
-            user.authenticated = true
-            _.assign(user, res.data.user)
-            console.log('>> auth.login data', res.data)
-          }
-          return res
-        })
+      .then((res) => {
+        if (res.data.success) {
+          localStorage.setItem('user', JSON.stringify(newUser))
+          // localStorage.setItem('jwtToken', res.data.jwtToken)
+          // jwtToken = res.data.jwtToken
+          user.authenticated = true
+          _.assign(user, res.data.user)
+          console.log('>> auth.login data', res.data)
+        }
+        return res
+      })
   },
 
   register (newUser) {
@@ -43,6 +42,12 @@ export default {
   update (editUser) {
     console.log('>> auth.update', editUser)
     return axios.post(config.apiUrl + '/api/update', editUser)
+      .then(res => {
+        if (res.data.success) {
+          _.assign(user, editUser)
+          localStorage.setItem('user', JSON.stringify(user))
+        }
+      })
   },
 
   restoreLastUser () {
