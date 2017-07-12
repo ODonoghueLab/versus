@@ -27,7 +27,7 @@
             <router-link
                 class="button"
                 v-bind:to="getInviteRoute(participant)">
-              invite
+              link
             </router-link>
           </md-table-cell>
           <md-table-cell>
@@ -67,11 +67,15 @@
 
     <h3>Images</h3>
 
-    <md-layout md-gutter :md-gutter="40">
-      <md-layout  md-gutter :md-gutter="40">
-        <md-card v-for="(url, index) in imageUrls" :key="index">
-          <img style="width: 100px" v-bind:src="url">
-        </md-card>
+    <md-layout md-gutter="true">
+      <md-layout md-gutter="true">
+        <md-whiteframe
+            md-elevation="10"
+            style="margin-right: 1rem; margin-bottom: 1rem"
+            v-for="(url, index) in imageUrls"
+            :key="index">
+          <img v-bind:src="url">
+        </md-whiteframe>
       </md-layout>
     </md-layout>
 

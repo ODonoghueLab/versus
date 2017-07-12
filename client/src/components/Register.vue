@@ -44,7 +44,7 @@
             placeholder='Confirm Password'>
         </md-input>
       </md-input-container>
-      <md-button class="md-raised md-primary">
+      <md-button type="submit" class="md-raised md-primary">
         Update
       </md-button>
       <div v-if="errors.length" class="card error">

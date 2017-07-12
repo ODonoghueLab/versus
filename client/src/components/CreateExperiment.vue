@@ -26,7 +26,11 @@
         {{fileStr}}
       </md-input-container>
       <br>
-      <md-button @click="submit" class="md-raised md-primary">Submit</md-button>
+      <md-button
+          type="submit"
+          class="md-raised md-primary">
+        Submit
+      </md-button>
     </form>
   </div>
 </template>

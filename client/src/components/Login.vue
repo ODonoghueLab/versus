@@ -32,7 +32,7 @@
           <router-link to="/register">Register</router-link>
         </md-layout>
         <md-layout md-align="end">
-          <md-button @click="submit" class="md-raised md-primary">login</md-button>
+          <md-button type="submit" class="md-raised md-primary">login</md-button>
         </md-layout>
       </md-layout>
 

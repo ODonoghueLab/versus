@@ -51,58 +51,55 @@
     </div>
 
     <div v-else-if="done" class="done">
-      <div class="md-display-2" style="text-align: center">
+      <md-layout
+          class="md-display-2 done"
+          md-align="center"
+          md-vertical-align="center">
         Your tests are done
         <br>
         Thank You
-      </div>
+      </md-layout>
     </div>
 
     <div v-else>
-      <div v-if="comparison">
-        <h2 class="md-display-2"> {{comparisonTitle}} </h2>
-        <p> {{comparisonText}}</p>
-        <md-layout>
-          <md-layout>
-            <img
-                class="choice"
-                @click="choose(comparison.itemA)"
-                v-bind:class="[loadingA ? 'choice-loading' : '']"
-                v-bind:src="getImageUrl(comparison.itemA)">
-            <div style="width: 100%; text-align: center">
-              {{comparison.itemA.value}}
-            </div>
-            <md-spinner
-              v-if="loadingA"
-              md-indeterminate
-              style="
-                position: absolute;
-                top: 50%;
-                left: 25%;
-                transform: translate(-25%, -50%);">
-            </md-spinner>
+      <md-layout md-align="center" v-if="comparison">
+        <md-layout md-align="center" md-flex="100">
+          <h2 class="md-display-2"> {{comparisonTitle}} </h2>
+        </md-layout>
+        <md-layout md-align="center" md-flex="100">
+          <p> {{comparisonText}}</p>
+        </md-layout>
+        <md-layout md-flex="100">
+          <md-layout md-flex="50" md-align="center">
+            <md-whiteframe md-elevation="5">
+              <md-button
+                  class="choice"
+                  v-bind:class="[loadingA ? 'choice-loading' : '']"
+                  @click="choose(comparison.itemA)">
+                <md-image :md-src="getImageUrl(comparison.itemA)">
+                </md-image>
+                <div style="width: 100%; text-align: center">
+                  {{comparison.itemA.value}}
+                </div>
+              </md-button>
+            </md-whiteframe>
           </md-layout>
-          <md-layout>
-            <img
-                class="choice"
-                @click="choose(comparison.itemB)"
-                v-bind:class="[loadingB ? 'choice-loading' : '']"
-                v-bind:src="getImageUrl(comparison.itemB)">
-            <div style="width: 100%; text-align: center">
-              {{comparison.itemB.value}}
-            </div>
-            <md-spinner
-              v-if="loadingB"
-              md-indeterminate
-              style="
-                position: absolute;
-                top: 50%;
-                left: 75%;
-                transform: translate(-75%, -50%);">
-            </md-spinner>
+          <md-layout md-flex="50" md-align="center">
+            <md-whiteframe md-elevation="5">
+              <md-button
+                  @click="choose(comparison.itemB)"
+                  class="choice"
+                  v-bind:class="[loadingB ? 'choice-loading' : '']">
+                <md-image :md-src="getImageUrl(comparison.itemB)">
+                </md-image>
+                <div style="width: 100%; text-align: center">
+                  {{comparison.itemB.value}}
+                </div>
+              </md-button>
+            </md-whiteframe>
           </md-layout>
         </md-layout>
-      </div>
+      </md-layout>
     </div>
   </div>
 
@@ -118,35 +115,20 @@
     width: 100vw;
     height: 100vh;
     margin-left: -14px;
-    background-image: -webkit-linear-gradient(55deg, #FF5F6D -10%, #FFC371);
     background-image: linear-gradient(35deg, #FF5F6D -10%, #FFC371);
-    display: -webkit-box;
-    display: -webkit-flex;
-    display: -ms-flexbox;
-    display: flex;
-    -webkit-box-orient: vertical;
-    -webkit-box-direction: normal;
-    -webkit-flex-direction: column;
-    -ms-flex-direction: column;
-    flex-direction: column;
-    -webkit-box-pack: center;
-    -webkit-justify-content: center;
-    -ms-flex-pack: center;
-    justify-content: center;
-    -webkit-box-align: center;
-    -webkit-align-items: center;
-    -ms-flex-align: center;
-    align-items: center;
     color: white;
     text-transform: uppercase;
-    font-family: "Lato";
+    font-weight: lighter;
+    text-align: center;
   }
-  .choice {
-    border: 1px solid rgba(255, 255, 255, 0.0);
-  }
+
+  /*.choice {*/
+  /*border: 1px solid rgba(255, 255, 255, 0.0);*/
+  /*}*/
   .choice:hover {
     border: 1px solid #EEBBBB;
   }
+
   .choice:active, .choice-loading {
     border: 1px solid #EEBBBB;
     background-color: #FFEEEE;
@@ -159,10 +141,8 @@
   import config from '../config'
   import util from '../modules/util'
   import rpc from '../modules/rpc'
-  import MdOption from '../../node_modules/vue-material/src/components/mdSelect/mdOption'
 
   export default {
-    components: {MdOption},
     name: 'invite',
     data() {
       return {
