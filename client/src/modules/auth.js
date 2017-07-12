@@ -1,7 +1,7 @@
 import axios from 'axios'
 import _ from 'lodash'
 import config from '../config'
-
+import util from '../modules/util'
 // really important for using with passport.js
 // https://stackoverflow.com/questions/40941118/axios-wont-send-cookie-ajax-xhrfields-does-just-fine
 axios.defaults.withCredentials = true
@@ -18,7 +18,7 @@ export default {
   // jwtToken: jwtToken,
 
   login (newUser) {
-    console.log('>> auth.login', newUser)
+    console.log('>> auth.login newUser', newUser)
     return axios
       .post(config.apiUrl + '/api/login', newUser)
       .then((res) => {
@@ -28,7 +28,8 @@ export default {
           // jwtToken = res.data.jwtToken
           user.authenticated = true
           _.assign(user, res.data.user)
-          console.log('>> auth.login data', res.data)
+          _.assign(user, newUser)
+          console.log('>> auth.login user', util.jstr(user))
         }
         return res
       })
@@ -40,13 +41,15 @@ export default {
   },
 
   update (editUser) {
-    console.log('>> auth.update', editUser)
-    return axios.post(config.apiUrl + '/api/update', editUser)
+    return axios
+      .post(config.apiUrl + '/api/update', editUser)
       .then(res => {
         if (res.data.success) {
           _.assign(user, editUser)
+          console.log('>> auth.update user', util.jstr(user))
           localStorage.setItem('user', JSON.stringify(user))
         }
+        return res
       })
   },
 

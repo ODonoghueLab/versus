@@ -63,6 +63,7 @@ import axios from 'axios'
 import Router from 'vue-router'
 import auth from '../modules/auth'
 import _ from 'lodash'
+import util from '../modules/util'
 
 export default {
   name: 'EditUser',
@@ -74,19 +75,19 @@ export default {
       passwordv: '',
       errors: []
     })
+    console.log('>> EditUser.data', payload)
     return payload
   },
   methods: {
     submit(e) {
-      let payload = {
-        id: this.$data.id,
-        firstName: this.$data.firstName,
-        lastName: this.$data.lastName,
-        email: this.$data.email,
-        password: this.$data.password,
-        passwordv: this.$data.password
+      let payload = {}
+      const keys = ['firstName', 'lastName', 'email', 'password', 'passwordv']
+      for (let key of keys) {
+        if (this.$data[key]) {
+          payload[key] = this.$data[key]
+        }
       }
-      console.log('>> EditUser.submit', payload)
+      console.log('>> EditUser.submit', util.jstr(payload))
       auth
         .update(payload)
         .then((res) => {

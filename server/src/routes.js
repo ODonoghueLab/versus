@@ -108,15 +108,15 @@ router.post('/api/update', (req, res) => {
       values[key] = req.body[key]
     }
   }
-  console.log('>> /api/update', values)
   if (values) {
     models
       .updateUser(values)
-      .then(() => {
+      .then(user => {
+        console.log('>> /api/update success', values, user)
         res.json({success: true})
       })
       .catch(err => {
-        console.log(`>> \\api\\update`, err)
+        console.log(`>> /api/update error`, err)
         values.errors = ['Couldn\' register, is your email already in use?']
         values.success = false
         res.json(values)
@@ -141,7 +141,12 @@ router.post('/api/login', (req, res, next) => {
         console.log('>> /api/login error', err)
         return next(error)
       }
-      return res.json({success: true, user: user, jwtToken: getJwtToken(user)})
+      console.log('>> /api/login user', user)
+      return res.json({
+        success: true,
+        user: user,
+        jwtToken: getJwtToken(user)
+      })
     })
   })(req, res, next)
 })

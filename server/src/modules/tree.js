@@ -38,7 +38,7 @@ function makeChoice (state, chosenImageIndex) {
   console.log('>> tree.makeChoice -', chosenImageIndex)
   const isTestImageChosen = (chosenImageIndex > state.nodes[state.nodeIndex].imageIndex)
   if (isTestImageChosen) {
-    // Right branch holds nodes thar are better thatn imageIndex
+    // Right branch holds nodes that are better than imageIndex
     if (state.nodes[state.nodeIndex].right == null) {
       // Insert Node
       state.nodes[state.nodeIndex].right = state.nodes.length
