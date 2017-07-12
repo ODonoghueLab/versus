@@ -25,7 +25,7 @@ function makeLineChartData () {
           position: 'bottom',
           scaleLabel: {
             display: true,
-            labelString: 'base rank'
+            labelString: 'Image order'
           },
           ticks: {}
         }],
@@ -33,7 +33,7 @@ function makeLineChartData () {
           type: 'linear',
           scaleLabel: {
             display: true,
-            labelString: 'user rank'
+            labelString: 'Perceived rank'
           }
         }]
       }

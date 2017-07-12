@@ -45,7 +45,7 @@
           </md-table-cell>
           <md-table-cell>
             <span v-if="participant.state.ranks.length">
-              Image {{ participant.bestImageIndex }} - {{ participant.bestImageKey }}
+              Image {{ participant.bestImageIndex + 1 }} - {{ participant.bestImageKey }}
             </span>
           </md-table-cell>
           <md-table-cell>
@@ -135,31 +135,41 @@
         .then((res) => {
           let experiment = res.data.experiment
           let participants = experiment.participants
+          console.log('>> Experiment.mounted', experiment)
+          this.$data.experiment = experiment
 
-          let xVals = []
-          let yVals = []
+          let graph = chartdata.makeLineChartData()
 
           for (let participant of participants) {
             let state = participant.state
             if ('ranks' in state) {
               state.ranks = _.map(state.ranks, this.getFullUrl)
 
+              let xVals = []
+              let yVals = []
+
               let baseOrder = {}
-              _.each(participant.state.urls, (url, i) => {
+              for (let [i, url] of state.urls.entries()) {
                 let key = path.basename(url)
-                baseOrder[key] = i
-              })
+                baseOrder[key] = i + 1
+              }
 
               let userOrder = {}
-              _.each(state.ranks, (url, i) => {
+              for (let [i, url] of state.ranks.entries()) {
                 let key = path.basename(url)
-                userOrder[key] = i
-              })
+                userOrder[key] = i + 1
+              }
 
               for (let key of _.keys(baseOrder)) {
                 xVals.push(baseOrder[key])
                 yVals.push(userOrder[key])
               }
+
+              chartdata.addDataset(
+                graph.data.datasets,
+                participant.participateId,
+                xVals,
+                yVals)
 
               participant.bestImageKey = path.basename(state.ranks[0])
               participant.bestImageIndex = baseOrder[participant.bestImageKey]
@@ -167,14 +177,10 @@
             }
           }
 
-          let graph = chartdata.makeLineChartData()
-          chartdata.addDataset(graph.data.datasets, 'trial', xVals, yVals)
           let idTag = '#graph-0'
           let canvas = $.find(idTag)
           let chart = new Chart(canvas[0], graph)
 
-          console.log('>> Experiment.mounted', experiment)
-          this.$data.experiment = experiment
         })
 
     },
