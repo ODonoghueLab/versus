@@ -1,9 +1,12 @@
 <template>
   <div style="padding-left: 1em; padding-right: 1em; text-align: left">
+
     <h2 class="md-display-2">
       Experiment: {{experiment.name}}
     </h2>
+
     <h3 class="md-title">Participants</h3>
+
     <md-button class="md-raised" @click="makeInvite">
       Invite participant
     </md-button>
@@ -42,11 +45,7 @@
           </md-table-cell>
           <md-table-cell>
             <span v-if="participant.state.ranks.length">
-              <a
-                  class="button"
-                  v-bind:href="participant.state.ranks[0]">
-                Image
-              </a>
+              Image {{ participant.bestImageIndex }} - {{ participant.bestImageKey }}
             </span>
           </md-table-cell>
           <md-table-cell>
@@ -65,22 +64,34 @@
       </md-table-body>
     </md-table>
 
-    <h3>Images</h3>
+    <div>
+      <h3 class="md-title">User rankings</h3>
+      <md-card style="padding: 1em; width: 250px;">
+        <md-card-media style="width: 220px; height: 220px">
+          <canvas id="graph-0"></canvas>
+        </md-card-media>
+      </md-card>
+    </div>
+
+    <h3 class="md-title">Images</h3>
 
     <md-layout>
-        <md-whiteframe
-            v-for="(image, index) in experiment.Images"
-            :key="index"
-            md-elevation="10"
-            style="
-                padding: 1em;
-                text-align: center;
-                margin-right: 1rem;
-                margin-bottom: 1rem">
+      <md-card
+          v-for="(image, index) in experiment.Images"
+          :key="index"
+          style="
+              text-align: center;
+              margin-right: 1rem;
+              margin-bottom: 1rem">
+        <md-card-header>
+          <div class="md-subhead">
+            Image {{ index + 1 }} - {{ getBaseUrl(image.url) }}
+          </div>
+        </md-card-header>
+        <md-card-media>
           <img v-bind:src="getFullUrl(image.url)">
-          <br clear="all">
-          Image {{ index+1 }} - {{ getBaseUrl(image.url) }}
-        </md-whiteframe>
+        </md-card-media>
+      </md-card>
     </md-layout>
 
   </div>
@@ -100,12 +111,14 @@
   import auth from '../modules/auth'
   import util from '../modules/util'
   import rpc from '../modules/rpc'
+  import chartdata from '../modules/chartdata.js'
+  import $ from 'jquery'
 
   export default {
     name: 'experiment',
     data() {
       return {
-        experiment: {}
+        experiment: {},
       }
     },
     computed: {
@@ -122,16 +135,50 @@
         .then((res) => {
           let experiment = res.data.experiment
           let participants = experiment.participants
-          _.each(participants, participant => {
+
+          let xVals = []
+          let yVals = []
+
+          for (let participant of participants) {
             let state = participant.state
             if ('ranks' in state) {
               state.ranks = _.map(state.ranks, this.getFullUrl)
+
+              let baseOrder = {}
+              _.each(participant.state.urls, (url, i) => {
+                let key = path.basename(url)
+                baseOrder[key] = i
+              })
+
+              let userOrder = {}
+              _.each(state.ranks, (url, i) => {
+                let key = path.basename(url)
+                userOrder[key] = i
+              })
+
+              for (let key of _.keys(baseOrder)) {
+                xVals.push(baseOrder[key])
+                yVals.push(userOrder[key])
+              }
+
+              participant.bestImageKey = path.basename(state.ranks[0])
+              participant.bestImageIndex = baseOrder[participant.bestImageKey]
+
             }
-          })
+          }
+
+          let graph = chartdata.makeLineChartData()
+          chartdata.addDataset(graph.data.datasets, 'trial', xVals, yVals)
+          let idTag = '#graph-0'
+          let canvas = $.find(idTag)
+          let chart = new Chart(canvas[0], graph)
+
           console.log('>> Experiment.mounted', experiment)
           this.$data.experiment = experiment
         })
+
     },
+
     methods: {
       getFullUrl (url) {
         return config.apiUrl + url

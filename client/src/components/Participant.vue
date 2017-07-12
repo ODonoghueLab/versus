@@ -68,10 +68,15 @@
         </md-layout>
         <md-layout md-align="center" md-flex="100">
           <p> {{comparisonText}}</p>
+          <br>
+          <br>
+          <br>
+          <br>
         </md-layout>
-        <md-layout md-flex="100">
-          <md-layout md-flex="50" md-align="center">
-            <md-whiteframe md-elevation="5">
+
+        <md-layout>
+          <md-layout md-flex="50" md-align="end">
+            <md-whiteframe md-elevation="5" style="margin-right: 1em">
               <md-button
                   class="choice"
                   v-bind:class="[loadingA ? 'choice-loading' : '']"
@@ -84,8 +89,8 @@
               </md-button>
             </md-whiteframe>
           </md-layout>
-          <md-layout md-flex="50" md-align="center">
-            <md-whiteframe md-elevation="5">
+          <md-layout md-flex="50" md-align="start">
+            <md-whiteframe md-elevation="5" style="margin-left: 0.7em">
               <md-button
                   @click="choose(comparison.itemB)"
                   class="choice"
