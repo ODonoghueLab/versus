@@ -77,6 +77,9 @@
         <md-layout>
           <md-layout md-flex="50" md-align="end">
             <md-whiteframe md-elevation="5" style="margin-right: 1em">
+              <md-progress
+                  v-if="loadingA"
+                  md-indeterminate></md-progress>
               <md-button
                   class="choice"
                   v-bind:class="[loadingA ? 'choice-loading' : '']"
@@ -90,6 +93,9 @@
           </md-layout>
           <md-layout md-flex="50" md-align="start">
             <md-whiteframe md-elevation="5" style="margin-left: 0.7em">
+              <md-progress
+                  v-if="loadingB"
+                  md-indeterminate></md-progress>
               <md-button
                   @click="choose(comparison.itemB)"
                   class="choice"
