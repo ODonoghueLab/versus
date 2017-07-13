@@ -66,14 +66,14 @@
 
     <div>
       <h3 class="md-title">User rankings</h3>
-      <md-card style="padding: 1em; width: 250px;">
-        <md-card-media style="width: 220px; height: 220px">
+      <md-card style="padding: 1em; box-sizing: content-box; width: 220px; height: 200px;">
+        <md-card-media style="width: 220px; height: 200px;">
           <canvas id="graph-0"></canvas>
         </md-card-media>
       </md-card>
     </div>
 
-    <h3 class="md-title">Images</h3>
+    <h3 class="md-title">Image Order</h3>
 
     <md-layout>
       <md-card
@@ -82,10 +82,14 @@
           style="
               text-align: center;
               margin-right: 1rem;
-              margin-bottom: 1rem">
+              margin-bottom: 1rem;
+              width: 220px">
         <md-card-header>
+          <h3 class="md-title">
+            Image Order {{ index + 1 }}
+          </h3>
           <div class="md-subhead">
-            Image {{ index + 1 }} - {{ getBaseUrl(image.url) }}
+            {{ getBaseUrl(image.url) }}
           </div>
         </md-card-header>
         <md-card-media>

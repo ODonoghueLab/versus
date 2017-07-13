@@ -81,7 +81,7 @@
                   class="choice"
                   v-bind:class="[loadingA ? 'choice-loading' : '']"
                   @click="choose(comparison.itemA)">
-                <md-image :md-src="getImageUrl(comparison.itemA)">
+                <md-image :md-src="imageA">
                 </md-image>
                 <div style="width: 100%; text-align: center">
                   {{comparison.itemA.value}}
@@ -95,7 +95,7 @@
                   @click="choose(comparison.itemB)"
                   class="choice"
                   v-bind:class="[loadingB ? 'choice-loading' : '']">
-                <md-image :md-src="getImageUrl(comparison.itemB)">
+                <md-image :md-src="imageB">
                 </md-image>
                 <div style="width: 100%; text-align: center">
                   {{comparison.itemB.value}}
@@ -153,6 +153,8 @@
       return {
         loadingA: false,
         loadingB: false,
+        imageA: null,
+        imageB: null,
         age: 18,
         gender: 'female',
         done: false,
@@ -192,9 +194,11 @@
               newComparison.itemB = dummy
             }
           }
-          this.$data.comparison = newComparison
           this.$data.loadingA = false
           this.$data.loadingB = false
+          this.$data.comparison = newComparison
+          this.$data.imageB = this.getImageUrl(newComparison.itemB)
+          this.$data.imageA = this.getImageUrl(newComparison.itemA)
         }
       },
       choose (item){

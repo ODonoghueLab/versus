@@ -51,7 +51,7 @@ const auth = require('./modules/auth')
 auth.initExpressApp(app)
 
 // Load routes for api
-app.use(require('./routes'))
+app.use(require('./router'))
 
 // Load compiled production client
 const clientDir = path.join(__dirname, '..', '..', 'client', 'dist')

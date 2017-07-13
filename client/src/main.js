@@ -2,17 +2,15 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 
 import Vue from 'vue'
-Vue.config.productionTip = false
-
 import VueMaterial from 'vue-material'
-Vue.use(VueMaterial)
-
-import App from './App'
-
-import router from './router.js'
 
 import auth from './modules/auth.js'
-console.log(auth)
+import App from './App'
+import router from './router'
+
+Vue.config.productionTip = false
+Vue.use(VueMaterial)
+
 auth
   .restoreLastUser()
   .then(() => {

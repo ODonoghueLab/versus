@@ -56,7 +56,7 @@
   import router from '../router.js'
 
   export default {
-    name: 'experiments',
+    name: 'userExperiments',
     data() {
       return {
         experiments: []
@@ -71,7 +71,7 @@
     methods: {
       title () {
         let user = auth.user
-        return `Experiments for: ${user.name}`
+        return `Experiments created by user: ${user.name}`
       },
       deleteExperiment(experiment) {
         rpc.rpcRun('deleteExperiment', experiment.id)
