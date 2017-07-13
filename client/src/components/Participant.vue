@@ -81,8 +81,7 @@
                   class="choice"
                   v-bind:class="[loadingA ? 'choice-loading' : '']"
                   @click="choose(comparison.itemA)">
-                <md-image :md-src="imageA">
-                </md-image>
+                <img :src="imageA">
                 <div style="width: 100%; text-align: center">
                   {{comparison.itemA.value}}
                 </div>
@@ -95,8 +94,7 @@
                   @click="choose(comparison.itemB)"
                   class="choice"
                   v-bind:class="[loadingB ? 'choice-loading' : '']">
-                <md-image :md-src="imageB">
-                </md-image>
+                <img :src="imageB">
                 <div style="width: 100%; text-align: center">
                   {{comparison.itemB.value}}
                 </div>
