@@ -1,147 +1,173 @@
 <template>
-  <div style="padding-left: 1em; padding-right: 1em; text-align: left">
+  <div style="padding-left: 1em; padding-right: 1em;">
 
     <h2 class="md-display-2">
       Experiment: {{experiment.name}}
     </h2>
 
-    <h3 class="md-title">
-      Question
-    </h3>
-    <md-input-container>
-      <label>Title</label>
-      <md-input v-model="experiment.attr.title">
-      </md-input>
-    </md-input-container>
+    <md-whiteframe style="padding: 1em; margin-bottom: 1em"
+                   v-if="experiment.attr">
+      <h3 class="md-title">
+        Question
+      </h3>
+      <md-input-container>
+        <label>Title</label>
+        <md-input v-model="experiment.attr.title">
+        </md-input>
+      </md-input-container>
 
-    <md-input-container>
-      <label>Blurb</label>
-      <md-textarea v-model="experiment.attr.blurb"></md-textarea>
-    </md-input-container>
+      <md-input-container>
+        <label>Blurb</label>
+        <md-textarea
+            v-model="experiment.attr.blurb">
 
-    <md-button class="md-raised" @click="saveQuestion">Save Question</md-button>
+        </md-textarea>
+      </md-input-container>
 
-    <div style="height: 4em"></div>
+      <md-button
+          class="md-raised"
+          @click="saveQuestion">
+        Update Question
+      </md-button>
 
-    <md-divider></md-divider>
+    </md-whiteframe>
 
-    <h3 class="md-title">Participants</h3>
+    <md-whiteframe style="padding: 1em; margin-bottom: 1em">
 
-    <md-button class="md-raised" @click="makeInvite">
-      Invite participant
-    </md-button>
-    <md-button class="md-raised" @click="downloadResults">
-      Download Results
-    </md-button>
-    <md-table v-if="experiment.participants && experiment.participants.length">
-      <md-table-header>
-        <md-table-row>
-          <md-table-head>Invite</md-table-head>
-          <md-table-head>Age</md-table-head>
-          <md-table-head>Gender</md-table-head>
-          <md-table-head>Best Image</md-table-head>
-          <md-table-head>Created</md-table-head>
-          <md-table-head>Updated</md-table-head>
-        </md-table-row>
-      </md-table-header>
-      <md-table-body>
-        <md-table-row v-for="(participant, index) in experiment.participants" :key="index">
-          <md-table-cell>
-            <router-link
-                class="button"
-                v-bind:to="getInviteRoute(participant)">
-              link
-            </router-link>
-          </md-table-cell>
-          <md-table-cell>
+      <h3 class="md-title">Participants</h3>
+
+      <md-button class="md-raised" @click="makeInvite">
+        Invite participant
+      </md-button>
+      <md-button class="md-raised" @click="downloadResults">
+        Download Results
+      </md-button>
+      <md-table v-if="experiment.participants && experiment.participants.length">
+        <md-table-header>
+          <md-table-row>
+            <md-table-head>Invite</md-table-head>
+            <md-table-head>Age</md-table-head>
+            <md-table-head>Gender</md-table-head>
+            <md-table-head>Best Image</md-table-head>
+            <md-table-head>Created</md-table-head>
+            <md-table-head>Updated</md-table-head>
+          </md-table-row>
+        </md-table-header>
+        <md-table-body>
+          <md-table-row
+              v-for="(participant, index) in experiment.participants"
+              :key="index">
+            <md-table-cell>
+              <router-link
+                  class="button"
+                  v-bind:to="getInviteRoute(participant)">
+                link
+              </router-link>
+            </md-table-cell>
+            <md-table-cell>
             <span v-if="participant.user">
               {{participant.user.age}}
             </span>
-          </md-table-cell>
-          <md-table-cell>
+            </md-table-cell>
+            <md-table-cell>
             <span v-if="participant.user">
               {{participant.user.gender}}
             </span>
-          </md-table-cell>
-          <md-table-cell>
+            </md-table-cell>
+            <md-table-cell>
             <span v-if="participant.state.ranks.length">
-              Image {{ participant.bestImageIndex + 1 }} - {{ participant.bestImageKey }}
+              Image
+              {{ participant.bestImageIndex + 1 }}
+              -
+              {{ participant.bestImageKey }}
             </span>
-          </md-table-cell>
-          <md-table-cell>
-            {{reformatDate(participant, 'createdAt')}}
-          </md-table-cell>
-          <md-table-cell>
-            {{reformatDate(participant, 'updatedAt')}}
-          </md-table-cell>
-          <md-table-cell>
-            <md-button class="md-icon-button md-raised"
-                       @click="deleteInvite(participant)">
-              <md-icon>delete</md-icon>
-            </md-button>
-          </md-table-cell>
-        </md-table-row>
-      </md-table-body>
-    </md-table>
+            </md-table-cell>
+            <md-table-cell>
+              {{reformatDate(participant, 'createdAt')}}
+            </md-table-cell>
+            <md-table-cell>
+              {{reformatDate(participant, 'updatedAt')}}
+            </md-table-cell>
+            <md-table-cell>
+              <md-button
+                  class="md-icon-button md-raised"
+                  @click="deleteInvite(participant)">
+                <md-icon>delete</md-icon>
+              </md-button>
+            </md-table-cell>
+          </md-table-row>
+        </md-table-body>
+      </md-table>
 
-    <md-divider></md-divider>
+    </md-whiteframe>
 
-    <md-layout md-column>
-      <h3 class="md-title">User rankings</h3>
-      <md-card style="padding: 1em; box-sizing: content-box; width: 220px; height: 200px;">
-        <md-card-media style="width: 220px; height: 200px;">
-          <canvas id="graph-0"></canvas>
-        </md-card-media>
-      </md-card>
-      <br>
-    </md-layout>
+    <md-whiteframe style="padding: 1em; margin-bottom: 1em">
+      <md-layout md-column>
+        <h3 class="md-title">Participant rankings</h3>
+        <md-card
+            style="
+            padding: 1em;
+            box-sizing: content-box;
+            width: 220px;
+            height: 220px;">
+          <md-card-media
+              style="
+              height: 200px;">
+            <canvas id="graph-0"></canvas>
+          </md-card-media>
+        </md-card>
+        <br>
+      </md-layout>
+    </md-whiteframe>
 
-    <md-divider></md-divider>
-
-    <h3 class="md-title">Image Order</h3>
-
-    <md-layout>
-      <md-card
-          v-for="(image, index) in experiment.Images"
-          :key="index"
-          style="
+    <md-whiteframe style="padding: 1em; margin-bottom: 1em">
+      <h3 class="md-title">Image Order (Drag & Sort)</h3>
+      <md-layout>
+        <draggable v-model="experiment.Images">
+          <md-card
+              v-for="(image, index) in experiment.Images"
+              :key="index"
+              style="
               text-align: center;
-              margin-right: 1rem;
-              margin-bottom: 1rem;
-              width: 220px">
-        <md-card-header>
-          <h3 class="md-title">
-            Image Order {{ index + 1 }}
-          </h3>
-          <div class="md-subhead">
-            {{ getBaseUrl(image.url) }}
-          </div>
-        </md-card-header>
-        <md-card-media>
-          <img v-bind:src="getFullUrl(image.url)">
-        </md-card-media>
-      </md-card>
-    </md-layout>
+              padding: 0.5em;
+              width: 100%">
+            <md-layout md-row md-align="start" md-vertical-align="center">
+              <md-button
+                  class="md-icon-button md-raised">
+                <md-icon>swap_vert</md-icon>
+              </md-button>
+              <md-layout style="flex: 1">
+                <md-card-header style="text-align: left">
+                  <p class="body">
+                    {{ index + 1 }} -- {{ getBaseUrl(image.url) }}
+                  </p>
+                </md-card-header>
+              </md-layout>
+              <md-whiteframe>
+                <img style="height: 100px" :src="getFullUrl(image.url)"></img>
+              </md-whiteframe>
+            </md-layout>
+          </md-card>
+        </draggable>
+      </md-layout>
+    </md-whiteframe>
 
   </div>
 </template>
 
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style scoped>
-  .left-margin {
-    margin-left: 10px
-  }
 </style>
 
 <script>
   import path from 'path'
-  import axios from 'axios'
   import config from '../config'
   import auth from '../modules/auth'
   import util from '../modules/util'
   import rpc from '../modules/rpc'
   import chartdata from '../modules/chartdata.js'
   import $ from 'jquery'
+  import draggable from 'vuedraggable'
 
   export default {
     name: 'experiment',
@@ -150,6 +176,7 @@
         experiment: {},
       }
     },
+    components: {draggable},
     computed: {
       imageUrls: function() {
         let urls = _.map(this.$data.experiment.Images, 'url')
@@ -209,7 +236,6 @@
           let idTag = '#graph-0'
           let canvas = $.find(idTag)
           let chart = new Chart(canvas[0], graph)
-
         })
 
     },
