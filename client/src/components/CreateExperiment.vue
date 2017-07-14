@@ -17,13 +17,27 @@
         <md-file
             id="file-input"
             multiple
-            v-model="multipleFiles"
             @selected="selectFiles">
         </md-file>
         <label for="file-input" class="button">
           Upload files
         </label>
         {{fileStr}}
+      </md-input-container>
+      <md-input-container>
+        <label>Title</label>
+        <md-input
+            type="text"
+            v-model="attr.title">
+        </md-input>
+      </md-input-container>
+      <md-input-container>
+        <label>Blurb</label>
+        <md-textarea
+            type="text"
+            name="blurb"
+            v-model="attr.blurb">
+        </md-textarea>
       </md-input-container>
       <br>
       <md-button
@@ -52,11 +66,13 @@
     name: 'createExperiment',
     data() {
       return {
-        target: null,
         name: '',
         files: '',
         fileStr: '',
-        multipleFiles: null
+        attr: {
+          title: 'Which image looks better?',
+          blurb: 'Take your time',
+        }
       }
     },
     methods: {
@@ -67,7 +83,7 @@
       submit ($event) {
         rpc
           .rpcUpload(
-            'uploadImages', this.$data.files, this.$data.name, auth.user.id)
+            'uploadImages', this.$data.files, this.$data.name, auth.user.id, this.$data.attr)
           .then(res => {
             console.log('>> CreateExperiment.submit', res.data)
             let experimentId = res.data.experimentId

@@ -5,6 +5,26 @@
       Experiment: {{experiment.name}}
     </h2>
 
+    <h3 class="md-title">
+      Question
+    </h3>
+    <md-input-container>
+      <label>Title</label>
+      <md-input v-model="experiment.attr.title">
+      </md-input>
+    </md-input-container>
+
+    <md-input-container>
+      <label>Blurb</label>
+      <md-textarea v-model="experiment.attr.blurb"></md-textarea>
+    </md-input-container>
+
+    <md-button class="md-raised" @click="saveQuestion">Save Question</md-button>
+
+    <div style="height: 4em"></div>
+
+    <md-divider></md-divider>
+
     <h3 class="md-title">Participants</h3>
 
     <md-button class="md-raised" @click="makeInvite">
@@ -64,14 +84,19 @@
       </md-table-body>
     </md-table>
 
-    <div>
+    <md-divider></md-divider>
+
+    <md-layout md-column>
       <h3 class="md-title">User rankings</h3>
       <md-card style="padding: 1em; box-sizing: content-box; width: 220px; height: 200px;">
         <md-card-media style="width: 220px; height: 200px;">
           <canvas id="graph-0"></canvas>
         </md-card-media>
       </md-card>
-    </div>
+      <br>
+    </md-layout>
+
+    <md-divider></md-divider>
 
     <h3 class="md-title">Image Order</h3>
 
@@ -239,6 +264,15 @@
           .then((res) => {
             console.log('>> Experiment.makeInvite', res.data)
             participants.push(res.data.participant)
+          })
+      },
+      saveQuestion() {
+        let experiment = this.$data.experiment
+        rpc
+          .rpcRun('saveQuestion', experiment.id, experiment.attr)
+          .then((res) => {
+            console.log('>> Experiment.saveQuestion', res.data)
+//            participants.push(res.data.participant)
           })
       }
     }

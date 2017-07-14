@@ -176,6 +176,11 @@ let remoteRunFns = {
       })
   },
 
+  saveQuestion (experimentId, attr) {
+    return models
+      .saveExperimentAttr(experimentId, attr)
+  },
+
   deleteExperiment (experimentId) {
     return models
       .deleteExperiment(experimentId)
@@ -211,20 +216,25 @@ let remoteRunFns = {
     return models
       .fetchParticipant(participateId)
       .then(participant => {
-        console.log('>> /participate/', participant)
         if (participant.user === null) {
           console.log('>> /participate no result found')
           return {new: true}
         } else {
-          const state = participant.state
-          if (tree.isDone(state)) {
-            console.log('>> /participate done')
-            return {done: true}
-          } else {
-            const comparison = tree.getComparison(participant.state)
-            console.log('>> /participate comparison', comparison)
-            return {comparison}
-          }
+          return models
+            .fetchExperiment(participant.ExperimentId)
+            .then(experiment => {
+              const state = participant.state
+              if (tree.isDone(state)) {
+                console.log('>> /participate done')
+                return {done: true}
+              } else {
+                const comparison = tree.getComparison(participant.state)
+                console.log('>> /participate comparison', comparison)
+                return {
+                  comparison,
+                  attr: experiment.attr }
+              }
+            })
         }
       })
   },
@@ -233,19 +243,26 @@ let remoteRunFns = {
     return models
       .fetchParticipant(participateId)
       .then(participant => {
-        let payload
-        let state = participant.state
-        tree.makeChoice(state, chosenImageIndex)
-        if (tree.isDone(state)) {
-          tree.rankNodes(state)
-          payload = {done: true}
-        } else {
-          payload = {comparison: tree.getComparison(state)}
-        }
         return models
-          .saveParticipant(participateId, {state})
-          .then(() => {
-            return payload
+          .fetchExperiment(participant.ExperimentId)
+          .then(experiment => {
+            let state = participant.state
+            tree.makeChoice(state, chosenImageIndex)
+            let payload
+            if (tree.isDone(state)) {
+              tree.rankNodes(state)
+              payload = {done: true}
+            } else {
+              payload = {
+                comparison: tree.getComparison(state),
+                attr: experiment.attr
+              }
+            }
+            return models
+              .saveParticipant(participateId, {state})
+              .then(() => {
+                return payload
+              })
           })
       })
   },
@@ -254,10 +271,15 @@ let remoteRunFns = {
     return models
       .saveParticipant(participateId, {user: details})
       .then(participant => {
-        return {
-          comparison: tree.getComparison(participant.state)
-        }
-      })
+        return models
+          .fetchExperiment(participant.ExperimentId)
+          .then(experiment => {
+            return {
+              comparison: tree.getComparison(participant.state),
+              attr: experiment.attr
+            }
+          })
+        })
   }
 }
 
@@ -284,7 +306,7 @@ function storeFiles (uploadedFiles) {
     const experimentDir = String(new Date().getTime())
     const fullExperimentDir = path.join(config.filesDir, experimentDir)
     if (!fs.existsSync(fullExperimentDir)) {
-        fs.mkdirSync(fullExperimentDir, 0744);
+      fs.mkdirSync(fullExperimentDir, 0744)
     }
 
     let err = ''
@@ -349,7 +371,7 @@ router.get('/image/:experimentDir/:basename', (req, res) => {
 })
 
 let remoteUploadFns = {
-  uploadImages (files, name, userId) {
+  uploadImages (files, name, userId, attr) {
     console.log('>> routes.remoteUploadFns', files, name, userId)
     return storeFiles(files)
       .then((paths) => {
@@ -358,7 +380,7 @@ let remoteUploadFns = {
           .createExperiment(
             userId,
             name,
-            '',
+            attr,
             _.map(paths, f => '/image/' + f))
           .then(experiment => {
             return {

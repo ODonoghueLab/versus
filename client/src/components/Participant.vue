@@ -64,10 +64,10 @@
     <div v-else>
       <md-layout md-align="center" v-if="comparison">
         <md-layout md-align="center" md-flex="100">
-          <h2 class="md-display-2"> {{comparisonTitle}} </h2>
+          <h2 class="md-display-2"> {{attr.title}} </h2>
         </md-layout>
         <md-layout md-align="center" md-flex="100">
-          <p> {{comparisonText}}</p>
+          <p> {{attr.blurb}}</p>
           <br>
           <br>
           <br>
@@ -77,9 +77,11 @@
         <md-layout>
           <md-layout md-flex="50" md-align="end">
             <md-whiteframe md-elevation="5" style="margin-right: 1em">
-              <md-progress
+              <div style="height: 12px">
+                <md-progress
                   v-if="loadingA"
                   md-indeterminate></md-progress>
+                </div>
               <md-button
                   class="choice"
                   v-bind:class="[loadingA ? 'choice-loading' : '']"
@@ -93,9 +95,11 @@
           </md-layout>
           <md-layout md-flex="50" md-align="start">
             <md-whiteframe md-elevation="5" style="margin-left: 0.7em">
-              <md-progress
-                  v-if="loadingB"
-                  md-indeterminate></md-progress>
+              <div style="height: 12px">
+                <md-progress
+                    v-if="loadingB"
+                    md-indeterminate></md-progress>
+              </div>
               <md-button
                   @click="choose(comparison.itemB)"
                   class="choice"
@@ -164,8 +168,7 @@
         done: false,
         start: false,
         comparison: null,
-        comparisonTitle: 'Choose the better looking image',
-        comparisonText: 'Take your time',
+        attr: {},
       }
     },
     mounted() {
@@ -203,6 +206,7 @@
           this.$data.comparison = newComparison
           this.$data.imageB = this.getImageUrl(newComparison.itemB)
           this.$data.imageA = this.getImageUrl(newComparison.itemA)
+          this.$data.attr = res.data.attr
         }
       },
       choose (item){

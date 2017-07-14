@@ -6,6 +6,7 @@
     <h2 class="md-title" style="padding-left: 1em; flex: 1" >Versus</h2>
 
     <span v-if="user.authenticated">
+
       <router-link to='/experiments' class="md-button">
         Experiments
       </router-link>
@@ -22,9 +23,10 @@
           <md-menu-item @click="logout">Logout</md-menu-item>
         </md-menu-content>
       </md-menu>
+
     </span>
 
-    <router-link v-else to='/login' class='md-button'>
+    <router-link v-else to='/login' tag='md-button'>
       Login
     </router-link>
 

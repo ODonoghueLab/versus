@@ -10,7 +10,8 @@ module.exports = app
 
 // Middleware Configuration
 
-// Cross-origin-resource-sharing
+// Cross-origin-resource-sharing to allow testing with
+// vue client that uses hot-reloading in the browser
 app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Credentials', true)
   res.header('Access-Control-Allow-Origin', req.headers.origin)

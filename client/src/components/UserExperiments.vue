@@ -1,5 +1,5 @@
 <template>
-  <div style="padding-left: 1em; text-align: left">
+  <div style="padding: 1em; text-align: left">
     <h2 class="md-display-2">
       {{ title() }}
     </h2>

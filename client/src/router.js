@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Router from 'vue-router'
 Vue.use(Router)
 
+import Home from './components/Home'
 import UserExperiments from './components/UserExperiments'
 import Experiment from './components/Experiment'
 import CreateExperiment from './components/CreateExperiment'
@@ -16,13 +17,8 @@ let router = new Router({
   routes: [
     {
       path: '/',
-      redirect: to => {
-        if (auth.user.authenticated) {
-          return '/experiments'
-        } else {
-          return '/login'
-        }
-      }
+      name: 'home',
+      component: Home
     },
     {
       path: '/login',

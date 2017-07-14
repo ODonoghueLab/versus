@@ -46,7 +46,7 @@ const Participant = sequelize.define('Participant', {
 
 const Experiment = sequelize.define('Experiment', {
   name: Sequelize.STRING,
-  description: Sequelize.STRING
+  attr: Sequelize.JSON,
 })
 
 const UserExperiment = sequelize.define('UserExperiment', {
@@ -87,6 +87,13 @@ function fetchExperiment (experimentId) {
     .then(unwrapInstance)
 }
 
+function saveExperimentAttr (experimentId, attr) {
+  return findExperiment(experimentId)
+    .then(experiment => {
+      experiment.update({attr})
+      return experiment
+    })
+}
 function deleteExperiment (experimentId) {
   return Experiment
     .destroy({where: {id: experimentId}})
@@ -139,10 +146,10 @@ function saveParticipant (participateId, values) {
     })
 }
 
-function createExperiment (userId, name, description, imageUrls) {
+function createExperiment (userId, name, attr, imageUrls) {
   return Experiment
     .create(
-      {name, description})
+      {name, attr})
     .then((experiment) => {
       let chainedPromise = null
       for (let url of imageUrls) {
@@ -225,6 +232,7 @@ module.exports = {
   createExperiment,
   fetchExperiment,
   fetchExperiments,
+  saveExperimentAttr,
   deleteExperiment,
   createParticipant,
   fetchParticipant,
