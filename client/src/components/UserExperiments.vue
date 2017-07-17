@@ -14,7 +14,7 @@
         <md-table-row v-for="(experiment, index) in experiments" :key="index">
           <md-table-cell style="width: 100%">
             <a @click="getExperimentRoute(experiment.id)">
-              {{experiment.name}}
+              {{experiment.attr.name}}
             </a>
           </md-table-cell>
           <md-table-cell>

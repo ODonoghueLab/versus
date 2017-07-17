@@ -10,7 +10,7 @@
         <md-input
             type="text"
             name="uploadFiles"
-            v-model="name">
+            v-model="attr.name">
         </md-input>
       </md-input-container>
       <md-input-container>
@@ -66,12 +66,12 @@
     name: 'createExperiment',
     data() {
       return {
-        name: '',
         files: '',
         fileStr: '',
         attr: {
           title: 'Which image looks better?',
           blurb: 'Take your time',
+          name: ''
         }
       }
     },
@@ -83,7 +83,7 @@
       submit ($event) {
         rpc
           .rpcUpload(
-            'uploadImages', this.$data.files, this.$data.name, auth.user.id, this.$data.attr)
+            'createExperimentWithUploadImages', this.$data.files, auth.user.id, this.$data.attr)
           .then(res => {
             console.log('>> CreateExperiment.submit', res.data)
             let experimentId = res.data.experimentId

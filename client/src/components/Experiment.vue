@@ -2,11 +2,13 @@
   <div style="padding-left: 1em; padding-right: 1em;">
 
     <h2 class="md-display-2">
-      Experiment: {{experiment.name}}
+      Experiment:
+      <span v-if="experiment.attr">
+        {{experiment.attr.name}}
+      </span>
     </h2>
 
-    <md-whiteframe style="padding: 1em; margin-bottom: 1em"
-                   v-if="experiment.attr">
+    <md-whiteframe v-if="experiment.attr" style="padding: 1em; margin-bottom: 1em">
       <h3 class="md-title">
         Question
       </h3>
@@ -26,7 +28,7 @@
 
       <md-button
           class="md-raised"
-          @click="saveQuestion">
+          @click="saveExperimentAttr">
         Update Question
       </md-button>
 
@@ -42,7 +44,7 @@
       <md-button class="md-raised" @click="downloadResults">
         Download Results
       </md-button>
-      <md-table v-if="experiment.participants && experiment.participants.length">
+      <md-table v-if="experiment.participants">
         <md-table-header>
           <md-table-row>
             <md-table-head>Invite</md-table-head>
@@ -76,9 +78,6 @@
             </md-table-cell>
             <md-table-cell>
             <span v-if="participant.state.ranks.length">
-              Image
-              {{ participant.bestImageIndex + 1 }}
-              -
               {{ participant.bestImageKey }}
             </span>
             </md-table-cell>
@@ -113,7 +112,7 @@
           <md-card-media
               style="
               height: 200px;">
-            <canvas id="graph-0"></canvas>
+            <canvas id="chart-canvas"></canvas>
           </md-card-media>
         </md-card>
         <br>
@@ -123,9 +122,11 @@
     <md-whiteframe style="padding: 1em; margin-bottom: 1em">
       <h3 class="md-title">Image Order (Drag & Sort)</h3>
       <md-layout>
-        <draggable v-model="experiment.Images">
+        <draggable
+            v-model="baseRanks"
+            @end="saveExperimentAttr">
           <md-card
-              v-for="(image, index) in experiment.Images"
+              v-for="(url, index) in baseRanks"
               :key="index"
               style="
               text-align: center;
@@ -139,12 +140,12 @@
               <md-layout style="flex: 1">
                 <md-card-header style="text-align: left">
                   <p class="body">
-                    {{ index + 1 }} -- {{ getBaseUrl(image.url) }}
+                    {{ index + 1 }} -- {{ getBaseUrl(url) }}
                   </p>
                 </md-card-header>
               </md-layout>
               <md-whiteframe>
-                <img style="height: 100px" :src="getFullUrl(image.url)"></img>
+                <img style="height: 100px" :src="getFullUrl(url)"></img>
               </md-whiteframe>
             </md-layout>
           </md-card>
@@ -161,81 +162,97 @@
 
 <script>
   import path from 'path'
+
+  import $ from 'jquery'
+  import draggable from 'vuedraggable'
+
   import config from '../config'
+
   import auth from '../modules/auth'
   import util from '../modules/util'
   import rpc from '../modules/rpc'
   import chartdata from '../modules/chartdata.js'
-  import $ from 'jquery'
-  import draggable from 'vuedraggable'
+
+  function cleanObj (o) {
+    return JSON.parse(JSON.stringify(o))
+  }
+
+  function getDatasets (experiment) {
+    let result = []
+
+    let baseOrder = {}
+    for (let [i, url] of experiment.attr.baseRanks.entries()) {
+      let key = path.basename(url)
+      baseOrder[key] = i + 1
+    }
+
+    for (let participant of experiment.participants) {
+      let state = participant.state
+      if ('ranks' in state) {
+        let participantOrder = {}
+        for (let [i, url] of state.ranks.entries()) {
+          let key = path.basename(url)
+          participantOrder[key] = i + 1
+        }
+
+        console.log('> Experiment.mounted data', baseOrder, participantOrder)
+
+        let xVals = []
+        let yVals = []
+        for (let key of _.keys(baseOrder)) {
+          xVals.push(baseOrder[key])
+          yVals.push(participantOrder[key])
+        }
+
+        chartdata.addDataset(
+          result,
+          participant.participateId,
+          xVals,
+          yVals)
+      }
+    }
+
+    return result
+  }
 
   export default {
     name: 'experiment',
     data() {
       return {
         experiment: {},
+        baseRanks: [],
       }
     },
     components: {draggable},
-    computed: {
-      imageUrls: function() {
-        let urls = _.map(this.$data.experiment.Images, 'url')
-        console.log('> Experiment.imageUrls', urls)
-        return _.map(urls, getFullUrl)
-      },
-    },
     mounted () {
       let experimentId = this.$route.params.experimentId
       rpc
         .rpcRun('getExperiment', experimentId)
         .then((res) => {
           let experiment = res.data.experiment
-          let participants = experiment.participants
-          console.log('>> Experiment.mounted', experiment)
-          this.$data.experiment = experiment
 
-          let graph = chartdata.makeLineChartData()
-
-          for (let participant of participants) {
-            let state = participant.state
-            if ('ranks' in state) {
-              state.ranks = _.map(state.ranks, this.getFullUrl)
-
-              let xVals = []
-              let yVals = []
-
-              let baseOrder = {}
-              for (let [i, url] of state.urls.entries()) {
-                let key = path.basename(url)
-                baseOrder[key] = i + 1
-              }
-
-              let userOrder = {}
-              for (let [i, url] of state.ranks.entries()) {
-                let key = path.basename(url)
-                userOrder[key] = i + 1
-              }
-
-              for (let key of _.keys(baseOrder)) {
-                xVals.push(baseOrder[key])
-                yVals.push(userOrder[key])
-              }
-
-              chartdata.addDataset(
-                graph.data.datasets,
-                participant.participateId,
-                xVals,
-                yVals)
-
-              participant.bestImageKey = path.basename(state.ranks[0])
-              participant.bestImageIndex = baseOrder[participant.bestImageKey]
-
-            }
+          if (!('baseRanks' in experiment.attr)) {
+            experiment.attr.baseRanks = _.map(
+              experiment.Images,
+              image => image.url
+            )
           }
 
-          let idTag = '#graph-0'
+          let participants = experiment.participants
+          for (let participant of participants) {
+            let state = participant.state
+            participant.bestImageKey = path.basename(state.ranks[0])
+          }
+
+          this.$data.experiment = experiment
+
+          this.$data.baseRanks = experiment.attr.baseRanks
+
+          this.chartData = chartdata.makeLineChartData()
+          this.chartData.data.datasets = getDatasets(experiment)
+          let idTag = '#chart-canvas'
           let canvas = $.find(idTag)
-          let chart = new Chart(canvas[0], graph)
+          this.chart = new Chart(canvas[0], this.chartData)
         })
 
     },
@@ -292,15 +309,21 @@
             participants.push(res.data.participant)
           })
       },
-      saveQuestion() {
+      saveExperimentAttr() {
         let experiment = this.$data.experiment
+        experiment.attr.baseRanks = this.$data.baseRanks
         rpc
-          .rpcRun('saveQuestion', experiment.id, experiment.attr)
+          .rpcRun('saveExperimentAttr', experiment.id, experiment.attr)
           .then((res) => {
-            console.log('>> Experiment.saveQuestion', res.data)
-//            participants.push(res.data.participant)
+            console.log('>> Experiment.saveExperimentAttr.res', res.data)
+            let newDatasets = getDatasets(experiment)
+            let datasets = this.chartData.data.datasets
+            for (let iDataset = 0; iDataset < newDatasets.length; iDataset += 1) {
+              datasets[iDataset].data = newDatasets[iDataset].data
+              this.chart.update()
+            }
           })
-      }
+      },
     }
   }
 

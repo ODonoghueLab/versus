@@ -135,17 +135,6 @@
     text-align: center;
   }
 
-  /*.choice {*/
-  /*border: 1px solid rgba(255, 255, 255, 0.0);*/
-  /*}*/
-  .choice:hover {
-    border: 1px solid #EEBBBB;
-  }
-
-  .choice:active, .choice-loading {
-    border: 1px solid #EEBBBB;
-    background-color: #FFEEEE;
-  }
 </style>
 
 <script>

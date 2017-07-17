@@ -176,7 +176,7 @@ let remoteRunFns = {
       })
   },
 
-  saveQuestion (experimentId, attr) {
+  saveExperimentAttr (experimentId, attr) {
     return models
       .saveExperimentAttr(experimentId, attr)
   },
@@ -342,7 +342,7 @@ function storeFiles (uploadedFiles) {
         let basename = path.basename(file.originalname)
         targetPaths.push(path.join(experimentDir, basename))
         try {
-          console.log('uploadFiles', path.basename(inputPaths[i]), '->', targetPaths[i])
+          console.log(`>> routes.storeFiles -> ${targetPaths[i]}`)
           fs.renameSync(inputPaths[i], path.join(config.filesDir, targetPaths[i]))
         } catch (err) {
           rollback(err)
@@ -371,15 +371,14 @@ router.get('/image/:experimentDir/:basename', (req, res) => {
 })
 
 let remoteUploadFns = {
-  uploadImages (files, name, userId, attr) {
-    console.log('>> routes.remoteUploadFns', files, name, userId)
+  createExperimentWithUploadImages (files, userId, attr) {
+    console.log('>> routes.remoteUploadFns', files, userId)
     return storeFiles(files)
       .then((paths) => {
-        console.log('>> routes.uploadImages', paths)
+        console.log('>> routes.createExperimentWithUploadImages', paths)
         return models
           .createExperiment(
             userId,
-            name,
             attr,
             _.map(paths, f => '/image/' + f))
           .then(experiment => {

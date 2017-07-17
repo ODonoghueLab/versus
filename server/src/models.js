@@ -45,7 +45,6 @@ const Participant = sequelize.define('Participant', {
 })
 
 const Experiment = sequelize.define('Experiment', {
-  name: Sequelize.STRING,
   attr: Sequelize.JSON,
 })
 
@@ -58,7 +57,6 @@ Experiment.belongsToMany(User, {through: UserExperiment})
 Experiment.hasMany(Participant, {as: 'participants'})
 Image.belongsTo(Experiment, {onDelete: 'cascade'})
 Participant.belongsTo(Experiment)
-
 User.belongsToMany(Experiment, {through: UserExperiment})
 
 /* access functions - only returns JSON literals */
@@ -146,16 +144,18 @@ function saveParticipant (participateId, values) {
     })
 }
 
-function createExperiment (userId, name, attr, imageUrls) {
+function createExperiment (userId, attr, imageUrls) {
   return Experiment
     .create(
-      {name, attr})
+      {attr})
     .then((experiment) => {
       let chainedPromise = null
       for (let url of imageUrls) {
         let promise = Image
           .create({url})
-          .then(image => experiment.addImage(image))
+          .then(image => {
+            experiment.addImage(image)
+          })
         if (chainedPromise === null) {
           chainedPromise = promise
         } else {
@@ -164,6 +164,7 @@ function createExperiment (userId, name, attr, imageUrls) {
       }
       chainedPromise
         .then(() => {
+          console.log('> models.createExperiment', experiment)
           experiment.addUser(userId, {permission: 0})
           return unwrapInstance(experiment)
         })
