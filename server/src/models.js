@@ -145,31 +145,38 @@ function saveParticipant (participateId, values) {
 }
 
 function createExperiment (userId, attr, imageUrls) {
-  return Experiment
-    .create(
-      {attr})
-    .then((experiment) => {
-      let chainedPromise = null
-      for (let url of imageUrls) {
-        let promise = Image
-          .create({url})
-          .then(image => {
-            experiment.addImage(image)
-          })
-        if (chainedPromise === null) {
-          chainedPromise = promise
-        } else {
-          chainedPromise = chainedPromise.then(() => promise)
+  return new Promise((resolve) => {
+    Experiment
+      .create(
+        {attr})
+      .then((experiment) => {
+        let chainedPromise = null
+        for (let url of imageUrls) {
+          let promise = Image
+            .create({url})
+            .then(image => {
+              experiment.addImage(image)
+            })
+          if (chainedPromise === null) {
+            chainedPromise = promise
+          } else {
+            chainedPromise = chainedPromise.then(() => promise)
+          }
         }
-      }
-      chainedPromise
-        .then(() => {
-          console.log('> models.createExperiment', experiment)
-          experiment.addUser(userId, {permission: 0})
-          return unwrapInstance(experiment)
+
+        chainedPromise
+          .then(() => {
+            experiment
+              .addUser(userId, {permission: 0})
+              .then(() => {
+                let result = unwrapInstance(experiment)
+                console.log('> Models.createExperiment ready to resolve', result)
+                resolve(result)
+              })
+          })
+          .catch(reject)
         })
-      return chainedPromise
-    })
+  })
 }
 
 function createUser (values) {

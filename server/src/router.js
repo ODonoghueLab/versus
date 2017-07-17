@@ -318,7 +318,6 @@ function storeFiles (uploadedFiles) {
       err = msg
     }
 
-    console.log('>> routes.storeFiles', uploadedFiles)
     const inputPaths = []
     const targetPaths = []
 
@@ -375,13 +374,14 @@ let remoteUploadFns = {
     console.log('>> routes.remoteUploadFns', files, userId)
     return storeFiles(files)
       .then((paths) => {
-        console.log('>> routes.createExperimentWithUploadImages', paths)
+        console.log('>> routes.createExperimentWithUploadImages paths', paths)
         return models
           .createExperiment(
             userId,
             attr,
             _.map(paths, f => '/image/' + f))
           .then(experiment => {
+            console.log('> routers.createExperimentWithUploadImages output', experiment)
             return {
               success: true,
               experimentId: experiment.id

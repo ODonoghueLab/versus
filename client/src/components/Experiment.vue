@@ -318,8 +318,8 @@
             console.log('>> Experiment.saveExperimentAttr.res', res.data)
             let newDatasets = getDatasets(experiment)
             let datasets = this.chartData.data.datasets
-            for (let iDataset = 0; iDataset < newDatasets.length; iDataset += 1) {
-              datasets[iDataset].data = newDatasets[iDataset].data
+            for (let i = 0; i < newDatasets.length; i += 1) {
+              datasets[i].data = newDatasets[i].data
               this.chart.update()
             }
           })
