@@ -16,11 +16,23 @@
       <p></p>
       <p></p>
       <p></p>
-      <md-layout md-align="center" md-vertical-align="center">
+      <md-layout
+          md-align="center"
+          md-vertical-align="center">
         Please
-        <router-link to="/login" tag="md-button" class="md-raised md-primary">login</router-link>
+        <router-link
+            to="/login"
+            tag="md-button"
+            class="md-raised md-primary">
+          login
+        </router-link>
          or
-        <router-link to="/register" tag="md-button" class="md-button md-raised">register</router-link>
+        <router-link
+            to="/register"
+            tag="md-button"
+            class="md-button md-raised">
+          register
+        </router-link>
       </md-layout>
     </md-layout>
   </div>

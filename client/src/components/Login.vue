@@ -5,8 +5,9 @@
       {{ title }}
     </h2>
 
-    <form novalidate class="login-screen"
-          v-on:submit.prevent="submit">
+    <form
+        novalidate class="login-screen"
+        v-on:submit.prevent="submit">
 
       <md-input-container>
         <label>E-mail address</label>
@@ -26,16 +27,17 @@
         </md-input>
       </md-input-container>
 
-      <md-button type="submit" class="md-raised md-primary">login</md-button>
+      <md-button
+          type="submit"
+          class="md-raised md-primary">
+        login
+      </md-button>
 
       <br>
       <br>
       <br>
       New to Versus? &nbsp;
       <router-link to="/register">Register</router-link>
-
-      </md-layout>
-
 
       <div v-if="msg" class="card error">
         {{ msg }}

@@ -6,10 +6,11 @@
         Welcome to Versus!
       </h2>
       <p>
-        You have been invited to participate in , an experiment on Versus.
+        You have been invited to participate in an experiment on Versus.
       </p>
       <p>
-        Experiments on Versus are super simple, all you need to do is view the two images and click on the one you beleive is better.
+        Experiments on Versus are easy, all you need to do
+        is view the two images and click on the one you beleive is better.
       </p>
       <p>
         To participate in this experiment, enter your age and gender below and click start.
@@ -198,7 +199,7 @@
           this.$data.attr = res.data.attr
         }
       },
-      choose (item){
+      choose (item) {
         let participateId = this.$route.params.participateId
         if (item.value === this.$data.comparison.itemA.value) {
           this.$data.loadingA = true

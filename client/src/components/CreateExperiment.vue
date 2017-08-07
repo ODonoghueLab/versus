@@ -40,11 +40,20 @@
         </md-textarea>
       </md-input-container>
       <br>
-      <md-button
-          type="submit"
-          class="md-raised md-primary">
-        Submit
-      </md-button>
+
+      <md-layout md-row md-vertical-align="center">
+        <md-button
+            type="submit"
+            :disabled="isUploading"
+            class="md-raised md-primary">
+          Submit
+        </md-button>
+        <md-spinner
+            md-indeterminate
+            md-size="30"
+            v-if="isUploading">
+        </md-spinner>
+      </md-layout>
     </form>
   </div>
 </template>
@@ -72,7 +81,8 @@
           title: 'Which image looks better?',
           blurb: 'Take your time',
           name: ''
-        }
+        },
+        isUploading: false
       }
     },
     methods: {
@@ -81,11 +91,14 @@
         this.$data.fileStr = `${files.length} files`
       },
       submit ($event) {
+        this.$data.isUploading = true
         rpc
           .rpcUpload(
             'createExperimentWithUploadImages', this.$data.files, auth.user.id, this.$data.attr)
           .then(res => {
+            this.$data.isUploading = false
             console.log('>> CreateExperiment.submit', res.data)
+            util.sleep(10000)
             let experimentId = res.data.experimentId
             this.$router.push('/experiment/' + experimentId)
           })

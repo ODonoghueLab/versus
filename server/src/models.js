@@ -147,8 +147,7 @@ function saveParticipant (participateId, values) {
 function createExperiment (userId, attr, imageUrls) {
   return new Promise((resolve) => {
     Experiment
-      .create(
-        {attr})
+      .create({attr})
       .then((experiment) => {
         let chainedPromise = null
         for (let url of imageUrls) {
@@ -163,7 +162,6 @@ function createExperiment (userId, attr, imageUrls) {
             chainedPromise = chainedPromise.then(() => promise)
           }
         }
-
         chainedPromise
           .then(() => {
             experiment
