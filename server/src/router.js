@@ -164,6 +164,7 @@ let remoteRunFns = {
     return models
       .fetchExperiments(userId)
       .then(experiments => {
+        console.log('> router.getExperiments', experiments)
         return {experiments}
       })
   },
@@ -172,6 +173,7 @@ let remoteRunFns = {
     return models
       .fetchExperiment(experimentId)
       .then(experiment => {
+        console.log('> router.getExperiment', experiment)
         return {experiment}
       })
   },

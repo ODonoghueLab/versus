@@ -65,7 +65,26 @@ function unwrapInstance (instance) {
   if (instance === null) {
     return null
   } else {
-    return instance.get({plain: true})
+    let result = instance.get({plain: true})
+    for (let key of ['attr', 'user', 'state']) {
+      if (key in result) {
+        if (typeof result[key] === 'string') {
+          result[key] = JSON.parse(result[key])
+        }
+      }
+    }
+    if ('participants' in result) {
+      for (let p of result.participants) {
+        for (let key of ['attr', 'user', 'state']) {
+          if (key in p) {
+            if (typeof p[key] === 'string') {
+              p[key] = JSON.parse(p[key])
+            }
+          }
+        }
+      }
+    }
+    return result
   }
 }
 
@@ -92,6 +111,7 @@ function saveExperimentAttr (experimentId, attr) {
       return experiment
     })
 }
+
 function deleteExperiment (experimentId) {
   return Experiment
     .destroy({where: {id: experimentId}})
@@ -102,7 +122,10 @@ function fetchExperiments (userId) {
     .findAll(
       {include: [{model: User, where: {id: userId}}]})
     .then(
-      experiments => _.map(experiments, unwrapInstance))
+      experiments => {
+        let results = _.map(experiments, unwrapInstance)
+        return results
+      })
 }
 
 function createParticipant (experimentId, email) {
@@ -145,7 +168,7 @@ function saveParticipant (participateId, values) {
 }
 
 function createExperiment (userId, attr, imageUrls) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     Experiment
       .create({attr})
       .then((experiment) => {
@@ -168,12 +191,12 @@ function createExperiment (userId, attr, imageUrls) {
               .addUser(userId, {permission: 0})
               .then(() => {
                 let result = unwrapInstance(experiment)
-                console.log('> Models.createExperiment ready to resolve', result)
+                console.log('> models.createExperiment ready to resolve', result)
                 resolve(result)
               })
           })
           .catch(reject)
-        })
+      })
   })
 }
 
@@ -215,7 +238,7 @@ function fetchUser (values) {
     })
 }
 
-function checkUserWithPassword(user, password) {
+function checkUserWithPassword (user, password) {
   return new Promise((resolve) => {
     bcrypt.compare(password, user.password, (err, isMatch) => {
       if (err) {

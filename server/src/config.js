@@ -5,13 +5,18 @@ module.exports = {
   ip: 'localhost',
   port: 3000,
   development: {
-    'username': 'postgres',
-    'password': 'postgres',
-    'database': 'versus',
-    'host': 'localhost',
-    'port': 5432,
-    'dialect': 'postgres'
+    host: 'localhost',
+    dialect: 'sqlite',
+    storage: 'database.sqlite'
   },
+  // development: {
+  //   'username': 'postgres',
+  //   'password': 'postgres',
+  //   'database': 'versus',
+  //   'host': 'localhost',
+  //   'port': 5432,
+  //   'dialect': 'postgres'
+  // },
   production: {
     'username': '',
     'password': '',
