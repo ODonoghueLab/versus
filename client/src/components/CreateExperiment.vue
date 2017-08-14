@@ -68,7 +68,6 @@
 
   import config from '../config'
   import auth from '../modules/auth'
-  import util from '../modules/util'
   import rpc from '../modules/rpc'
 
   export default {
@@ -98,7 +97,6 @@
           .then(res => {
             this.$data.isUploading = false
             console.log('>> CreateExperiment.submit', res.data)
-            util.sleep(10000)
             let experimentId = res.data.experimentId
             this.$router.push('/experiment/' + experimentId)
           })

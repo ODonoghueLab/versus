@@ -13,8 +13,6 @@ const upload = multer({dest: config.filesDir})
 const del = require('del')
 
 const passport = require('passport')
-const jwt = require('jwt-simple')
-
 const express = require('express')
 
 const router = express.Router()
@@ -25,140 +23,85 @@ module.exports = router
  * User routes - login/register etc.
  */
 
-function getJwtToken (user) {
-  let payload = {id: user.id}
-  let token = jwt.encode(payload, config.jwtSecret)
-  return token
-}
-
-router.post('/api/token', function(req, res) {
-  if (req.body.email && req.body.password) {
-    let email = req.body.email
-    let password = req.body.password
-    models
-      .fetchUser({email})
-      .then(user => {
-        models.checkUserWithPassword(user, password)
-          .then((user) => {
-            if (user === null) {
-              res.sendStatus(401)
-            } else {
-              let payload = {id: user.id}
-              let token = jwt.encode(payload, config.jwtSecret)
-              res.json({token})
-            }
-          })
-      })
-      .catch(() => {
-        res.sendStatus(401)
-      })
-  }
-})
-
-router.post('/api/register', (req, res) => {
-  // Sanitization
-  const keys = ['name', 'email', 'password', 'passwordv']
-  for (let key of keys) {
-    req.sanitize(key).escape()
-    req.sanitize(key).trim()
-  }
-  // Server-side validation using expressValidator
-  req.checkBody('name', 'Please Enter Your User Name').notEmpty()
-  req.checkBody('email', 'Please Enter Your Email').notEmpty()
-  req.checkBody('password', 'Please Enter Both Password Fields').notEmpty()
-  req.checkBody('passwordv', 'Please Enter Both Password Fields').notEmpty()
-  // req.checkBody('password', 'Please Enter A Longer Password').len(6);
-  req.checkBody('password', 'Passwords Do Not Match').equals(req.body.passwordv)
-  const errors = req.validationErrors()
-  let values = {
-    name: req.body.name,
-    email: req.body.email,
-    password: req.body.password
-  }
-  if (errors) {
-    values.errors = errors.map(obj => obj.msg)
-    values.success = false
-    res.json(values)
-  } else {
-    models
-      .createUser(values)
-      .then(() => {
-        res.json({success: true})
-      })
-      .catch(err => {
-        console.log('>> \api\register', err)
-        values.errors = ['Couldn\' register, is your email already in use?']
-        values.success = false
-        res.json(values)
-      })
-  }
-})
-
-router.post('/api/update', (req, res) => {
-  const keys = ['id', 'name', 'email', 'password']
-  for (let key of keys) {
-    req.sanitize(key).escape()
-    req.sanitize(key).trim()
-  }
-  let values = {}
-  for (let key of keys) {
-    if (req.body[key]) {
-      values[key] = req.body[key]
-    }
-  }
-  if (values) {
-    models
-      .updateUser(values)
-      .then(user => {
-        console.log('>> /api/update success', values, user)
-        res.json({success: true})
-      })
-      .catch(err => {
-        console.log(`>> /api/update error`, err)
-        values.errors = ['Couldn\' register, is your email already in use?']
-        values.success = false
-        res.json(values)
-      })
-  }
-})
-
-// [POST] get login form
-router.post('/api/login', (req, res, next) => {
-  passport.authenticate('local', (err, user) => {
-    if (err) {
-      console.log('>> /api/login error', err)
-      return next(err)
-    }
-    if (!user) {
-      return res.json(
-        {success: false, msg: 'user/password not found'})
-    }
-    req.logIn(user, (error) => {
-      if (error) {
-        console.log('>> /api/login error', err)
-        return next(error)
-      }
-      console.log('>> /api/login user', user)
-      return res.json({
-        success: true,
-        user: user,
-        jwtToken: getJwtToken(user)
-      })
-    })
-  })(req, res, next)
-})
-
-router.post('/api/logout', (req, res) => {
-  req.session.destroy()
-  req.logout()
-  res.json({success: true})
-})
-
 /**
  *  Public functions for json-rpc-api
  */
 
 let remoteRunFns = {
+
+  registerUser (user) {
+    return new Promise(resolve => {
+      const keys = ['name', 'email', 'password', 'passwordv']
+
+      let errors = []
+      if (!user.name) {
+        errors.push('Please Enter Your User Name')
+      }
+      if (!user.email) {
+        errors.push('Please Enter Your Email')
+      }
+      if (!user.password) {
+        errors.push('Please Enter Both Password Fields')
+      }
+      if (user.password !== user.passwordv) {
+        errors.push('Passwords Do Not Match')
+      }
+
+      let values = {
+        name: user.name,
+        email: user.email,
+        password: user.password
+      }
+
+      console.log('> router.registerUser', values, errors)
+      if (errors.length > 0) {
+        resolve({
+          success: false,
+          errors: errors
+        })
+      } else {
+        models
+          .createUser(values)
+          .then(() => {
+            resolve({success: true})
+          })
+          .catch(err => {
+            resolve({
+              success: false,
+              errors: ['Couldn\' register, is your email already in use?']
+            })
+          })
+      }
+    })
+  },
+
+  updateUser (user) {
+    return new Promise((resolve) => {
+      const keys = ['id', 'name', 'email', 'password']
+      let values = {}
+      for (let key of keys) {
+        if (user[key]) {
+          values[key] = user[key]
+        }
+      }
+      if (values) {
+        models
+          .updateUser(values)
+          .then(user => {
+            console.log('>> /api/update success', values, user)
+            resolve({success: true})
+          })
+          .catch(err => {
+            console.log(`>> /api/update error`, err)
+            values.errors = ['Couldn\' register, is your email already in use?']
+            values.success = false
+            resolve(values)
+          })
+      } else {
+        resolve({success: false})
+      }
+    })
+  },
 
   getExperiments (userId) {
     return models
@@ -285,17 +228,62 @@ let remoteRunFns = {
   }
 }
 
-router.post('/api/rpc-run', (req, res) => {
+router.post('/api/rpc-run', (req, res, next) => {
   let args = req.body.args
   let fnName = req.body.fnName
-  if (fnName in remoteRunFns) {
+
+  if (fnName === 'login') {
+
+    req.body.email = args[0].email
+    req.body.password = args[0].password
+
+    passport.authenticate('local', (err, user) => {
+      if (err) {
+        return next(err)
+      }
+      if (!user) {
+        return res.json({
+          success: false,
+          msg: 'user/password not found'
+        })
+      }
+      req.logIn(user, (error) => {
+        if (error) {
+          console.log('>> /api/login error', err)
+          return next(error)
+        }
+        console.log('>> /api/login user', user)
+        return res.json({
+          success: true,
+          user: user
+        })
+      })
+    })(req, res, next)
+
+  } else if (fnName === 'logout') {
+
+    req.session.destroy()
+    req.logout()
+    res.json({success: true})
+
+  } else if (fnName in remoteRunFns) {
+
+    // // check if session is logged-in!
+    // if (!req.isAuthenticated || !req.isAuthenticated()) {
+    //   throw new Error(`Not logged in`)
+    // }
+
     const runFn = remoteRunFns[fnName]
     runFn(...args).then(result => {
       res.json(result)
     })
+
   } else {
+
     throw new Error(`Remote runFn ${fnName} not found`)
+
   }
+
 })
 
 /**

@@ -31,6 +31,7 @@
   "dependencies": {
     "bcryptjs": "*",
     "body-parser": "~1.15.1",
+    "connect-ensure-login": "^0.1.1",
     "cookie-parser": "~1.4.3",
     "cors": "^2.8.3",
     "debug": "~2.2.0",
@@ -40,6 +41,7 @@
     "express-session": "*",
     "express-validator": "*",
     "gmail-send": "^1.2.10",
+    "jsonwebtoken": "^7.4.2",
     "jwt-simple": "^0.5.1",
     "morgan": "~1.7.0",
     "multer": "*",
@@ -51,6 +53,7 @@
     "pg": "^6.1.0",
     "pg-hstore": "^2.3.2",
     "sequelize": "^3.24.3",
+    "sequelize-json": "^2.1.2",
     "sqlite3": "^3.1.8"
   },
   "devDependencies": {

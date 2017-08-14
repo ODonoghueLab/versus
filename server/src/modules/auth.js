@@ -34,27 +34,7 @@ function initExpressApp (app) {
       .catch(error => done(error, null))
   })
 
-  var jwtStrategy = new JwtStrategy(
-    {
-      secretOrKey: config.jwtSecret,
-      jwtFromRequest: ExtractJwt.fromAuthHeader()
-    },
-    function(payload, done) {
-      models
-        .fetchUser({id: payload.id})
-        .then((user) => {
-          models.checkUserWithPassword(user, password)
-            .then((user) => {
-              if (user === null) {
-                done(null, false)
-              } else {
-                done(null, user, {name: user.name})
-              }
-            })
-        })
-    })
-
-  var localStrategy = new LocalStrategy(
+  passport.use(new LocalStrategy(
     {
       usernameField: 'email',
       passwordField: 'password'
@@ -77,9 +57,7 @@ function initExpressApp (app) {
             done(null, false)
           }
         })
-    })
-
-  passport.use(localStrategy)
+    }))
 
   app.use(passport.initialize())
   app.use(passport.session())

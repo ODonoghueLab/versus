@@ -1,8 +1,6 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-a pycharm .
-
 osascript 2>/dev/null <<EOF
 
     tell application "System Events"

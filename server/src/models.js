@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs')
 
 const tree = require('./modules/tree')
 
+const JsonField = require('sequelize-json')
+
 // initialize database using Sequelize
 const env = process.env.NODE_ENV || 'development'
 const dbConfig = require('./config')[env]
@@ -24,8 +26,7 @@ const User = sequelize.define('User', {
 })
 
 User.beforeValidate((user) => {
-  user.password = bcrypt.hashSync(
-    user.password, bcrypt.genSaltSync(10))
+  user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10))
 })
 
 const Image = sequelize.define('Image', {
@@ -41,7 +42,8 @@ const Participant = sequelize.define('Participant', {
   },
   email: Sequelize.STRING,
   user: Sequelize.JSON,
-  state: Sequelize.JSON
+  state: Sequelize.JSON,
+  attr: JsonField(sequelize, 'User', 'attr')
 })
 
 const Experiment = sequelize.define('Experiment', {

@@ -15,8 +15,9 @@ axios.defaults.withCredentials = true
 export default {
 
   rpcRun (fnName, ...args) {
-    console.log('>> rpc.rpcRun', fnName, args)
-    return axios.post(`${config.apiUrl}/api/rpc-run`, {fnName, args})
+    let payload = {fnName, args}
+    console.log('>> rpc.rpcRun', payload)
+    return axios.post(`${config.apiUrl}/api/rpc-run`, payload)
   },
 
   rpcUpload (fnName, files, ...args) {
