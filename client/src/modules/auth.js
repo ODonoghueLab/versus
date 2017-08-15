@@ -47,7 +47,6 @@ export default {
     let payload = _.cloneDeep(editUser)
     payload.password = hashPassword(payload.password)
     payload.passwordv = hashPassword(payload.passwordv)
-    payload.jwtToken = user.jwtToken
     console.log('>> auth.update', payload)
     return rpc
       .rpcRun('updateUser', payload)

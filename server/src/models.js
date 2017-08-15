@@ -1,19 +1,17 @@
 const _ = require('lodash')
 const bcrypt = require('bcryptjs')
+const Sequelize = require('sequelize')
 
+const conn = require('./conn')
 const tree = require('./modules/tree')
-
 const JsonField = require('sequelize-json')
 
-const Sequelize = require('sequelize')
-const conn = require('./conn')
 let db = conn.db
-
-// Reset database `force: true` -> wipes database
-db.sync({ force: false })
 
 /**
  * Definitions of the database for Versus
+ *
+ * JsonField is used as it works with Sqlite and Postgres, and MySQL
  */
 
 const User = db.define('User', {
@@ -38,13 +36,12 @@ const Participant = db.define('Participant', {
     defaultValue: Sequelize.UUIDV4
   },
   email: Sequelize.STRING,
-  user: Sequelize.JSON,
-  state: Sequelize.JSON,
-  attr: JsonField(db, 'User', 'attr')
+  user: JsonField(db, 'Participant', 'user'),
+  state: JsonField(db, 'Participant', 'state'),
 })
 
 const Experiment = db.define('Experiment', {
-  attr: Sequelize.JSON,
+  attr: JsonField(db, 'Experiment', 'attr'),
 })
 
 const UserExperiment = db.define('UserExperiment', {
@@ -64,26 +61,7 @@ function unwrapInstance (instance) {
   if (instance === null) {
     return null
   } else {
-    let result = instance.get({plain: true})
-    for (let key of ['attr', 'user', 'state']) {
-      if (key in result) {
-        if (typeof result[key] === 'string') {
-          result[key] = JSON.parse(result[key])
-        }
-      }
-    }
-    if ('participants' in result) {
-      for (let p of result.participants) {
-        for (let key of ['attr', 'user', 'state']) {
-          if (key in p) {
-            if (typeof p[key] === 'string') {
-              p[key] = JSON.parse(p[key])
-            }
-          }
-        }
-      }
-    }
-    return result
+    return instance.get({plain: true})
   }
 }
 
@@ -106,8 +84,9 @@ function fetchExperiment (experimentId) {
 function saveExperimentAttr (experimentId, attr) {
   return findExperiment(experimentId)
     .then(experiment => {
-      experiment.update({attr})
       return experiment
+        .updateAttributes({attr})
+        .then(unwrapInstance)
     })
 }
 
@@ -161,7 +140,7 @@ function saveParticipant (participateId, values) {
   return findParticipant(participateId)
     .then(participant => {
       return participant
-        .update(values)
+        .updateAttributes(values)
         .then(unwrapInstance)
     })
 }
@@ -217,7 +196,7 @@ function updateUser (values) {
     .then(user => {
       if (user) {
         return user
-          .update(values)
+          .updateAttributes(values)
           .then(unwrapInstance)
       } else {
         return null

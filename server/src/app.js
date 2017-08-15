@@ -27,21 +27,14 @@ app.use(function (req, res, next) {
 const logger = require('morgan')
 app.use(logger('dev'))
 
-// parse Json in body
+// Parse Json in body
 const bodyParser = require('body-parser')
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 
-const cookieParser = require('cookie-parser')
-app.use(cookieParser())
-
-// Check form validation in handlers
-const expressValidator = require('express-validator')
-app.use(expressValidator())
-
 // Session management for validated users
 const session = require('express-session')
-app.use(session({ 
+app.use(session({
   secret: 'csiro-versus',
   saveUninitialized: true,
   resave: true
@@ -52,7 +45,7 @@ const passport = require('passport')
 app.use(passport.initialize())
 app.use(passport.session())
 
-// Hook user in models to authentication manager
+// Hook user in models.js to authentication manager
 const models = require('./models')
 passport.serializeUser((user, done) => {
   done(null, user.id)
@@ -101,6 +94,8 @@ app.use(express.static(clientDir))
 app.get('/', (req, res) => {
   res.sendFile(path.join(clientDir, 'index.html'))
 })
+
+// Redirect dangling calls to here
 app.get('*', (req, res) => {
   res.redirect('/')
 })
