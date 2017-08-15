@@ -1,10 +1,5 @@
 const passport = require('passport')
-const passportJWT = require('passport-jwt')
-const bcrypt = require('bcryptjs')
-
 const LocalStrategy = require('passport-local').Strategy
-const ExtractJwt = passportJWT.ExtractJwt
-const JwtStrategy = passportJWT.Strategy
 
 const config = require('../config')
 const models = require('../models')
@@ -21,6 +16,7 @@ const models = require('../models')
  */
 
 function initExpressApp (app) {
+
   // Session : Serialization
   passport.serializeUser((user, done) => {
     done(null, user.id)

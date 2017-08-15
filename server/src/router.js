@@ -29,7 +29,7 @@ module.exports = router
 
 let remoteRunFns = {
 
-  registerUser (user) {
+  publicRegisterUser (user) {
     return new Promise(resolve => {
       const keys = ['name', 'email', 'password', 'passwordv']
 
@@ -53,7 +53,6 @@ let remoteRunFns = {
         password: user.password
       }
 
-      console.log('> router.registerUser', values, errors)
       if (errors.length > 0) {
         resolve({
           success: false,
@@ -93,9 +92,10 @@ let remoteRunFns = {
           })
           .catch(err => {
             console.log(`>> /api/update error`, err)
-            values.errors = ['Couldn\' register, is your email already in use?']
-            values.success = false
-            resolve(values)
+            resolve({
+              success: false,
+              errors: ['Couldn\' register, is your email already in use?']
+            })
           })
       } else {
         resolve({success: false})
@@ -268,10 +268,11 @@ router.post('/api/rpc-run', (req, res, next) => {
 
   } else if (fnName in remoteRunFns) {
 
-    // // check if session is logged-in!
-    // if (!req.isAuthenticated || !req.isAuthenticated()) {
-    //   throw new Error(`Not logged in`)
-    // }
+    if (!_.startsWith(fnName, 'public')) {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        throw new Error(`Not logged in`)
+      }
+    }
 
     const runFn = remoteRunFns[fnName]
     runFn(...args).then(result => {
