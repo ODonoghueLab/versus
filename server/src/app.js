@@ -1,11 +1,10 @@
 const path = require('path')
-
-// Reset database `force: true` -> wipes database
-require('./models').sequelize.sync({ force: false })
-
-// Begin Application
 const express = require('express')
-const app = express()
+
+// Defines express app and sqlalchemy db together
+// This avoids problems of circular definitions
+const conn = require('./conn')
+let app = conn.app
 module.exports = app
 
 // Middleware Configuration
@@ -36,6 +35,11 @@ app.use(bodyParser.urlencoded({ extended: false }))
 const cookieParser = require('cookie-parser')
 app.use(cookieParser())
 
+// Check form validation in handlers
+const expressValidator = require('express-validator')
+app.use(expressValidator())
+
+// Session management for validated users
 const session = require('express-session')
 app.use(session({ 
   secret: 'csiro-versus',
@@ -43,13 +47,50 @@ app.use(session({
   resave: true
 }))
 
-// Check form validation in handlers
-const expressValidator = require('express-validator')
-app.use(expressValidator())
+// User authentication and session management
+const passport = require('passport')
+app.use(passport.initialize())
+app.use(passport.session())
 
-// Initialize authentication with passport
-const auth = require('./modules/auth')
-auth.initExpressApp(app)
+// Hook user in models to authentication manager
+const models = require('./models')
+passport.serializeUser((user, done) => {
+  done(null, user.id)
+})
+passport.deserializeUser((id, done) => {
+  models
+    .fetchUser({id})
+    .then(user => done(null, user))
+    .catch(error => done(error, null))
+})
+
+// Define the method to authenticate user for sessions
+const LocalStrategy = require('passport-local').Strategy
+passport.use(new LocalStrategy(
+  {
+    usernameField: 'email',
+    passwordField: 'password'
+  },
+  function(email, password, done) {
+    models
+      .fetchUser({email: email})
+      .then(user => {
+        if (user) {
+          models
+            .checkUserWithPassword(user, password)
+            .then((user) => {
+              if (user === null) {
+                done(null, false)
+              } else {
+                done(null, user, {name: user.name})
+              }
+            })
+        } else {
+          done(null, false)
+        }
+      })
+  })
+)
 
 // Load routes for api
 app.use(require('./router'))

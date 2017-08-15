@@ -5,21 +5,18 @@ const tree = require('./modules/tree')
 
 const JsonField = require('sequelize-json')
 
-// initialize database using Sequelize
-const env = process.env.NODE_ENV || 'development'
-const dbConfig = require('./config')[env]
 const Sequelize = require('sequelize')
-const sequelize = new Sequelize(
-  dbConfig.database,
-  dbConfig.username,
-  dbConfig.password,
-  dbConfig)
+const conn = require('./conn')
+let db = conn.db
+
+// Reset database `force: true` -> wipes database
+db.sync({ force: false })
 
 /**
  * Definitions of the database for Versus
  */
 
-const User = sequelize.define('User', {
+const User = db.define('User', {
   name: Sequelize.STRING,
   email: {type: Sequelize.STRING, unique: true},
   password: Sequelize.STRING
@@ -29,12 +26,12 @@ User.beforeValidate((user) => {
   user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10))
 })
 
-const Image = sequelize.define('Image', {
+const Image = db.define('Image', {
   url: Sequelize.STRING,
   filename: Sequelize.STRING
 })
 
-const Participant = sequelize.define('Participant', {
+const Participant = db.define('Participant', {
   participateId: {
     primaryKey: true,
     type: Sequelize.UUID,
@@ -43,14 +40,14 @@ const Participant = sequelize.define('Participant', {
   email: Sequelize.STRING,
   user: Sequelize.JSON,
   state: Sequelize.JSON,
-  attr: JsonField(sequelize, 'User', 'attr')
+  attr: JsonField(db, 'User', 'attr')
 })
 
-const Experiment = sequelize.define('Experiment', {
+const Experiment = db.define('Experiment', {
   attr: Sequelize.JSON,
 })
 
-const UserExperiment = sequelize.define('UserExperiment', {
+const UserExperiment = db.define('UserExperiment', {
   permission: Sequelize.INTEGER
 })
 
@@ -255,7 +252,6 @@ function checkUserWithPassword (user, password) {
 }
 
 module.exports = {
-  sequelize,
   createUser,
   fetchUser,
   checkUserWithPassword,
