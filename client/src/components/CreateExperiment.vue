@@ -93,7 +93,7 @@
         this.$data.isUploading = true
         rpc
           .rpcUpload(
-            'createExperimentWithUploadImages', this.$data.files, auth.user.id, this.$data.attr)
+            'uploadImagesAndCreateExperiment', this.$data.files, auth.user.id, this.$data.attr)
           .then(res => {
             this.$data.isUploading = false
             console.log('>> CreateExperiment.submit', res.data)

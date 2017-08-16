@@ -1,17 +1,22 @@
+const path = require('path')
+const fs = require('fs')
+
 const _ = require('lodash')
 const bcrypt = require('bcryptjs')
 const Sequelize = require('sequelize')
 
-const conn = require('./conn')
 const tree = require('./modules/tree')
-const JsonField = require('sequelize-json')
+const sequelizeJson = require('sequelize-json')
 
+const config = require('./config')
+const conn = require('./conn')
 let db = conn.db
 
 /**
  * Definitions of the database for Versus
  *
- * JsonField is used as it works with Sqlite and Postgres, and MySQL
+ * sequelize-json is used as it works with Sqlite, Postgres, and MySQL
+ * be sure to use updateAttributes, and not update for sequelize-json
  */
 
 const User = db.define('User', {
@@ -20,6 +25,7 @@ const User = db.define('User', {
   password: Sequelize.STRING
 })
 
+// passwords are salted
 User.beforeValidate((user) => {
   user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10))
 })
@@ -36,12 +42,12 @@ const Participant = db.define('Participant', {
     defaultValue: Sequelize.UUIDV4
   },
   email: Sequelize.STRING,
-  user: JsonField(db, 'Participant', 'user'),
-  state: JsonField(db, 'Participant', 'state'),
+  user: sequelizeJson(db, 'Participant', 'user'),
+  state: sequelizeJson(db, 'Participant', 'state'),
 })
 
 const Experiment = db.define('Experiment', {
-  attr: JsonField(db, 'Experiment', 'attr'),
+  attr: sequelizeJson(db, 'Experiment', 'attr'),
 })
 
 const UserExperiment = db.define('UserExperiment', {
@@ -230,6 +236,71 @@ function checkUserWithPassword (user, password) {
   })
 }
 
+/**
+ * Stores the files in a unique sub-directory on the server in the
+ * directory listed in the config.js file, where the
+ * sub-directory is a string version of the time it was loaded in, and
+ * the path basenames are based on the original basenames.
+ *
+ * As well a file checking function is run to ensure the uploaded
+ * files are legitimate, this function returns a null string
+ * if all is good, otherwise an error string is returned.
+ *
+ * The new stored path names are returned in a promise.
+ *
+ * @param uploadedFiles
+ * @param checkFilesForError
+ * @returns {Promise}
+ */
+function storeFiles (uploadedFiles, checkFilesForError) {
+
+  return new Promise((resolve, reject) => {
+
+    const experimentDir = String(new Date().getTime())
+    const fullExperimentDir = path.join(config.filesDir, experimentDir)
+    if (!fs.existsSync(fullExperimentDir)) {
+      fs.mkdirSync(fullExperimentDir, 0o744)
+    }
+
+    function rollback () {
+      for (let i = 0; i < uploadedFiles.length; i += 1) {
+        del(uploadedFiles[i].path)
+      }
+    }
+
+    const inputPaths = []
+    const targetPaths = []
+
+    let error = checkFilesForError(uploadedFiles)
+
+    if (error) {
+      rollback()
+    } else {
+      for (let file of uploadedFiles) {
+        inputPaths.push(file.path)
+        let basename = path.basename(file.originalname)
+        let targetPath = path.join(experimentDir, basename)
+        targetPaths.push(targetPath)
+        let fullTargetPath = path.join(config.filesDir, targetPath)
+        try {
+          console.log(`>> router.storeFiles ${targetPath}`)
+          fs.renameSync(file.path, fullTargetPath)
+        } catch (err) {
+          error = err
+          rollback()
+          break
+        }
+      }
+    }
+
+    if (error) {
+      reject(error)
+    } else {
+      resolve(targetPaths)
+    }
+  })
+}
+
 module.exports = {
   createUser,
   fetchUser,
@@ -243,5 +314,6 @@ module.exports = {
   createParticipant,
   fetchParticipant,
   saveParticipant,
-  deleteParticipant
+  deleteParticipant,
+  storeFiles
 }

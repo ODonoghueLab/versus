@@ -29,7 +29,7 @@ export default {
           _.assign(user, res.data.user)
           user.password = newUser.password
           localStorage.setItem('user', util.jstr(user))
-          console.log('>> auth.login user', util.jstr(user))
+          console.log('>> auth.login', util.jstr(user))
         }
         return res
       })
@@ -53,7 +53,7 @@ export default {
       .then(res => {
         if (res.data.success) {
           _.assign(user, payload)
-          console.log('>> auth.update user', util.jstr(user))
+          console.log('>> auth.update', user)
           localStorage.setItem('user', JSON.stringify(user))
         }
         return res
@@ -62,7 +62,7 @@ export default {
 
   restoreLastUser () {
     let lastUser = JSON.parse(localStorage.getItem('user'))
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       console.log('>> auth.restoreLastUser', lastUser)
       if (lastUser) {
         this.login(lastUser)

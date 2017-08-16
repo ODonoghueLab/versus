@@ -51,10 +51,9 @@
 </template>
 
 <script>
-import axios from 'axios'
+import _ from 'lodash'
 import Router from 'vue-router'
 import auth from '../modules/auth'
-import _ from 'lodash'
 import util from '../modules/util'
 
 export default {

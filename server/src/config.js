@@ -17,16 +17,12 @@ module.exports = {
   //   'port': 5432,
   //   'dialect': 'postgres'
   // },
-  production: {
-    'username': '',
-    'password': '',
-    'database': '',
-    'host': '',
-    'port': 5432,
-    'dialect': 'postgres'
-  },
-  jwtSecret: 'MyS3cr3tK3Y',
-  jwtSession: {
-    session: false
-  }
+  // production: {
+  //   'username': '',
+  //   'password': '',
+  //   'database': '',
+  //   'host': '',
+  //   'port': 5432,
+  //   'dialect': 'postgres'
+  // },
 }

@@ -1,7 +1,6 @@
 import axios from 'axios'
 import _ from 'lodash'
 import config from '../config'
-import auth from '../modules/auth'
 
 /**
  * rpc module provides a clean rpc interface for JSON-based

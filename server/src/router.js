@@ -4,8 +4,6 @@ const fs = require('fs')
 const _ = require('lodash')
 
 const config = require('./config')
-const models = require('./models')
-const tree = require('./modules/tree')
 
 const mime = require('mime')
 const multer = require('multer')
@@ -16,212 +14,19 @@ const passport = require('passport')
 const express = require('express')
 
 const router = express.Router()
-
 module.exports = router
 
+
 /**
- *  Public functions for json-rpc-api
+ * These are the rpc remote functions that take JSON object parameters
+ * and return JSON objects
  */
+const remoteRunFns = require('./handlers')
 
-let remoteRunFns = {
 
-  publicRegisterUser (user) {
-    return new Promise(resolve => {
-      const keys = ['name', 'email', 'password', 'passwordv']
-
-      let errors = []
-      if (!user.name) {
-        errors.push('Please Enter Your User Name')
-      }
-      if (!user.email) {
-        errors.push('Please Enter Your Email')
-      }
-      if (!user.password) {
-        errors.push('Please Enter Both Password Fields')
-      }
-      if (user.password !== user.passwordv) {
-        errors.push('Passwords Do Not Match')
-      }
-
-      let values = {
-        name: user.name,
-        email: user.email,
-        password: user.password
-      }
-
-      if (errors.length > 0) {
-        resolve({
-          success: false,
-          errors: errors
-        })
-      } else {
-        models
-          .createUser(values)
-          .then(() => {
-            resolve({success: true})
-          })
-          .catch(err => {
-            resolve({
-              success: false,
-              errors: ['Couldn\' register, is your email already in use?']
-            })
-          })
-      }
-    })
-  },
-
-  updateUser (user) {
-    return new Promise((resolve) => {
-      const keys = ['id', 'name', 'email', 'password']
-      let values = {}
-      for (let key of keys) {
-        if (user[key]) {
-          values[key] = user[key]
-        }
-      }
-      if (values) {
-        models
-          .updateUser(values)
-          .then(user => {
-            console.log('>> router.updateUser success', values, user)
-            resolve({success: true})
-          })
-          .catch(err => {
-            console.log(`>> router.updateUser error`, err)
-            resolve({
-              success: false,
-              errors: ['Couldn\' register, is your email already in use?']
-            })
-          })
-      } else {
-        resolve({success: false})
-      }
-    })
-  },
-
-  getExperiments (userId) {
-    return models
-      .fetchExperiments(userId)
-      .then(experiments => {
-        return {experiments}
-      })
-  },
-
-  getExperiment (experimentId) {
-    return models
-      .fetchExperiment(experimentId)
-      .then(experiment => {
-        return {experiment}
-      })
-  },
-
-  saveExperimentAttr (experimentId, attr) {
-    return models
-      .saveExperimentAttr(experimentId, attr)
-  },
-
-  deleteExperiment (experimentId) {
-    return models
-      .deleteExperiment(experimentId)
-      .then(() => {
-        return {success: true}
-      })
-      .catch(err => {
-        return {success: false, error: err}
-      })
-  },
-
-  inviteParticipant (experimentId, email) {
-    return models
-      .createParticipant(
-        experimentId, email)
-      .then((participant) => {
-        return {participant}
-      })
-  },
-
-  deleteParticipant (participantId) {
-    return models
-      .deleteParticipant(participantId)
-      .then(() => {
-        return {success: true}
-      })
-      .catch(err => {
-        return {success: false, error: err}
-      })
-  },
-
-  getParticipant (participateId) {
-    return models
-      .fetchParticipant(participateId)
-      .then(participant => {
-        if (participant.user === null) {
-          console.log('>> router.getParticipant no result found')
-          return {new: true}
-        } else {
-          return models
-            .fetchExperiment(participant.ExperimentId)
-            .then(experiment => {
-              const state = participant.state
-              if (tree.isDone(state)) {
-                console.log('>> router.getParticipant done')
-                return {done: true}
-              } else {
-                const comparison = tree.getComparison(participant.state)
-                console.log('>> router.getParticipant comparison', comparison)
-                return {
-                  comparison,
-                  attr: experiment.attr }
-              }
-            })
-        }
-      })
-  },
-
-  chooseItem (participateId, chosenImageIndex) {
-    return models
-      .fetchParticipant(participateId)
-      .then(participant => {
-        return models
-          .fetchExperiment(participant.ExperimentId)
-          .then(experiment => {
-            let state = participant.state
-            tree.makeChoice(state, chosenImageIndex)
-            let payload
-            if (tree.isDone(state)) {
-              tree.rankNodes(state)
-              payload = {done: true}
-            } else {
-              payload = {
-                comparison: tree.getComparison(state),
-                attr: experiment.attr
-              }
-            }
-            return models
-              .saveParticipant(participateId, {state})
-              .then(() => {
-                return payload
-              })
-          })
-      })
-  },
-
-  saveParticipantUserDetails (participateId, details) {
-    return models
-      .saveParticipant(participateId, {user: details})
-      .then(participant => {
-        return models
-          .fetchExperiment(participant.ExperimentId)
-          .then(experiment => {
-            return {
-              comparison: tree.getComparison(participant.state),
-              attr: experiment.attr
-            }
-          })
-        })
-  }
-}
-
+/**
+ *
+ */
 router.post('/api/rpc-run', (req, res, next) => {
   let args = req.body.args
   let fnName = req.body.fnName
@@ -272,9 +77,11 @@ router.post('/api/rpc-run', (req, res, next) => {
     }
 
     const runFn = remoteRunFns[fnName]
-    runFn(...args).then(result => {
-      res.json(result)
-    })
+
+    runFn(...args)
+      .then(result => {
+        res.json(result)
+      })
 
   } else {
 
@@ -284,72 +91,14 @@ router.post('/api/rpc-run', (req, res, next) => {
 
 })
 
+
 /**
- * Uploading file-handler and generic file return
+ * Returns a file stored on the server
  */
-
-function storeFiles (uploadedFiles) {
-
-  return new Promise((resolve, reject) => {
-    const experimentDir = String(new Date().getTime())
-    const fullExperimentDir = path.join(config.filesDir, experimentDir)
-    if (!fs.existsSync(fullExperimentDir)) {
-      fs.mkdirSync(fullExperimentDir, 0744)
-    }
-
-    let err = ''
-
-    function rollback (msg) {
-      for (let i = 0; i < uploadedFiles.length; i += 1) {
-        del(uploadedFiles[i].path)
-      }
-      err = msg
-    }
-
-    const inputPaths = []
-    const targetPaths = []
-
-    if (uploadedFiles.length < 2) {
-      err = 'Minimum two images.'
-    } else {
-      for (let i = 0; i < uploadedFiles.length; i += 1) {
-        let file = uploadedFiles[i]
-        const extname = path.extname(file.originalname).toLowerCase()
-        // handle formats
-        if (!_.includes(['.png', '.jpg', '.gif'], extname)) {
-          rollback(`only png's, jpg's, gif's`)
-          break
-        }
-        // size checking
-        if (file.size / 1000000 > 2) {
-          rollback('Please Keep Images Under 2MB')
-          break
-        }
-        inputPaths.push(file.path)
-        let basename = path.basename(file.originalname)
-        targetPaths.push(path.join(experimentDir, basename))
-        try {
-          console.log(`>> router.storeFiles -> ${targetPaths[i]}`)
-          fs.renameSync(inputPaths[i], path.join(config.filesDir, targetPaths[i]))
-        } catch (err) {
-          rollback(err)
-          break
-        }
-      }
-    }
-
-    if (err) {
-      reject(err)
-    } else {
-      resolve(targetPaths)
-    }
-  })
-}
-
-router.get('/image/:experimentDir/:basename', (req, res) => {
+router.get('/file/:experimentDir/:basename', (req, res) => {
   let basename = req.params.basename
   let experimentDir = req.params.experimentDir
-  console.log('>> router.image', experimentDir, basename)
+  console.log('>> router.file', experimentDir, basename)
   let filename = path.join(config.filesDir, experimentDir, basename)
   let mimeType = mime.lookup(filename)
   res.setHeader('Content-disposition', `attachment; filename=${basename}`)
@@ -357,34 +106,20 @@ router.get('/image/:experimentDir/:basename', (req, res) => {
   fs.createReadStream(filename).pipe(res)
 })
 
-let remoteUploadFns = {
-  createExperimentWithUploadImages (files, userId, attr) {
-    console.log('>> routes.remoteUploadFns', files, userId)
-    return storeFiles(files)
-      .then((paths) => {
-        console.log('>> routes.createExperimentWithUploadImages paths', paths)
-        return models
-          .createExperiment(
-            userId,
-            attr,
-            _.map(paths, f => '/image/' + f))
-          .then(experiment => {
-            console.log('> routers.createExperimentWithUploadImages output', experiment)
-            return {
-              success: true,
-              experimentId: experiment.id
-            }
-          })
-      })
-  }
-}
 
+/**
+ * Upload file handlers, sends to 'upload*' function with the
+ * implicit first argument, a filelist of the uploaded files.
+ */
 router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
   let fnName = req.body.fnName
   let args = JSON.parse(req.body.args)
   console.log('>> router.rpc-upload.' + fnName)
-  if (fnName in remoteUploadFns) {
-    const uploadFn = remoteUploadFns[fnName]
+  if (fnName in remoteRunFns) {
+    if (!_.startsWith(fnName, 'upload')) {
+      throw new Error(`Remote uploadFn ${fnName} should start with 'upload'`)
+    }
+    const uploadFn = remoteRunFns[fnName]
     args = _.concat([req.files], args)
     uploadFn(...args)
       .then(result => {

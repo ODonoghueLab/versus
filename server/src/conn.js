@@ -1,6 +1,8 @@
-// Centralized place to declare main app and db variables
-// so that circular references are avoided when loading
-// models.js, router.js and app.js
+/**
+ * Centralized place to declare main app and db variables
+ * so that circular references are avoided when loading
+ * models.js, router.js and app.js
+ **/
 
 // Initialize express app
 const express = require('express')
@@ -16,7 +18,7 @@ const db = new Sequelize(
   dbConfig.password,
   dbConfig)
 
-// Reset database `force: true` -> wipes database
+// Wipes database if `force: true`
 db.sync({ force: false })
 
 module.exports = {app, db}
