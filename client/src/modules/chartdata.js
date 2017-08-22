@@ -5,7 +5,7 @@ import Chart from 'chart.js'
  * Functions to generate chartJs data for model
  */
 
-function makeLineChartData () {
+function makeLineChartData (xAxisLabel, yAxisLabel) {
   return {
     type: 'scatter',
     data: {datasets: []},
@@ -25,7 +25,7 @@ function makeLineChartData () {
           position: 'bottom',
           scaleLabel: {
             display: true,
-            labelString: 'Image order'
+            labelString: xAxisLabel
           },
           ticks: {}
         }],
@@ -33,7 +33,7 @@ function makeLineChartData () {
           type: 'linear',
           scaleLabel: {
             display: true,
-            labelString: 'Perceived rank'
+            labelString: yAxisLabel
           }
         }]
       }

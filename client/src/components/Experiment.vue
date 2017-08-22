@@ -101,11 +101,12 @@
     </md-whiteframe>
 
     <md-whiteframe style="padding: 1em; margin-bottom: 1em">
-      <md-layout md-column>
-        <h3 class="md-title">Participant rankings</h3>
+      <h3 class="md-title">Participant rankings</h3>
+      <md-layout md-row>
         <md-card
             style="
             padding: 1em;
+            margin-right: 1em;
             box-sizing: content-box;
             width: 220px;
             height: 220px;">
@@ -115,7 +116,6 @@
             <canvas id="chart-canvas"></canvas>
           </md-card-media>
         </md-card>
-        <br>
         <md-card
             style="
             padding: 1em;
@@ -194,8 +194,7 @@
     return l
   }
 
-  function getFractions (nodes) {
-      console.log('> Experiment.getDatasets nodes', JSON.stringify(nodes))
+  function getFractionsOfVotesFromNodes (nodes) {
       let nNode = nodes.length
       let parents = makeArray(nNode, null)
 
@@ -212,7 +211,7 @@
 
       let votes = makeArray(nNode, 0)
       let prefs = makeArray(nNode, 0)
-      for (let iTestNode = 0; iTestNode < nNode; iTestNode += 1) {
+      for (let iTestNode of _.range(nNode)) {
         let iHopNode = iTestNode
         while (parents[iHopNode] !== null) {
           let iParentNode = parents[iHopNode]
@@ -236,8 +235,9 @@
       return fractions
   }
 
-  function getDatasets (experiment) {
-    let result = []
+
+  function getPartcipantImageOrderDatasets (experiment) {
+    let dataSets = []
 
     let baseOrder = {}
     for (let [i, url] of experiment.attr.baseRanks.entries()) {
@@ -247,9 +247,6 @@
 
     for (let participant of experiment.participants) {
       let state = participant.state
-
-      let fractions = getFractions(state.nodes)
-      console.log('> Experiment.getDatasets fractions', fractions)
 
       if ('ranks' in state) {
         let participantOrder = {}
@@ -268,16 +265,59 @@
         }
 
         chartdata.addDataset(
-          result,
+          dataSets,
           participant.participateId,
           xVals,
           yVals)
       }
     }
 
-    return result
+    return dataSets
   }
 
+  function getPartcipantImageWeightDatasets (experiment) {
+    let dataSets = []
+
+    let baseOrder = {}
+    for (let [i, url] of experiment.attr.baseRanks.entries()) {
+      let key = path.basename(url)
+      baseOrder[key] = i + 1
+    }
+
+    for (let participant of experiment.participants) {
+      let state = participant.state
+
+      let fractions = getFractionsOfVotesFromNodes(state.nodes)
+      console.log('> Experiment.getDatasets fractions', fractions)
+
+      if ('ranks' in state) {
+        let participantOrder = {}
+        let participantWeight = {}
+        for (let [i, url] of state.ranks.entries()) {
+          let key = path.basename(url)
+          participantOrder[key] = i + 1
+          participantWeight[key] = fractions[i]
+        }
+
+        console.log('> Experiment.mounted data', baseOrder, participantWeight)
+
+        let xVals = []
+        let yVals = []
+        for (let key of _.keys(baseOrder)) {
+          xVals.push(participantOrder[key])
+          yVals.push(participantWeight[key])
+        }
+
+        chartdata.addDataset(
+          dataSets,
+          participant.participateId,
+          xVals,
+          yVals)
+      }
+    }
+
+    return dataSets
+  }
   export default {
     name: 'experiment',
     data () {
@@ -311,11 +351,15 @@
 
           this.$data.baseRanks = experiment.attr.baseRanks
 
-          this.chartData = chartdata.makeLineChartData()
-          this.chartData.data.datasets = getDatasets(experiment)
-          let idTag = '#chart-canvas'
-          let canvas = $.find(idTag)
+          this.chartData = chartdata.makeLineChartData('image order', 'perceived rank')
+          this.chartData.data.datasets = getPartcipantImageOrderDatasets(experiment)
+          let canvas = $.find('#chart-canvas')
           this.chart = new Chart(canvas[0], this.chartData)
+
+          this.chartData2 = chartdata.makeLineChartData('image order', 'fraction votes')
+          this.chartData2.data.datasets = getPartcipantImageWeightDatasets(experiment)
+          canvas = $.find('#chart-canvas2')
+          this.chart2 = new Chart(canvas[0], this.chartData2)
         })
 
     },
@@ -379,11 +423,19 @@
           .rpcRun('saveExperimentAttr', experiment.id, experiment.attr)
           .then((res) => {
             console.log('>> Experiment.saveExperimentAttr.res', res.data)
-            let newDatasets = getDatasets(experiment)
+            let newDatasets = getPartcipantImageOrderDatasets(experiment)
             let datasets = this.chartData.data.datasets
             for (let i = 0; i < newDatasets.length; i += 1) {
               datasets[i].data = newDatasets[i].data
               this.chart.update()
+            }
+            {
+              let newDatasets = getPartcipantImageWeightDatasets(experiment)
+              let datasets = this.chartData2.data.datasets
+              for (let i = 0; i < newDatasets.length; i += 1) {
+                datasets[i].data = newDatasets[i].data
+                this.chart2.update()
+              }
             }
           })
       },
