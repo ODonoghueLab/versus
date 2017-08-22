@@ -196,16 +196,16 @@
 
   function getFractionsOfVotesFromNodes (nodes) {
       let nNode = nodes.length
-      let parents = makeArray(nNode, null)
+      let parentNodeIndices = makeArray(nNode, null)
 
       for (let [i, node] of nodes.entries()) {
         // node = {imageIndex: 0, left: 1, right: 2}
         // where left is worse, and right is better
         if (node.left) {
-          parents[node.left] = i
+          parentNodeIndices[node.left] = i
         }
         if (node.right) {
-          parents[node.right] = i
+          parentNodeIndices[node.right] = i
         }
       }
 
@@ -213,8 +213,8 @@
       let prefs = makeArray(nNode, 0)
       for (let iTestNode of _.range(nNode)) {
         let iHopNode = iTestNode
-        while (parents[iHopNode] !== null) {
-          let iParentNode = parents[iHopNode]
+        while (parentNodeIndices[iHopNode] !== null) {
+          let iParentNode = parentNodeIndices[iHopNode]
           votes[iTestNode] += 1
           votes[iParentNode] += 1
           let isParentBetter = nodes[iParentNode].left === iHopNode
@@ -304,8 +304,8 @@
         let xVals = []
         let yVals = []
         for (let key of _.keys(baseOrder)) {
-          xVals.push(participantOrder[key])
-          yVals.push(participantWeight[key])
+          xVals.push(participantWeight[key])
+          yVals.push(participantOrder[key])
         }
 
         chartdata.addDataset(
@@ -356,7 +356,7 @@
           let canvas = $.find('#chart-canvas')
           this.chart = new Chart(canvas[0], this.chartData)
 
-          this.chartData2 = chartdata.makeLineChartData('image order', 'fraction votes')
+          this.chartData2 = chartdata.makeLineChartData('fraction votes', 'perceived rank')
           this.chartData2.data.datasets = getPartcipantImageWeightDatasets(experiment)
           canvas = $.find('#chart-canvas2')
           this.chart2 = new Chart(canvas[0], this.chartData2)

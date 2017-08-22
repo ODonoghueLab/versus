@@ -66,7 +66,6 @@
   import axios from 'axios'
   import _ from 'lodash'
 
-  import config from '../config'
   import auth from '../modules/auth'
   import rpc from '../modules/rpc'
 

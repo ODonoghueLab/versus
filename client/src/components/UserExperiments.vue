@@ -46,9 +46,7 @@
 </style>
 
 <script>
-  import axios from 'axios'
   import auth from '../modules/auth'
-  import config from '../config'
   import util from '../modules/util'
   import rpc from '../modules/rpc'
   import _ from 'lodash'

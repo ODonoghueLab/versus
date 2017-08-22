@@ -39,7 +39,6 @@
 <script>
 
   import axios from 'axios'
-  import config from '../config'
   import auth from '../modules/auth'
   import router from '../router'
 

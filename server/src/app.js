@@ -1,6 +1,13 @@
 const path = require('path')
 const express = require('express')
 
+const fs = require('fs-extra')
+
+let configFname = path.join(__dirname, 'config.js')
+if (!fs.existsSync(configFname)) {
+  fs.copySync(path.join(__dirname, 'defaultConfig.js'), configFname)
+}
+
 // Defines express app and sqlalchemy db together
 // This avoids problems of circular definitions
 const conn = require('./conn')
