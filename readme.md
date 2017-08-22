@@ -12,61 +12,16 @@ Versus is a web-based application that allows users ('requesters') to create mul
 
 ## Getting Started
 
-To get started working on versus there are a few prerequisites (Windows is not supported)
+To get started on versus:
 
-1. Installing Postgres
-   - Linux - [Digital Ocean Guide](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-16-04)
-     - Install with  `apt-get`
 
-       ```bash
-       sudo apt-get update
-       sudo apt-get install postgresql postgresql-contrib
-       ```
-     - a postgres superuser may already be defined on your file system, in that case, set password to `postgres`
-
-       ```bash
-         sudo -u postgres psql postgres
-         # \password postgres
-         # \q
-       ```
-
-     - Create the `versus` Database.
-
-        ```bash
-        sudo -u postgres createdb versus
-        ```
-   - Mac
-     - Install with `brew`
-
-       ```bash
-       brew update
-       brew install postgres
-       ```
-
-     - Create a user within postgres
-
-       ```bash
-       psql
-       # \du # list users to check if postgres exists
-       # CREATE USER postgres WITH SUPERUSER;
-       # \q
-       ```
-
-     - Create the versus database
-
-         ```bash
-         createdb versus
-         ```
-
-         ​
-
-2. Clone the Repository!
+1. Clone the Repository!
 
     ```bash
     git clone https://github.com/ODonoghueLab/versus.git
     ```
 
-3. The Versus code-base consists of two node packages, one for the server and one for the client. You need to install this via the node package manager `npm` 
+2. The Versus code-base consists of two node packages, one for the server and one for the client. You need to install this via the node package manager `npm` 
 
     ```bash
     cd <versus>/server
@@ -75,14 +30,14 @@ To get started working on versus there are a few prerequisites (Windows is not s
     npm install
     ```
 
-4. Start the server `http://localhost:3000`,  which serves a JSON api
+3. Start the server `http://localhost:3000`,  which serves a JSON api
 
     ```bash
     cd <versus>/server
     ./run_server.sh
     ```
 
-5. Start the client, hot reload web-client on `http://localhost:8080`
+4. Start the client, hot reload web-client on `http://localhost:8080`
 
     ```bash
     cd <versus>/client
@@ -101,6 +56,12 @@ To get started working on versus there are a few prerequisites (Windows is not s
 7. Download results by clicking on the button `Download Results`
 
 
+# Databases
+
+The default database is sqlite, but you can use
+other databases such as postgres. Here's a link to a Linux
+[database installation guide](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-16-04).
+
 
 # Development Workflow
 
@@ -111,7 +72,3 @@ npm test
 * If tests pass, branch and make merge requests
 * Travis will block you if your branch build fails
 
-## Git Issue Codes
-* FN - Fix Now - Issues That Halt Progress
-* CBT - Come Back To - Issues That Need Fixing But Not Urgent
-* WLT - Would Like To - More Feature Idea/s Than Needed Fix

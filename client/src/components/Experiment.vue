@@ -116,6 +116,18 @@
           </md-card-media>
         </md-card>
         <br>
+        <md-card
+            style="
+            padding: 1em;
+            box-sizing: content-box;
+            width: 220px;
+            height: 220px;">
+          <md-card-media
+              style="
+              height: 200px;">
+            <canvas id="chart-canvas2"></canvas>
+          </md-card-media>
+        </md-card>
       </md-layout>
     </md-whiteframe>
 
@@ -173,8 +185,55 @@
   import rpc from '../modules/rpc'
   import chartdata from '../modules/chartdata.js'
 
-  function cleanObj (o) {
-    return JSON.parse(JSON.stringify(o))
+
+  function makeArray (n, v) {
+    let l = []
+    for (let i = 0; i < n; i += 1) {
+      l.push(v)
+    }
+    return l
+  }
+
+  function getFractions (nodes) {
+      console.log('> Experiment.getDatasets nodes', JSON.stringify(nodes))
+      let nNode = nodes.length
+      let parents = makeArray(nNode, null)
+
+      for (let [i, node] of nodes.entries()) {
+        // node = {imageIndex: 0, left: 1, right: 2}
+        // where left is worse, and right is better
+        if (node.left) {
+          parents[node.left] = i
+        }
+        if (node.right) {
+          parents[node.right] = i
+        }
+      }
+
+      let votes = makeArray(nNode, 0)
+      let prefs = makeArray(nNode, 0)
+      for (let iTestNode = 0; iTestNode < nNode; iTestNode += 1) {
+        let iHopNode = iTestNode
+        while (parents[iHopNode] !== null) {
+          let iParentNode = parents[iHopNode]
+          votes[iTestNode] += 1
+          votes[iParentNode] += 1
+          let isParentBetter = nodes[iParentNode].left === iHopNode
+          if (isParentBetter) {
+            prefs[iParentNode] += 1
+          } else {
+            prefs[iTestNode] += 1
+          }
+          iHopNode = iParentNode
+        }
+      }
+
+      let fractions = []
+      for (let i of _.range(nNode)) {
+        fractions.push(prefs[i] / votes[i])
+      }
+
+      return fractions
   }
 
   function getDatasets (experiment) {
@@ -188,6 +247,10 @@
 
     for (let participant of experiment.participants) {
       let state = participant.state
+
+      let fractions = getFractions(state.nodes)
+      console.log('> Experiment.getDatasets fractions', fractions)
+
       if ('ranks' in state) {
         let participantOrder = {}
         for (let [i, url] of state.ranks.entries()) {
@@ -217,7 +280,7 @@
 
   export default {
     name: 'experiment',
-    data() {
+    data () {
       return {
         experiment: {},
         baseRanks: [],
@@ -264,7 +327,7 @@
       getBaseUrl (url) {
         return path.basename(url)
       },
-      downloadResults() {
+      downloadResults () {
         console.log('>> Experiment.downloadResults')
         let experiment = this.$data.experiment
         let participants = experiment.participants
@@ -280,17 +343,17 @@
         })
         util.downloadObject('results.json', payload)
       },
-      reformatDate(participant, key) {
+      reformatDate (participant, key) {
         if (key in participant) {
           let date = participant[key]
           return new Date(date).toDateString()
         }
         return ''
       },
-      getInviteRoute(participant) {
+      getInviteRoute (participant) {
         return `/participant/${participant.participateId}`
       },
-      deleteInvite(participant) {
+      deleteInvite (participant) {
         rpc
           .rpcRun('deleteParticipant', participant.participateId)
           .then((res) => {
@@ -309,7 +372,7 @@
             participants.push(res.data.participant)
           })
       },
-      saveExperimentAttr() {
+      saveExperimentAttr () {
         let experiment = this.$data.experiment
         experiment.attr.baseRanks = this.$data.baseRanks
         rpc
