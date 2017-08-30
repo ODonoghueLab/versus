@@ -1,4 +1,3 @@
-
 /**
  * Implementation of the binary-tree method for
  * efficient paired comparions "Efficient method
@@ -15,120 +14,154 @@
  * based on the work of Tylor Stewart
  */
 
+
 const _ = require('lodash')
 
 function newNode (imageIndex, left, right, parent) {
-  return { imageIndex, left, right, parent }
+  return {imageIndex, left, right, parent}
 }
 
+
 function newState (imageUrls) {
+  let untestedImageIndices = _.range(imageUrls.length)
+  let rootImageIndex = untestedImageIndices.shift()
+  let rootNode = newNode(rootImageIndex, null, null, null)
+  let newImageIndex = untestedImageIndices.shift()
+  console.log(untestedImageIndices, newImageIndex)
   return {
-    testImageIndex: 1, // currently testing this imageIndex
-    rootNodeIndex: 0, // root of the binary tree, can change with re-balancing
-    nodeIndex: 0, // node to compare to test imageIndex,
-    nodes: [newNode(0, null, null, null)],
+    urls: imageUrls,
+    rootNodeIndex: 0, // can change with re-balancing
+    nodes: [rootNode],
+    testNodeIndex: 0, // points to imageIndex of image to test
+    untestedImageIndices,
+    newImageIndex,
     ranks: [],
-    urls: imageUrls
+    comparisons: [],
   }
 }
 
 
+/**
+ * Sorts the nodes into an ordered list based on
+ * the position in the binary tree with left-most
+ * first
+ *
+ * @param state
+ * @returns {Array} of nodes
+ */
 function getOrderedNodeList (state) {
-  // Perform Pre Order Search
-  // binary search with the deepest right branch
-  // stored in ranks first
   let sortedNodes = []
-  let nodes = state.nodes
   function storeRank (nodeIndex) {
-    if (nodeIndex === null) {
-      return
+    if (nodeIndex !== null) {
+      storeRank(state.nodes[nodeIndex].left)
+      sortedNodes.push(state.nodes[nodeIndex])
+      storeRank(state.nodes[nodeIndex].right)
     }
-    storeRank(nodes[nodeIndex].left)
-    sortedNodes.push(nodes[nodeIndex])
-    storeRank(nodes[nodeIndex].right)
   }
   storeRank(state.rootNodeIndex)
   return sortedNodes
 }
 
 
-function balanceSubTree(nodes) {
-  const n = nodes.length
-  if (n == 0) {
+/**
+ * Balances the binary tree represented by the order of
+ * the sorted nodes and returns the root node of the
+ * new tree
+ *
+ * @param {Array} of sorted nodes
+ * @returns {node} the root node of the re-balanced tree
+ */
+function balanceSubTree (sortedNodes) {
+  const nNode = sortedNodes.length
+  if (nNode == 0) {
     return null
   }
-  const iMidNode = Math.floor(n/2)
-  let midNode = nodes[iMidNode]
-  midNode.left = null
-  midNode.right = null
-  const leftNodes = nodes.slice(0, iMidNode)
-  const rightNodes = nodes.slice(iMidNode+1, n+1)
+
+  const iMidNode = Math.floor(nNode / 2)
+  let leftNodes = sortedNodes.slice(0, iMidNode)
+  let midNode = sortedNodes[iMidNode]
+  let rightNodes = sortedNodes.slice(iMidNode + 1, nNode + 1)
+
   let leftChildNode = balanceSubTree(leftNodes)
   let rightChildNode = balanceSubTree(rightNodes)
   if (leftChildNode !== null) {
     midNode.left = leftChildNode.imageIndex
     leftChildNode.parent = midNode.imageIndex
+  } else {
+    midNode.left = null
   }
   if (rightChildNode !== null) {
     midNode.right = rightChildNode.imageIndex
     rightChildNode.parent = midNode.imageIndex
+  } else {
+    midNode.right = null
   }
+
   return midNode
 }
 
 
-function rebalanceTree(state) {
+function insertNodeForNewImageIndex (state) {
+
+  // create new node for newImageIndex
+  let node = newNode(state.newImageIndex, null, null, state.testNodeIndex)
+  iNewNode = state.nodes.length
+  state.nodes.push(node)
+
+  // rebalance the tree
   let sortedNodes = getOrderedNodeList(state)
   let newRootNode = balanceSubTree(sortedNodes)
   newRootNode.parent = null
   state.rootNodeIndex = newRootNode.imageIndex
-  state.nodeIndex = state.rootNodeIndex
-  state.testImageIndex += 1 // choose new image
-  console.log('>> tree.rebalanceTree ===>',
+  state.testNodeIndex = state.rootNodeIndex
+
+  // get new Image
+  state.newImageIndex = state.untestedImageIndices.shift()
+
+  console.log('>> tree.resetTreeForNewTestImage ===>',
     'rootNodeIndex', state.rootNodeIndex,
-    'nodeIndex', state.nodeIndex,
-    'testImageIndex', state.testImageIndex)
+    'testNodeIndex', state.testNodeIndex,
+    'newImageIndex', state.newImageIndex,
+    state.untestedImageIndices)
+
+  return iNewNode
 }
 
-function makeChoice (state, chosenImageIndex) {
-  // state.testImageIndex is always larger than all previously seen imageIndex's
-  // so if chosenImageIndex is larger than tree.testImageIndex, this mean
-  // state.testImageIndex was chosen, therefore the new image is better
-  console.log('>> tree.makeChoice (', state.testImageIndex,
-    state.nodes[state.nodeIndex].imageIndex, ') -', chosenImageIndex)
+
+function makeChoice (state, comparison) {
+
+  let testNode = state.nodes[state.testNodeIndex]
+  let chosenImageIndex = comparison.choice
+
   console.log('>> tree.makeChoice',
     'rootNodeIndex', state.rootNodeIndex,
-    'nodeIndex', state.nodeIndex,
-    'testImageIndex', state.testImageIndex)
-  const isTestImageChosen = (chosenImageIndex !== state.nodes[state.nodeIndex].imageIndex)
-  if (isTestImageChosen) {
-    // Right branch holds nodes that are better than imageIndex
-    if (state.nodes[state.nodeIndex].right == null) {
-      // Insert Node
-      state.nodes[state.nodeIndex].right = state.nodes.length
-      state.nodes[state.nodes.length] = newNode(state.testImageIndex, null, null, state.nodeIndex)
-      rebalanceTree(state)
+    'testNodeIndex', state.testNodeIndex,
+    'newImageIndex', state.newImageIndex,
+    '- chosenImageIndex', chosenImageIndex)
+
+  // go right branch if newImageIndex is chosen (preferred)
+  if (chosenImageIndex === state.newImageIndex) {
+    if (testNode.right === null) {
+      testNode.right = insertNodeForNewImageIndex(state)
     } else {
-      // Traverse Tree
-      state.nodeIndex = state.nodes[state.nodeIndex].right
+      state.testNodeIndex = testNode.right
     }
   } else {
-    // Left branch holds nodes that are worse than imageIndex
-    if (state.nodes[state.nodeIndex].left == null) {
-      // Insert Node
-      state.nodes[state.nodeIndex].left = state.nodes.length
-      state.nodes[state.nodes.length] = newNode(state.testImageIndex, null, null, state.nodeIndex)
-      rebalanceTree(state)
+    if (testNode.left === null) {
+      testNode.left = insertNodeForNewImageIndex(state)
     } else {
-      // Traverse Tree
-      state.nodeIndex = state.nodes[state.nodeIndex].left
+      state.testNodeIndex = testNode.left
     }
   }
-  console.log('>> tree.makeChoice nodes\n', state.nodes)
+
+  state.comparisons.push(comparison)
+
+  console.log(state.nodes)
 }
 
+
 function isDone (state) {
-  if (state.testImageIndex === state.urls.length) {
+  if (_.isUndefined(state.newImageIndex)) {
     return true
   }
   if (('ranks' in state) && (state.ranks.length > 0)) {
@@ -137,40 +170,32 @@ function isDone (state) {
   return false
 }
 
+
 function makeComparison (state, imageIndexA, imageIndexB) {
   return {
-    itemA: { value: imageIndexA, url: state.urls[imageIndexA] },
-    itemB: { value: imageIndexB, url: state.urls[imageIndexB] }
+    itemA: {value: imageIndexA, url: state.urls[imageIndexA]},
+    itemB: {value: imageIndexB, url: state.urls[imageIndexB]},
+    choice: null,
+    isRepeat: false
   }
 }
 
+
 function getComparison (state) {
-  let iNew = state.testImageIndex
-  let iNode = state.nodes[state.nodeIndex].imageIndex
+  let iNew = state.newImageIndex
+  let iNode = state.nodes[state.testNodeIndex].imageIndex
   return makeComparison(state, iNode, iNew)
 }
 
 
 function rankNodes (state) {
-  // Perform Pre Order Search
-  // binary search with the deepest right branch
-  // stored in ranks first
-  let ranks = []
-  function storeRank (nodeIndex) {
-    if (nodeIndex !== null) {
-      storeRank(state.nodes[nodeIndex].left)
-      ranks.push(state.urls[state.nodes[nodeIndex].imageIndex])
-      storeRank(state.nodes[nodeIndex].right)
-    }
-  }
-  storeRank(state.rootNodeIndex)
-  state.ranks = ranks
+  let orderedNodes = getOrderedNodeList(state)
+  state.ranks = _.map(orderedNodes, n => state.urls[n.imageIndex])
 }
 
 module.exports = {
   isDone,
   newState,
-  newNode,
   makeChoice,
   getComparison,
   rankNodes

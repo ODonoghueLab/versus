@@ -158,7 +158,7 @@ module.exports = {
       })
   },
 
-  chooseItem (participateId, chosenImageIndex) {
+  chooseItem (participateId, comparison) {
     return models
       .fetchParticipant(participateId)
       .then(participant => {
@@ -166,7 +166,7 @@ module.exports = {
           .fetchExperiment(participant.ExperimentId)
           .then(experiment => {
             let state = participant.state
-            tree.makeChoice(state, chosenImageIndex)
+            tree.makeChoice(state, comparison)
             let payload
             if (tree.isDone(state)) {
               tree.rankNodes(state)

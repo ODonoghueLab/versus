@@ -206,8 +206,9 @@
         } else {
           this.$data.loadingB = true
         }
+        this.$data.comparison.choice = item.value
         rpc
-          .rpcRun('chooseItem', participateId, item.value)
+          .rpcRun('chooseItem', participateId, this.$data.comparison)
           .then(this.handleRes)
       },
       getImageUrl (item) {
