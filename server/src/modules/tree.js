@@ -16,6 +16,8 @@
 
 
 const _ = require('lodash')
+const util = require('./util')
+
 
 function newNode (imageIndex, left, right, parent) {
   return {imageIndex, left, right, parent}
@@ -23,7 +25,11 @@ function newNode (imageIndex, left, right, parent) {
 
 
 function newState (imageUrls) {
-  let untestedImageIndices = _.range(imageUrls.length)
+  let fractionRepeated = 0.2
+  let nImage = imageUrls.length
+  let maxNComparison = Math.floor(nImage * Math.log2(nImage))
+  let nRepeatComparison = Math.ceil(maxNComparison * fractionRepeated)
+  let untestedImageIndices = _.range(nImage)
   let rootImageIndex = untestedImageIndices.shift()
   let rootNode = newNode(rootImageIndex, null, null, null)
   let newImageIndex = untestedImageIndices.shift()
@@ -35,6 +41,8 @@ function newState (imageUrls) {
     testNodeIndex: 0, // points to imageIndex of image to test
     untestedImageIndices,
     newImageIndex,
+    nRepeatComparison,
+    fractions: [],
     ranks: [],
     comparisons: [],
   }
@@ -51,6 +59,7 @@ function newState (imageUrls) {
  */
 function getOrderedNodeList (state) {
   let sortedNodes = []
+
   function storeRank (nodeIndex) {
     if (nodeIndex !== null) {
       storeRank(state.nodes[nodeIndex].left)
@@ -58,6 +67,7 @@ function getOrderedNodeList (state) {
       storeRank(state.nodes[nodeIndex].right)
     }
   }
+
   storeRank(state.rootNodeIndex)
   return sortedNodes
 }
@@ -161,10 +171,27 @@ function makeChoice (state, comparison) {
 
 
 function isDone (state) {
+
+  const getUrlFromNode = node => state.urls[node.imageIndex]
+
   if (_.isUndefined(state.newImageIndex)) {
-    return true
-  }
-  if (('ranks' in state) && (state.ranks.length > 0)) {
+    if (state.ranks.length === 0) {
+      state.ranks = _.map(getOrderedNodeList(state), getUrlFromNode)
+    }
+    if (state.fractions.length === 0) {
+      let nImage = state.urls.length
+      let seen = util.makeArray(nImage, 0)
+      let chosen = util.makeArray(nImage, 0)
+      for (let comparison of state.comparisons) {
+        chosen[comparison.choice] += 1
+        seen[comparison.itemA.value] += 1
+        seen[comparison.itemB.value] += 1
+      }
+      state.fractions = _.map(_.range(nImage), i => chosen[i] / seen[i])
+      console.log('> tree.isDone picked', chosen)
+      console.log('> tree.isDone voted', seen)
+      console.log('> tree.isDone fractions', state.fractions)
+    }
     return true
   }
   return false
@@ -182,21 +209,17 @@ function makeComparison (state, imageIndexA, imageIndexB) {
 
 
 function getComparison (state) {
-  let iNew = state.newImageIndex
-  let iNode = state.nodes[state.testNodeIndex].imageIndex
-  return makeComparison(state, iNode, iNew)
+  let iNewImage = state.newImageIndex
+  let iTestNodeImage = state.nodes[state.testNodeIndex].imageIndex
+  return makeComparison(state, iTestNodeImage, iNewImage)
 }
 
-
-function rankNodes (state) {
-  let orderedNodes = getOrderedNodeList(state)
-  state.ranks = _.map(orderedNodes, n => state.urls[n.imageIndex])
-}
 
 module.exports = {
   isDone,
   newState,
   makeChoice,
   getComparison,
-  rankNodes
 }
+
+

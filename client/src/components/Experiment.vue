@@ -186,56 +186,6 @@
   import chartdata from '../modules/chartdata.js'
 
 
-  function makeArray (n, v) {
-    let l = []
-    for (let i = 0; i < n; i += 1) {
-      l.push(v)
-    }
-    return l
-  }
-
-  function getFractionsOfVotesFromNodes (nodes) {
-      let nNode = nodes.length
-      let parentNodeIndices = makeArray(nNode, null)
-
-      for (let [i, node] of nodes.entries()) {
-        // node = {imageIndex: 0, left: 1, right: 2}
-        // where left is worse, and right is better
-        if (node.left) {
-          parentNodeIndices[node.left] = i
-        }
-        if (node.right) {
-          parentNodeIndices[node.right] = i
-        }
-      }
-
-      let votes = makeArray(nNode, 0)
-      let prefs = makeArray(nNode, 0)
-      for (let iTestNode of _.range(nNode)) {
-        let iHopNode = iTestNode
-        while (parentNodeIndices[iHopNode] !== null) {
-          let iParentNode = parentNodeIndices[iHopNode]
-          votes[iTestNode] += 1
-          votes[iParentNode] += 1
-          let isParentBetter = nodes[iParentNode].left === iHopNode
-          if (isParentBetter) {
-            prefs[iParentNode] += 1
-          } else {
-            prefs[iTestNode] += 1
-          }
-          iHopNode = iParentNode
-        }
-      }
-
-      let fractions = []
-      for (let i of _.range(nNode)) {
-        fractions.push(prefs[i] / votes[i])
-      }
-
-      return fractions
-  }
-
-
   function getPartcipantImageOrderDatasets (experiment) {
     let dataSets = []
 
@@ -287,7 +237,7 @@
     for (let participant of experiment.participants) {
       let state = participant.state
 
-      let fractions = getFractionsOfVotesFromNodes(state.nodes)
+      let fractions = state.fractions
       console.log('> Experiment.getDatasets fractions', fractions)
 
       if ('ranks' in state) {

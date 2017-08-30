@@ -1,4 +1,3 @@
-
 module.exports = {
 
   jstr (o) {
@@ -12,6 +11,14 @@ module.exports = {
         aList.splice(i, 1)
       }
     }
+  },
+
+  makeArray (n, v) {
+    let l = []
+    for (let i = 0; i < n; i += 1) {
+      l.push(v)
+    }
+    return l
   }
 
 }

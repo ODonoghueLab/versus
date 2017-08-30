@@ -169,7 +169,6 @@ module.exports = {
             tree.makeChoice(state, comparison)
             let payload
             if (tree.isDone(state)) {
-              tree.rankNodes(state)
               payload = {done: true}
             } else {
               payload = {
