@@ -70,8 +70,12 @@
         <md-layout md-align="center" md-flex="100">
           <p> {{attr.blurb}}</p>
           <br>
-          <br>
-          <br>
+        </md-layout>
+        <md-layout
+            v-if="comparison.isRepeat"
+            md-align="center"
+            md-flex="100">
+          repeat
           <br>
         </md-layout>
 
@@ -206,7 +210,11 @@
         } else {
           this.$data.loadingB = true
         }
-        this.$data.comparison.choice = item.value
+        if (this.$data.comparison.isRepeat) {
+          this.$data.comparison.repeat = item.value
+        } else {
+          this.$data.comparison.choice = item.value
+        }
         rpc
           .rpcRun('chooseItem', participateId, this.$data.comparison)
           .then(this.handleRes)
