@@ -136,7 +136,7 @@ module.exports = {
       .fetchParticipant(participateId)
       .then(participant => {
         if (participant.user === null) {
-          console.log('>> router.getParticipant no result found')
+          console.log('>> router.getParticipant none found')
           return {new: true}
         } else {
           return models

@@ -29,12 +29,19 @@ function newNode (index, imageIndex, left, right, parent) {
 }
 
 
+/**
+ * Initialize the binary choice tree with all associated parameters
+ * required to keep track of the tree, repeats and user statistics
+ *
+ * @param urls
+ * @returns {{urls: *, nodes: [null], rootNodeIndex: number, testNodeIndex: number, untestedImageIndices: *, newImageIndex, fractionToRepeat: number, maxNRepeat: number, fractions: Array, ranks: Array, comparisons: Array, comparisonIndices: Array, repeatedComparisonIndices: Array, consistencies: Array}}
+ */
 function newState (urls) {
-  let fractionRepeated = 0.2
+  let fractionToRepeat = 0.2
 
   let nImage = urls.length
   let maxNComparison = Math.floor(nImage * Math.log2(nImage))
-  let nMaxRepeat = Math.ceil(maxNComparison * fractionRepeated)
+  let nMaxRepeat = Math.ceil(maxNComparison * fractionToRepeat)
 
   let untestedImageIndices = _.shuffle(_.range(nImage))
   let rootNodeImageIndex = untestedImageIndices.shift()
@@ -50,7 +57,7 @@ function newState (urls) {
     testNodeIndex: rootNodeIndex, // contains imageIndex to compare with new image
     untestedImageIndices,
     newImageIndex,
-    fractionRepeated,
+    fractionToRepeat: fractionToRepeat,
     maxNRepeat: nMaxRepeat,
     fractions: [],
     ranks: [],
@@ -151,16 +158,22 @@ function insertNewNode (state) {
 }
 
 
+/**
+ * Generates a unique number for the (unordered) pair of values
+ *
+ * @param comparison
+ * @returns {Number}
+ */
+function getCantorPairingNumber(comparison) {
+  let x = [comparison.itemA.value, comparison.itemB.value]
+  x.sort()
+  return 0.5*(x[0] + x[1])*(x[0] + x[1] + 1) + x[1]
+}
+
+
 function makeChoice (state, comparison) {
 
   let testNode = state.nodes[state.testNodeIndex]
-
-  function getCantorPairingNumber(comparison) {
-    let pair = [comparison.itemA.value, comparison.itemB.value]
-    pair.sort()
-    let [x, y] = pair
-    return 0.5*(x + y)*(x + y + 1) + y
-  }
 
   if (comparison.isRepeat) {
     let p = getCantorPairingNumber(comparison)
@@ -202,46 +215,6 @@ function makeChoice (state, comparison) {
 }
 
 
-function isDone (state) {
-
-  const getUrlFromNode = node => state.urls[node.imageIndex]
-
-  if (_.isUndefined(state.newImageIndex)) {
-    if (state.consistencies.length === 0) {
-      console.log('> tree.isDone comparisons', state.comparisons)
-      state.consistencies = _.map(state.repeatedComparisonIndices, i => {
-        let comparison = state.comparisons[i]
-        if (comparison.choice === comparison.repeat) {
-          return 1
-        } else {
-          return 0
-        }
-      })
-      console.log('> tree.isDone consistencies', state.consistencies)
-    }
-    if (state.ranks.length === 0) {
-      state.ranks = _.map(getOrderedNodeList(state), getUrlFromNode)
-    }
-    if (state.fractions.length === 0) {
-      let nImage = state.urls.length
-      let seen = util.makeArray(nImage, 0)
-      let chosen = util.makeArray(nImage, 0)
-      for (let comparison of state.comparisons) {
-        chosen[comparison.choice] += 1
-        seen[comparison.itemA.value] += 1
-        seen[comparison.itemB.value] += 1
-      }
-      state.fractions = _.map(_.range(nImage), i => chosen[i] / seen[i])
-      console.log('> tree.isDone picked', chosen)
-      console.log('> tree.isDone voted', seen)
-      console.log('> tree.isDone fractions', state.fractions)
-    }
-    return true
-  }
-  return false
-}
-
-
 function makeComparison (state, imageIndexA, imageIndexB) {
   return {
     itemA: {value: imageIndexA, url: state.urls[imageIndexA]},
@@ -253,17 +226,72 @@ function makeComparison (state, imageIndexA, imageIndexB) {
 }
 
 
+function isAllImagesTested(state) {
+  return (state.untestedImageIndices.length === 0)
+           && _.isUndefined(state.newImageIndex)
+}
+
+
+function isDone (state) {
+
+  if (!isAllImagesTested(state)) {
+    return false
+  }
+
+  if (state.repeatedComparisonIndices.length < state.maxNRepeat) {
+    return false
+  }
+
+  if (state.consistencies.length === 0) {
+    console.log('> tree.isDone comparisons', state.comparisons)
+    state.consistencies = _.map(state.repeatedComparisonIndices, i => {
+      let comparison = state.comparisons[i]
+      if (comparison.choice === comparison.repeat) {
+        return 1
+      } else {
+        return 0
+      }
+    })
+    console.log('> tree.isDone consistencies', state.consistencies)
+  }
+
+  if (state.ranks.length === 0) {
+    state.ranks = _.map(
+      getOrderedNodeList(state),
+      node => state.urls[node.imageIndex])
+  }
+
+  if (state.fractions.length === 0) {
+    let nImage = state.urls.length
+    let seen = util.makeArray(nImage, 0)
+    let chosen = util.makeArray(nImage, 0)
+    for (let comparison of state.comparisons) {
+      chosen[comparison.choice] += 1
+      seen[comparison.itemA.value] += 1
+      seen[comparison.itemB.value] += 1
+    }
+    state.fractions = _.map(_.range(nImage), i => chosen[i] / seen[i])
+    console.log('> tree.isDone picked', chosen)
+    console.log('> tree.isDone voted', seen)
+    console.log('> tree.isDone fractions', state.fractions)
+  }
+
+  return true
+
+}
+
+
 function getComparison (state) {
-  let isBernoulli = Math.random() <= state.fractionRepeated
+  let isBernoulli = Math.random() <= state.fractionToRepeat
   let hasUntestedComparison = state.comparisonIndices.length > 0
   let hasRepeatsToDo = state.repeatedComparisonIndices.length < state.maxNRepeat
   let doRepeat = isBernoulli && hasUntestedComparison && hasRepeatsToDo
 
-  if (doRepeat) {
+  if (doRepeat || isAllImagesTested(state)) {
     let iComparison = state.comparisonIndices.shift()
+    state.repeatedComparisonIndices.push(iComparison)
     let comparison = state.comparisons[iComparison]
     comparison.isRepeat = true
-    state.repeatedComparisonIndices.push(iComparison)
     return comparison
   } else {
     let iNewImage = state.newImageIndex

@@ -51,6 +51,7 @@
             <md-table-head>Age</md-table-head>
             <md-table-head>Gender</md-table-head>
             <md-table-head>Best Image</md-table-head>
+            <md-table-head>Consistency</md-table-head>
             <md-table-head>Created</md-table-head>
             <md-table-head>Updated</md-table-head>
           </md-table-row>
@@ -67,19 +68,24 @@
               </router-link>
             </md-table-cell>
             <md-table-cell>
-            <span v-if="participant.user">
-              {{participant.user.age}}
-            </span>
+              <span v-if="participant.user">
+                {{participant.user.age}}
+              </span>
             </md-table-cell>
             <md-table-cell>
-            <span v-if="participant.user">
-              {{participant.user.gender}}
-            </span>
+              <span v-if="participant.user">
+                {{participant.user.gender}}
+              </span>
             </md-table-cell>
             <md-table-cell>
-            <span v-if="participant.state.ranks.length">
-              {{ participant.bestImageKey }}
-            </span>
+              <span v-if="participant.state.ranks.length">
+                {{ participant.bestImageKey }}
+              </span>
+            </md-table-cell>
+            <md-table-cell>
+              <span v-if="participant.state.consistencies.length">
+                {{ participant.consistency }}
+              </span>
             </md-table-cell>
             <md-table-cell>
               {{reformatDate(participant, 'createdAt')}}
@@ -295,6 +301,10 @@
           for (let participant of participants) {
             let state = participant.state
             participant.bestImageKey = path.basename(state.ranks[0])
+            if (participant.state.consistencies.length > 0) {
+              let c = participant.state.consistencies
+              participant.consistency = parseInt(_.sum(c)/c.length*100) + "%"
+            }
           }
 
           this.$data.experiment = experiment
