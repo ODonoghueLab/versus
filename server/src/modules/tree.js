@@ -28,15 +28,15 @@ function newNode (i, iImage, left, right, parent) {
  * Initialize the binary choice tree with all associated parameters
  * required to keep track of the tree, repeats and user statistics
  *
- * @param urls
- * @returns {{urls: *, nodes: [null], iNodeRoot: number, iNodeCompare: number, testImageIndices: *, iImageTest, probRepeat: number, totalRepeat: number, fractions: Array, ranks: Array, comparisons: Array, comparisonIndices: Array, repeatComparisonIndices: Array, consistencies: Array}}
+ * @param imageUrls
+ * @returns {{imageUrls: *, nodes: [null], iNodeRoot: number, iNodeCompare: number, testImageIndices: *, iImageTest, probRepeat: number, totalRepeat: number, fractions: Array, ranks: Array, comparisons: Array, comparisonIndices: Array, repeatComparisonIndices: Array, consistencies: Array}}
  */
-function newState (urls) {
+function newState (imageUrls) {
   let probRepeat = 0.2
 
-  let nImage = urls.length
-  let totalComparison = Math.floor(nImage * Math.log2(nImage))
-  let totalRepeat = Math.ceil(totalComparison * probRepeat)
+  let nImage = imageUrls.length
+  let maxNComparison = Math.floor(nImage * Math.log2(nImage))
+  let totalRepeat = Math.ceil(maxNComparison * probRepeat)
 
   let testImageIndices = _.shuffle(_.range(nImage))
   let rootNodeImageIndex = testImageIndices.shift()
@@ -46,22 +46,21 @@ function newState (urls) {
   let nodes = [newNode(iNodeRoot, rootNodeImageIndex, null, null, null)]
 
   return {
-    urls, // list of image-url's that will be ranked
+    imageUrls, // list of image-url's that will be ranked
     probRepeat, // how likely a comparison will be repeated
-    nodes, // list of nodes to the binary search tree
+    nodes, // list of nodes in the binary search tree
     iNodeRoot, // index to the root node, can change with re-balancing
     iImageTest, // index to the url of the image to test, undefined if done
     testImageIndices, // remaining iImageTest to test
     totalRepeat, // total number of repeats to be conducted
-    iNodeCompare: iNodeRoot, // index to Node containing iImage to
-                                     // compare with iImageTest
-    comparisons: [], // a list of all comparisons made by the participant
+    iNodeCompare: iNodeRoot, // index to Node containing compare image                                     // compare with iImageTest
+    comparisons: [], // list of all comparisons made by the participant
     comparisonIndices: [], // indices to comparisons made that have not been repeated
     iComparisonRepeat: null, // index to comparison being repeated
-    repeatComparisonIndices: [], // indices to repeated comparisons, the last one is
-                                   // the current one
-    consistencies: [], // list of (0, 1) for each repeated comparison for consistency
-                       // with the original choice and the repeated choice
+    repeatComparisonIndices: [], // indices to repeated comparisons
+
+    // the following are only calculated when done
+    consistencies: [], // list of (0, 1) for consistency of repeated comparisons                       // with the original choice and the repeated choice
     fractions: [], // list of number of winning votes for each image-url
     ranks: [], // ranked list of the image-url for user preference
   }
@@ -131,15 +130,17 @@ function balanceSubTree (sortedNodes) {
 
 
 function insertNewNode (state) {
-
-  // create new node for iImageTest
   let iNewNode = state.nodes.length
   let node = newNode(iNewNode, state.iImageTest, null, null, state.iNodeCompare)
   state.nodes.push(node)
+  return iNewNode
+}
 
-  // get iImageTest, is undefined if testImageIndices is empty
+function getNextImage (state) {
+  // next iImageTest, is undefined if testImageIndices is empty
   state.iImageTest = state.testImageIndices.shift()
 
+  console.log('> tree.getNextImage', checkNodes(state.nodes))
   // rebalance the tree
   let sortedNodes = getOrderedNodeList(state)
   let newRootNode = balanceSubTree(sortedNodes)
@@ -153,7 +154,8 @@ function insertNewNode (state) {
     'iImageTest', state.iImageTest,
     state.testImageIndices)
 
-  return iNewNode
+  console.log('> tree.getNextImage', checkNodes(state.nodes))
+
 }
 
 
@@ -171,6 +173,39 @@ function setNextRepeatComparison (state) {
   }
 }
 
+
+function checkNodes (nodes) {
+  let nNullParent = 0
+  let pass = true
+  for (let node of nodes) {
+    // check parent
+    if (node.parent === null) {
+      nNullParent += 1
+    } else {
+      let parent = nodes[node.parent]
+      if ((parent.left !== node.i) && (parent.right !== node.i)) {
+        pass = false
+      }
+    }
+    // check children
+    for (let iChildNode of [node.left, node.right]) {
+      if (iChildNode !== null) {
+        if (iChildNode >= nodes.length) {
+          pass = false
+        } else {
+          child = nodes[iChildNode]
+          if (child.parent !== node.i) {
+            pass = false
+          }
+        }
+      }
+    }
+  }
+  if (nNullParent > 1) {
+    pass = false
+  }
+  return pass
+}
 
 function makeChoice (state, comparison) {
 
@@ -196,12 +231,14 @@ function makeChoice (state, comparison) {
     if (chosenImageIndex === state.iImageTest) {
       if (compareNode.right === null) {
         compareNode.right = insertNewNode(state)
+        getNextImage(state)
       } else {
         state.iNodeCompare = compareNode.right
       }
     } else {
       if (compareNode.left === null) {
         compareNode.left = insertNewNode(state)
+        getNextImage(state)
       } else {
         state.iNodeCompare = compareNode.left
       }
@@ -224,8 +261,8 @@ function makeChoice (state, comparison) {
 
 function makeComparison (state, iImageA, iImageB) {
   return {
-    itemA: {value: iImageA, url: state.urls[iImageA]},
-    itemB: {value: iImageB, url: state.urls[iImageB]},
+    itemA: {value: iImageA, url: state.imageUrls[iImageA]},
+    itemB: {value: iImageB, url: state.imageUrls[iImageB]},
     choice: null,
     isRepeat: false,
     repeat: null
@@ -233,15 +270,15 @@ function makeComparison (state, iImageA, iImageB) {
 }
 
 
-function isAllImagesTested(state) {
+function isAllImagesTested (state) {
   return (state.testImageIndices.length === 0)
-     && _.isUndefined(state.iImageTest)
+    && _.isUndefined(state.iImageTest)
 }
 
 
-function isAllRepeatComparisonsMade(state) {
+function isAllRepeatComparisonsMade (state) {
   return (state.repeatComparisonIndices.length === state.totalRepeat)
-     && (state.iComparisonRepeat === null)
+    && (state.iComparisonRepeat === null)
 }
 
 
@@ -268,11 +305,14 @@ function isDone (state) {
   }
 
   if (state.ranks.length === 0) {
-    state.ranks = _.map(getOrderedNodeList(state), node => state.urls[node.iImage])
+    let sortedNodes = getOrderedNodeList(state)
+    state.ranks = _.map(sortedNodes, node => state.imageUrls[node.iImage])
+    console.log('> tree.isDone sorted nodes', sortedNodes)
+    console.log('> tree.isDone ranks', state.ranks)
   }
 
   if (state.fractions.length === 0) {
-    let nImage = state.urls.length
+    let nImage = state.imageUrls.length
     let seen = util.makeArray(nImage, 0)
     let chosen = util.makeArray(nImage, 0)
     for (let comparison of state.comparisons) {
@@ -296,7 +336,9 @@ function getComparison (state) {
     doRepeatComparison = true
   } else {
     if (state.iComparisonRepeat !== null) {
-      if (Math.random() <= state.probRepeat) {
+      let r = Math.random()
+      console.log('> tree.getComparison bernoulli', r, state.probRepeat)
+      if (r <= state.probRepeat) {
         doRepeatComparison = true
       }
     }
