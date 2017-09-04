@@ -1,21 +1,6 @@
 const path = require('path')
 const express = require('express')
 
-const fs = require('fs-extra')
-
-// As the server config.js is not saved into the github,
-// on initialization, if the config.js is not found,
-// a defaultConfig.js will be copied into config.js
-const configFname = path.join(__dirname, 'config.js')
-if (!fs.existsSync(configFname)) {
-  fs.copySync(path.join(__dirname, 'defaultConfig.js'), configFname)
-}
-const clientDevDir = path.join(__dirname, '..', '..', 'client', 'src')
-const clientConfigFname = path.join(clientDevDir, 'config.js')
-if (!fs.existsSync(clientConfigFname)) {
-  fs.copySync(path.join(clientDevDir, 'defaultConfig.js'), clientConfigFname)
-}
-
 // Defines express app and sqlalchemy db together
 // This avoids problems of circular definitions
 const conn = require('./conn')

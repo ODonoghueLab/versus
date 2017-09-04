@@ -48,11 +48,8 @@
         <md-table-header>
           <md-table-row>
             <md-table-head>Invite</md-table-head>
-            <md-table-head>Age</md-table-head>
-            <md-table-head>Gender</md-table-head>
             <md-table-head>Unseen Images</md-table-head>
             <md-table-head>Comparisons</md-table-head>
-            <md-table-head>Repeats</md-table-head>
             <md-table-head>Consistency</md-table-head>
             <md-table-head>Created</md-table-head>
             <md-table-head>Updated</md-table-head>
@@ -70,27 +67,20 @@
               </router-link>
             </md-table-cell>
             <md-table-cell>
-              <span v-if="participant.user">
-                {{participant.user.age}}
+              <span v-if="participant.state.testImageIndices.length > 0">
+                ongoing
               </span>
-            </md-table-cell>
-            <md-table-cell>
-              <span v-if="participant.user">
-                {{participant.user.gender}}
+              <span v-else>
+                done
               </span>
-            </md-table-cell>
-            <md-table-cell>
-              {{ participant.state.testImageIndices.length }}
             </md-table-cell>
             <md-table-cell>
               {{ participant.state.comparisons.length }}
             </md-table-cell>
             <md-table-cell>
-              {{ participant.state.repeatComparisonIndices.length }}
-            </md-table-cell>
-            <md-table-cell>
               <span v-if="participant.consistency">
-                {{ participant.consistency }}
+                {{ participant.consistency }}/{{ participant.state.repeatComparisonIndices.length}}
+                repeat
               </span>
             </md-table-cell>
             <md-table-cell>
@@ -306,7 +296,7 @@
             participant.bestImageKey = path.basename(state.ranks[0])
             if (participant.state.consistencies.length > 0) {
               let c = participant.state.consistencies
-              participant.consistency = parseInt(_.sum(c)/c.length*100) + "%"
+              participant.consistency = _.sum(c)
             }
           }
 

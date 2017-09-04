@@ -37,6 +37,10 @@ function newState (imageUrls) {
   let nImage = imageUrls.length
   let maxNComparison = Math.floor(nImage * Math.log2(nImage))
   let totalRepeat = Math.ceil(maxNComparison * probRepeat)
+  console.log('> tree.newState',
+    'maxNComparison', maxNComparison,
+    'nImage', nImage,
+    'totalRepeat', totalRepeat)
 
   let testImageIndices = _.shuffle(_.range(nImage))
   let rootNodeImageIndex = testImageIndices.shift()
@@ -136,11 +140,11 @@ function insertNewNode (state) {
   return iNewNode
 }
 
+
 function getNextImage (state) {
-  // next iImageTest, is undefined if testImageIndices is empty
+  // undefined if testImageIndices is empty
   state.iImageTest = state.testImageIndices.shift()
 
-  console.log('> tree.getNextImage', checkNodes(state.nodes))
   // rebalance the tree
   let sortedNodes = getOrderedNodeList(state)
   let newRootNode = balanceSubTree(sortedNodes)
@@ -154,39 +158,49 @@ function getNextImage (state) {
     'iImageTest', state.iImageTest,
     state.testImageIndices)
 
-  console.log('> tree.getNextImage', checkNodes(state.nodes))
+  console.log('> tree.getNextImage consistency', checkNodes(state.nodes))
 
 }
 
 
 function setNextRepeatComparison (state) {
 
+  state.iComparisonRepeat = null
+
   if (state.repeatComparisonIndices.length < state.totalRepeat) {
-    state.comparisonIndices = _.shuffle(state.comparisonIndices)
-    state.iComparisonRepeat = state.comparisonIndices.shift()
-    state.repeatComparisonIndices.push(state.iComparisonRepeat)
-    let comparison = state.comparisons[state.iComparisonRepeat]
-    comparison.isRepeat = true
-  } else {
-    // we are done with repeats
-    state.iComparisonRepeat = null
+    if (state.comparisonIndices.length > 0) {
+      state.comparisonIndices = _.shuffle(state.comparisonIndices)
+      state.iComparisonRepeat = state.comparisonIndices.shift()
+      state.repeatComparisonIndices.push(state.iComparisonRepeat)
+    }
   }
 }
 
 
+/**
+ * Checks for the consistency of the binary tree in terms of
+ * 1. one root node
+ * 2. parent indices match
+ * 3. children indices match
+ *
+ * @param nodes
+ * @returns {boolean}
+ */
 function checkNodes (nodes) {
   let nNullParent = 0
   let pass = true
   for (let node of nodes) {
-    // check parent
+
     if (node.parent === null) {
       nNullParent += 1
     } else {
+      // check parent
       let parent = nodes[node.parent]
       if ((parent.left !== node.i) && (parent.right !== node.i)) {
         pass = false
       }
     }
+
     // check children
     for (let iChildNode of [node.left, node.right]) {
       if (iChildNode !== null) {
@@ -200,12 +214,17 @@ function checkNodes (nodes) {
         }
       }
     }
+
   }
-  if (nNullParent > 1) {
+
+  // check for a unique root
+  if (nNullParent !== 1) {
     pass = false
   }
+
   return pass
 }
+
 
 function makeChoice (state, comparison) {
 
@@ -248,7 +267,6 @@ function makeChoice (state, comparison) {
     state.comparisons.push(comparison)
     state.comparisonIndices.push(iComparisonNew)
 
-    // only called once after initialization
     if (state.iComparisonRepeat === null) {
       setNextRepeatComparison(state)
     }
@@ -336,9 +354,7 @@ function getComparison (state) {
     doRepeatComparison = true
   } else {
     if (state.iComparisonRepeat !== null) {
-      let r = Math.random()
-      console.log('> tree.getComparison bernoulli', r, state.probRepeat)
-      if (r <= state.probRepeat) {
+      if (Math.random() <= state.probRepeat) {
         doRepeatComparison = true
       }
     }
