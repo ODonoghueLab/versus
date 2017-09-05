@@ -48,7 +48,7 @@
         <md-table-header>
           <md-table-row>
             <md-table-head>Invite</md-table-head>
-            <md-table-head>Unseen Images</md-table-head>
+            <md-table-head>SurveyCode</md-table-head>
             <md-table-head>Comparisons</md-table-head>
             <md-table-head>Consistency</md-table-head>
             <md-table-head>Created</md-table-head>
@@ -67,12 +67,7 @@
               </router-link>
             </md-table-cell>
             <md-table-cell>
-              <span v-if="participant.state.testImageIndices.length > 0">
-                ongoing
-              </span>
-              <span v-else>
-                done
-              </span>
+              {{ participant.state.surveyCode }}
             </md-table-cell>
             <md-table-cell>
               {{ participant.state.comparisons.length }}
@@ -80,7 +75,6 @@
             <md-table-cell>
               <span v-if="participant.consistency">
                 {{ participant.consistency }}/{{ participant.state.repeatComparisonIndices.length}}
-                repeat
               </span>
             </md-table-cell>
             <md-table-cell>
@@ -232,10 +226,9 @@
 
     for (let participant of experiment.participants) {
       let state = participant.state
-      console.log('> Experiment.getPartcipantImageWeightDatasets ranks', state.ranks)
 
       let fractions = state.fractions
-      console.log('> Experiment.getPartcipantImageWeightDatasets fractions', fractions)
+      console.log('> Experiment.getPartcipantImageWeightDatasets', state.ranks, fractions)
 
       if ('ranks' in state) {
         let participantOrder = {}
@@ -246,16 +239,12 @@
           participantWeight[key] = fractions[i]
         }
 
-        console.log('> Experiment.getPartcipantImageWeightDatasets data', participantOrder, participantWeight)
-
         let xVals = []
         let yVals = []
         for (let key of _.keys(participantWeight)) {
           xVals.push(participantWeight[key])
           yVals.push(participantOrder[key])
         }
-
-        console.log('> Experiment.getPartcipantImageWeightDatasets chart', xVals, yVals)
 
         chartdata.addDataset(
           dataSets,

@@ -145,7 +145,7 @@ module.exports = {
               const state = participant.state
               if (tree.isDone(state)) {
                 console.log('>> router.getParticipant done')
-                return {done: true}
+                return {done: true, surveyCode: state.surveyCode}
               } else {
                 const comparison = tree.getComparison(participant.state)
                 console.log('>> router.getParticipant comparison', comparison)
@@ -169,7 +169,7 @@ module.exports = {
             tree.makeChoice(state, comparison)
             let payload
             if (tree.isDone(state)) {
-              payload = {done: true}
+              payload = {done: true, surveyCode: state.surveyCode}
             } else {
               payload = {
                 comparison: tree.getComparison(state),

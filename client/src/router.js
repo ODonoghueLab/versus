@@ -10,6 +10,7 @@ import Participant from './components/Participant'
 import Login from './components/Login'
 import Register from './components/Register'
 import EditUser from './components/EditUser'
+import MturkParticipant from './components/MturkParticipant'
 
 let router = new Router({
   routes: [
@@ -52,6 +53,11 @@ let router = new Router({
       path: '/participant/:participateId',
       name: 'participant',
       component: Participant
+    },
+    {
+      path: '/mechanical-turk/:experimentId',
+      name: 'mturkParticipant',
+      component: MturkParticipant
     }
   ]
 })

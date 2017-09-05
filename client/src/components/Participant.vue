@@ -46,7 +46,7 @@
             @click="enterUser"
             class="md-raised md-primary"
             style="margin-left: 1em">
-          Start Experiment
+          Look at images
         </md-button>
       </form>
     </div>
@@ -55,10 +55,18 @@
       <md-layout
           class="md-display-2 done"
           md-align="center"
+          md-column
           md-vertical-align="center">
         Your tests are done
         <br>
-        Thank You
+        Thank you
+        <br>
+        Your survey code is
+        <br>
+        <md-whiteframe
+          style="padding: 0.5em">
+          {{ surveyCode }}
+        </md-whiteframe>
       </md-layout>
     </div>
 
@@ -162,6 +170,7 @@
         done: false,
         start: false,
         comparison: null,
+        surveyCode: null,
         attr: {},
       }
     },
@@ -182,6 +191,7 @@
         } else if (res.data.done) {
           console.log('>> Invite.handleRes done')
           this.$data.done = true
+          this.$data.surveyCode = res.data.surveyCode
         } else if (res.data.comparison) {
           let comparison = this.$data.comparison
           let newComparison = res.data.comparison

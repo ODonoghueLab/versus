@@ -16,6 +16,8 @@
 
 
 const _ = require('lodash')
+const shortid = require('shortid')
+
 const util = require('./util')
 
 
@@ -67,6 +69,7 @@ function newState (imageUrls) {
     consistencies: [], // list of (0, 1) for consistency of repeated comparisons                       // with the original choice and the repeated choice
     fractions: [], // list of number of winning votes for each image-url
     ranks: [], // ranked list of the image-url for user preference
+    surveyCode: null
   }
 }
 
@@ -340,6 +343,10 @@ function isDone (state) {
     }
     state.fractions = _.map(_.range(nImage), i => chosen[i] / seen[i])
     console.log('> tree.isDone fractions', state.fractions)
+  }
+
+  if (state.surveyCode === null) {
+    state.surveyCode = shortid.generate()
   }
 
   return true
