@@ -41,10 +41,7 @@
       <md-button class="md-raised" @click="makeInvite">
         Invite participant
       </md-button>
-      <md-button class="md-raised" @click="downloadResults">
-        Download Results
-      </md-button>
-      <md-table v-if="experiment.participants">
+       <md-table v-if="experiment.participants">
         <md-table-header>
           <md-table-row>
             <md-table-head>Invite</md-table-head>

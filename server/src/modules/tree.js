@@ -155,7 +155,7 @@ function getNextImage (state) {
   state.iNodeRoot = newRootNode.i
   state.iNodeCompare = state.iNodeRoot
 
-  console.log('>> tree.resetTreeForNewTestImage ===>',
+  console.log('>> tree.getNextImage ===>',
     'iNodeRoot', state.iNodeRoot,
     'iNodeCompare', state.iNodeCompare,
     'iImageTest', state.iImageTest,
@@ -163,13 +163,12 @@ function getNextImage (state) {
 
   console.log('> tree.getNextImage consistency', checkNodes(state.nodes))
 
+  console.log(state.nodes)
 }
 
 
 function setNextRepeatComparison (state) {
-
   state.iComparisonRepeat = null
-
   if (state.repeatComparisonIndices.length < state.totalRepeat) {
     if (state.comparisonIndices.length > 0) {
       state.comparisonIndices = _.shuffle(state.comparisonIndices)
@@ -273,8 +272,6 @@ function makeChoice (state, comparison) {
     if (state.iComparisonRepeat === null) {
       setNextRepeatComparison(state)
     }
-
-    console.log(state.nodes)
 
   }
 }

@@ -135,26 +135,28 @@ module.exports = {
     return models
       .fetchParticipant(participateId)
       .then(participant => {
-        if (participant.user === null) {
-          console.log('>> router.getParticipant none found')
-          return {new: true}
-        } else {
-          return models
-            .fetchExperiment(participant.ExperimentId)
-            .then(experiment => {
-              const state = participant.state
-              if (tree.isDone(state)) {
-                console.log('>> router.getParticipant done')
-                return {done: true, surveyCode: state.surveyCode}
-              } else {
-                const comparison = tree.getComparison(participant.state)
-                console.log('>> router.getParticipant comparison', comparison)
-                return {
-                  comparison,
-                  attr: experiment.attr }
+        console.log('> getParticipant got here 1')
+        return models
+          .fetchExperiment(participant.ExperimentId)
+          .then(experiment => {
+            if (participant.user === null) {
+              console.log('>> router.getParticipant none found')
+              return {new: true, nImage: experiment.Images.length}
+            }
+            const state = participant.state
+            console.log('> getParticipant state', state)
+            if (tree.isDone(state)) {
+              console.log('>> router.getParticipant done')
+              return {done: true, surveyCode: state.surveyCode}
+            } else {
+              const comparison = tree.getComparison(participant.state)
+              console.log('>> router.getParticipant comparison', comparison)
+              return {
+                comparison,
+                attr: experiment.attr
               }
-            })
-        }
+            }
+          })
       })
   },
 

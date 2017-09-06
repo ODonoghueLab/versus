@@ -12,6 +12,14 @@
         Experiments on Versus are easy, all you need to do
         is view the two images and click on the one you beleive is better.
       </p>
+
+      <p>
+        You will be ranking {{nImage}} images,
+        with at most {{getMaxComparison()}} image comparisons, of which
+        {{Math.ceil(.2*getMaxComparison())}} will be repeated.
+
+      </p>
+
       <p>
         To participate in this experiment, enter your age and gender below and click start.
       </p>
@@ -163,6 +171,7 @@
       return {
         loadingA: false,
         loadingB: false,
+        nImage: null,
         imageA: null,
         imageB: null,
         age: 18,
@@ -188,6 +197,7 @@
         if (res.data.new) {
           console.log('>> Invite.handleRes new')
           this.$data.start = true
+          this.$data.nImage = res.data.nImage
         } else if (res.data.done) {
           console.log('>> Invite.handleRes done')
           this.$data.done = true
@@ -242,7 +252,15 @@
           .rpcRun(
             'saveParticipantUserDetails', participateId, details)
           .then(this.handleRes)
+      },
+      getMaxComparison () {
+        let n = this.$data.nImage
+        if (n > 0) {
+          return Math.ceil(n * Math.log2(n))
+        }
+        return null
       }
+
     }
   }
 </script>
