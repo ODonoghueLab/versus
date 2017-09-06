@@ -56,17 +56,17 @@ function newState (imageUrls) {
     probRepeat, // how likely a comparison will be repeated
     nodes, // list of nodes in the binary search tree
     iNodeRoot, // index to the root node, can change with re-balancing
-    iImageTest, // index to the url of the image to test, undefined if done
+    iImageTest, // index to the url of the image to test, null if done
     testImageIndices, // remaining iImageTest to test
     totalRepeat, // total number of repeats to be conducted
-    iNodeCompare: iNodeRoot, // index to Node containing compare image                                     // compare with iImageTest
+    iNodeCompare: iNodeRoot, // index to Node containing compare image
     comparisons: [], // list of all comparisons made by the participant
     comparisonIndices: [], // indices to comparisons made that have not been repeated
     iComparisonRepeat: null, // index to comparison being repeated
     repeatComparisonIndices: [], // indices to repeated comparisons
 
     // the following are only calculated when done
-    consistencies: [], // list of (0, 1) for consistency of repeated comparisons                       // with the original choice and the repeated choice
+    consistencies: [], // list of (0, 1) for consistency of repeated comparisons
     fractions: [], // list of number of winning votes for each image-url
     ranks: [], // ranked list of the image-url for user preference
     surveyCode: null
@@ -145,8 +145,10 @@ function insertNewNode (state) {
 
 
 function getNextImage (state) {
-  // undefined if testImageIndices is empty
   state.iImageTest = state.testImageIndices.shift()
+  if (_.isUndefined(state.iImageTest)) {
+    state.iImageTest = null
+  }
 
   // rebalance the tree
   let sortedNodes = getOrderedNodeList(state)
@@ -230,8 +232,6 @@ function checkNodes (nodes) {
 
 function makeChoice (state, comparison) {
 
-  let compareNode = state.nodes[state.iNodeCompare]
-
   if (comparison.isRepeat) {
 
     let i = state.iComparisonRepeat
@@ -240,11 +240,12 @@ function makeChoice (state, comparison) {
 
   } else {
 
+    let compareNode = state.nodes[state.iNodeCompare]
     let chosenImageIndex = comparison.choice
 
     console.log('>> tree.makeChoice',
       'iNodeRoot', state.iNodeRoot,
-      'iNodeCompare', state.iNodeCompare,
+      'compareNode.iImage', compareNode.iImage,
       'iImageTest', state.iImageTest,
       '- chosenImageIndex', chosenImageIndex)
 
@@ -290,7 +291,7 @@ function makeComparison (state, iImageA, iImageB) {
 
 function isAllImagesTested (state) {
   return (state.testImageIndices.length === 0)
-    && _.isUndefined(state.iImageTest)
+    && (state.iImageTest === null)
 }
 
 

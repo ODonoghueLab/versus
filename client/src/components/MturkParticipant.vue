@@ -43,8 +43,6 @@
     name: 'experiment',
     data () {
       return {
-        experimentId: null,
-        experiment: null,
         participateId: null,
       }
     },
@@ -52,13 +50,6 @@
     mounted () {
       this.$data.experimentId = this.$route.params.experimentId
       console.log('> MturkParticipant.mounted', this.$data.experimentId)
-      rpc
-        .rpcRun(
-          'getExperiment', this.$data.experimentId)
-        .then(res => {
-          console.log('> MturkParticipant experiment', res.data)
-          this.$data.experiment = res.data.experiment
-        })
       rpc
         .rpcRun(
           'inviteParticipant', this.$data.experimentId, 'test@test.com')

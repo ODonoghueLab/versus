@@ -10,7 +10,7 @@
       </p>
       <p>
         Experiments on Versus are easy, all you need to do
-        is view the two images and click on the one you beleive is better.
+        is view the two images and click on the one you believe is better.
       </p>
 
       <p>
@@ -80,25 +80,20 @@
 
     <div v-else>
       <md-layout md-align="center" v-if="comparison">
+
         <md-layout md-align="center" md-flex="100">
           <h2 class="md-display-2"> {{attr.title}} </h2>
         </md-layout>
+
         <md-layout md-align="center" md-flex="100">
           <p> {{attr.blurb}}</p>
-          <br>
-        </md-layout>
-        <md-layout
-            v-if="comparison.isRepeat"
-            md-align="center"
-            md-flex="100">
-          repeat
           <br>
         </md-layout>
 
         <md-layout>
           <md-layout md-flex="50" md-align="end">
             <md-whiteframe md-elevation="5" style="margin-right: 1em">
-              <div style="height: 12px">
+              <div style="height: 12px;">
                 <md-progress
                   v-if="loadingA"
                   md-indeterminate></md-progress>
@@ -108,12 +103,13 @@
                   v-bind:class="[loadingA ? 'choice-loading' : '']"
                   @click="choose(comparison.itemA)">
                 <img :src="imageA">
-                <div style="width: 100%; text-align: center">
+                <div style="width: 100%; text-align: center; color: #DDD">
                   {{comparison.itemA.value}}
                 </div>
               </md-button>
             </md-whiteframe>
           </md-layout>
+
           <md-layout md-flex="50" md-align="start">
             <md-whiteframe md-elevation="5" style="margin-left: 0.7em">
               <div style="height: 12px">
@@ -126,13 +122,23 @@
                   class="choice"
                   v-bind:class="[loadingB ? 'choice-loading' : '']">
                 <img :src="imageB">
-                <div style="width: 100%; text-align: center">
+                <div style="width: 100%; text-align: center; color: #DDD">
                   {{comparison.itemB.value}}
                 </div>
               </md-button>
             </md-whiteframe>
           </md-layout>
         </md-layout>
+
+        <md-layout
+            v-if="comparison.isRepeat"
+            md-align="center"
+            style="padding-top: 1em; color: #DDD"
+            md-flex="100">
+          repeat
+          <br>
+        </md-layout>
+
       </md-layout>
     </div>
   </div>
