@@ -17,7 +17,6 @@
 
 const _ = require('lodash')
 const shortid = require('shortid')
-
 const util = require('./util')
 
 
@@ -301,6 +300,30 @@ function isAllRepeatComparisonsMade (state) {
 }
 
 
+/**
+ * Checks that the choices in each individual comparison are
+ * consistent with the final sorted list generated from the binary tree
+ *
+ * @param state
+ * @returns {boolean}
+ */
+function checkComparisons (state) {
+  let sortedImages = _.map(getOrderedNodeList(state), n => n.iImage)
+  let getRank = iImage => _.indexOf(sortedImages, iImage)
+  for (let comparison of state.comparisons) {
+    let iImageA = comparison.itemA.value
+    let iImageB = comparison.itemB.value
+    let iImageBetter = comparison.choice
+    let iImageWorse = iImageBetter == iImageA ? iImageB : iImageA
+    let consistent = getRank(iImageWorse) < getRank(iImageBetter)
+    if (!consistent) {
+      return false
+    }
+  }
+  return true
+}
+
+
 function isDone (state) {
 
   if (!isAllImagesTested(state)) {
@@ -346,6 +369,9 @@ function isDone (state) {
   if (state.surveyCode === null) {
     state.surveyCode = shortid.generate()
   }
+
+  let result = checkComparisons(state)
+  console.log('> tree.isDone checkComparisons', result)
 
   return true
 

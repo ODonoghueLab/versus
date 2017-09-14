@@ -50,6 +50,7 @@ const models = require('./models')
 passport.serializeUser((user, done) => {
   done(null, user.id)
 })
+
 passport.deserializeUser((id, done) => {
   models
     .fetchUser({id})

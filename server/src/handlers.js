@@ -135,7 +135,6 @@ module.exports = {
     return models
       .fetchParticipant(participateId)
       .then(participant => {
-        console.log('> getParticipant got here 1')
         return models
           .fetchExperiment(participant.ExperimentId)
           .then(experiment => {

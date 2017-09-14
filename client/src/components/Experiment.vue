@@ -31,12 +31,19 @@
           @click="saveExperimentAttr">
         Update Question
       </md-button>
+    </md-whiteframe>
 
+    <md-whiteframe v-if="experiment.attr" style="padding: 1em; margin-bottom: 1em">
     </md-whiteframe>
 
     <md-whiteframe style="padding: 1em; margin-bottom: 1em">
 
       <h3 class="md-title">Participants</h3>
+
+      Mechanical Turk Survey Link:
+      <a :href="getMturkLink()">{{getMturkLink()}}</a>
+      <br>
+      <br>
 
       <md-button class="md-raised" @click="makeInvite">
         Invite participant
@@ -378,6 +385,9 @@
             }
           })
       },
+      getMturkLink () {
+        return `./#/mechanical-turk/${this.$data.experiment.id}`
+      }
     }
   }
 
