@@ -229,12 +229,19 @@ function checkNodes (nodes) {
 }
 
 
+function getCurrentTimeStr () {
+  let date = new Date()
+  return date.toJSON()
+}
+
+
 function makeChoice (state, comparison) {
 
   if (comparison.isRepeat) {
 
     let i = state.iComparisonRepeat
     state.comparisons[i].repeat = comparison.repeat
+    state.comparisons[i].repeatEndTime = getCurrentTimeStr()
     setNextRepeatComparison(state)
 
   } else {
@@ -265,6 +272,7 @@ function makeChoice (state, comparison) {
       }
     }
 
+    comparison.endTime = getCurrentTimeStr()
     let iComparisonNew = state.comparisons.length
     state.comparisons.push(comparison)
     state.comparisonIndices.push(iComparisonNew)
@@ -283,7 +291,11 @@ function makeComparison (state, iImageA, iImageB) {
     itemB: {value: iImageB, url: state.imageUrls[iImageB]},
     choice: null,
     isRepeat: false,
-    repeat: null
+    repeat: null,
+    startTime: getCurrentTimeStr(),
+    endTime: null,
+    repeatStartTime: null,
+    repeatEndTime: null,
   }
 }
 
@@ -373,6 +385,20 @@ function isDone (state) {
   let result = checkComparisons(state)
   console.log('> tree.isDone checkComparisons', result)
 
+  function getTimeInterval(start, end) {
+    let startMs = new Date(start).getTime()
+    let endMs = new Date(end).getTime()
+    return endMs - startMs
+  }
+
+  for (let comparison of state.comparisons) {
+    console.log('> tree.isDone comparison',
+      comparison.itemA.value,
+      comparison.itemB.value,
+      comparison.choice,
+      getTimeInterval(comparison.startTime, comparison.endTime)/1000 + 's')
+  }
+
   return true
 
 }
@@ -395,6 +421,7 @@ function getComparison (state) {
 
     let comparison = state.comparisons[state.iComparisonRepeat]
     comparison.isRepeat = true
+    comparison.repeatStartTime = getCurrentTimeStr()
     return comparison
 
   } else {
