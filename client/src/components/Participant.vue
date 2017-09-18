@@ -100,6 +100,7 @@
                 </div>
               <md-button
                   class="choice"
+                  :disabled="loadingA"
                   v-bind:class="[loadingA ? 'choice-loading' : '']"
                   @click="choose(comparison.itemA)">
                 <img :src="imageA">
@@ -119,6 +120,7 @@
               </div>
               <md-button
                   @click="choose(comparison.itemB)"
+                  :disabled="loadingB"
                   class="choice"
                   v-bind:class="[loadingB ? 'choice-loading' : '']">
                 <img :src="imageB">
