@@ -30,9 +30,6 @@
 <script>
   import path from 'path'
 
-  import $ from 'jquery'
-  import draggable from 'vuedraggable'
-
   import config from '../config'
 
   import auth from '../modules/auth'
@@ -46,7 +43,6 @@
         participateId: null,
       }
     },
-    components: {draggable},
     mounted () {
       this.$data.experimentId = this.$route.params.experimentId
       console.log('> MturkParticipant.mounted', this.$data.experimentId)

@@ -1,17 +1,30 @@
 <template>
-  <div style="padding-left: 1em; padding-right: 1em;">
+  <div
+    style="
+      padding-left: 1em;
+      padding-right: 1em;">
+
 
     <h2 class="md-display-2">
+
       Experiment:
       <span v-if="experiment.attr">
         {{experiment.attr.name}}
       </span>
+
     </h2>
 
-    <md-whiteframe v-if="experiment.attr" style="padding: 1em; margin-bottom: 1em">
+
+    <md-whiteframe
+      v-if="experiment.attr"
+      style="
+        padding: 1em;
+        margin-bottom: 1em">
+
       <h3 class="md-title">
         Question
       </h3>
+
       <md-input-container>
         <label>Title</label>
         <md-input v-model="experiment.attr.title">
@@ -31,12 +44,14 @@
           @click="saveExperimentAttr">
         Update Question
       </md-button>
+
     </md-whiteframe>
 
-    <md-whiteframe v-if="experiment.attr" style="padding: 1em; margin-bottom: 1em">
-    </md-whiteframe>
 
-    <md-whiteframe style="padding: 1em; margin-bottom: 1em">
+    <md-whiteframe
+      style="
+        padding: 1em;
+        margin-bottom: 1em">
 
       <h3 class="md-title">Participants</h3>
 
@@ -48,7 +63,9 @@
       <md-button class="md-raised" @click="makeInvite">
         Invite participant
       </md-button>
-       <md-table v-if="experiment.participants">
+
+      <md-table v-if="experiment.participants">
+
         <md-table-header>
           <md-table-row>
             <md-table-head>Invite</md-table-head>
@@ -59,6 +76,7 @@
             <md-table-head>Updated</md-table-head>
           </md-table-row>
         </md-table-header>
+
         <md-table-body>
           <md-table-row
               v-for="(participant, index) in experiment.participants"
@@ -96,170 +114,72 @@
             </md-table-cell>
           </md-table-row>
         </md-table-body>
+
       </md-table>
 
     </md-whiteframe>
 
-    <md-whiteframe style="padding: 1em; margin-bottom: 1em">
-      <h3 class="md-title">Participant rankings</h3>
-      <md-layout md-row>
+
+    <md-whiteframe
+      style="
+        padding: 1em;
+        margin-bottom: 1em">
+
+      <h3 class="md-title">Images</h3>
+
+      <md-layout>
+
         <md-card
-            style="
-            padding: 1em;
-            margin-right: 1em;
-            box-sizing: content-box;
-            width: 220px;
-            height: 220px;">
-          <md-card-media
-              style="
-              height: 200px;">
-            <canvas id="chart-canvas"></canvas>
-          </md-card-media>
+          v-for="(url, index) in baseRanks"
+          :key="index"
+          style="
+            text-align: center;
+            padding: 0.5em;
+            width: 400px">
+
+          <md-layout
+              md-gutter
+              md-row
+              md-align="start"
+              md-vertical-align="center">
+
+            <md-layout style="flex: 1">
+              <md-card-header style="text-align: left">
+                <p class="body">
+                  {{ index + 1 }}: {{ getBaseUrl(url) }}
+                </p>
+              </md-card-header>
+            </md-layout>
+
+            <md-whiteframe>
+              <img
+                style="height: 100px"
+                :src="getFullUrl(url)">
+              </img>
+            </md-whiteframe>
+
+          </md-layout>
+
         </md-card>
-        <md-card
-            style="
-            padding: 1em;
-            box-sizing: content-box;
-            width: 220px;
-            height: 220px;">
-          <md-card-media
-              style="
-              height: 200px;">
-            <canvas id="chart-canvas2"></canvas>
-          </md-card-media>
-        </md-card>
+
       </md-layout>
+
     </md-whiteframe>
 
-    <md-whiteframe style="padding: 1em; margin-bottom: 1em">
-      <h3 class="md-title">Image Order (Drag & Sort)</h3>
-      <md-layout>
-        <draggable
-            v-model="baseRanks"
-            @end="saveExperimentAttr">
-          <md-card
-              v-for="(url, index) in baseRanks"
-              :key="index"
-              style="
-              text-align: center;
-              padding: 0.5em;
-              width: 100%">
-            <md-layout md-row md-align="start" md-vertical-align="center">
-              <md-button
-                  class="md-icon-button md-raised">
-                <md-icon>swap_vert</md-icon>
-              </md-button>
-              <md-layout style="flex: 1">
-                <md-card-header style="text-align: left">
-                  <p class="body">
-                    {{ index + 1 }} -- {{ getBaseUrl(url) }}
-                  </p>
-                </md-card-header>
-              </md-layout>
-              <md-whiteframe>
-                <img style="height: 100px" :src="getFullUrl(url)"></img>
-              </md-whiteframe>
-            </md-layout>
-          </md-card>
-        </draggable>
-      </md-layout>
-    </md-whiteframe>
 
   </div>
 </template>
 
-<!-- Add 'scoped' attribute to limit CSS to this component only -->
-<style scoped>
-</style>
 
 <script>
+
   import path from 'path'
 
-  import $ from 'jquery'
-  import draggable from 'vuedraggable'
-
   import config from '../config'
-
   import auth from '../modules/auth'
   import util from '../modules/util'
   import rpc from '../modules/rpc'
-  import chartdata from '../modules/chartdata.js'
 
-
-  function getPartcipantImageOrderDatasets (experiment) {
-    let dataSets = []
-
-    let baseOrder = {}
-    for (let [i, url] of experiment.attr.baseRanks.entries()) {
-      let key = path.basename(url)
-      baseOrder[key] = i + 1
-    }
-
-    for (let participant of experiment.participants) {
-      let state = participant.state
-
-      if ('ranks' in state) {
-        let participantOrder = {}
-        for (let [i, url] of state.ranks.entries()) {
-          let key = path.basename(url)
-          participantOrder[key] = i + 1
-        }
-
-        console.log('> Experiment.getPartcipantImageOrderDatasets data', baseOrder, participantOrder)
-
-        let xVals = []
-        let yVals = []
-        for (let key of _.keys(baseOrder)) {
-          xVals.push(baseOrder[key])
-          yVals.push(participantOrder[key])
-        }
-
-        chartdata.addDataset(
-          dataSets,
-          participant.participateId,
-          xVals,
-          yVals)
-      }
-    }
-
-    return dataSets
-  }
-
-  function getPartcipantImageWeightDatasets (experiment) {
-    let dataSets = []
-
-    for (let participant of experiment.participants) {
-      let state = participant.state
-
-      let fractions = state.fractions
-      console.log('> Experiment.getPartcipantImageWeightDatasets', state.ranks, fractions)
-
-      if ('ranks' in state) {
-        let participantOrder = {}
-        let participantWeight = {}
-        for (let [i, url] of state.ranks.entries()) {
-          let key = path.basename(url)
-          participantOrder[key] = i + 1
-          participantWeight[key] = fractions[i]
-        }
-
-        let xVals = []
-        let yVals = []
-        for (let key of _.keys(participantWeight)) {
-          xVals.push(participantWeight[key])
-          yVals.push(participantOrder[key])
-        }
-
-        chartdata.addDataset(
-          dataSets,
-          participant.participateId,
-          xVals,
-          yVals)
-      }
-    }
-
-    return dataSets
-  }
   export default {
     name: 'experiment',
     data () {
@@ -268,7 +188,6 @@
         baseRanks: [],
       }
     },
-    components: {draggable},
     mounted () {
       let experimentId = this.$route.params.experimentId
       rpc
@@ -297,15 +216,6 @@
 
           this.$data.baseRanks = experiment.attr.baseRanks
 
-          this.chartData = chartdata.makeLineChartData('image order', 'perceived rank')
-          this.chartData.data.datasets = getPartcipantImageOrderDatasets(experiment)
-          let canvas = $.find('#chart-canvas')
-          this.chart = new Chart(canvas[0], this.chartData)
-
-          this.chartData2 = chartdata.makeLineChartData('fraction votes', 'perceived rank')
-          this.chartData2.data.datasets = getPartcipantImageWeightDatasets(experiment)
-          canvas = $.find('#chart-canvas2')
-          this.chart2 = new Chart(canvas[0], this.chartData2)
         })
 
     },
