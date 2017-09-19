@@ -64,6 +64,10 @@
         Invite participant
       </md-button>
 
+      <md-button class="md-raised" @click="downloadResults()">
+        Download Results
+      </md-button>
+
       <md-table v-if="experiment.participants">
 
         <md-table-header>
