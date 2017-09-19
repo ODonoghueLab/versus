@@ -12,6 +12,7 @@
 </style>
 
 <script>
+  import _ from 'lodash'
   import Navbar from './components/Navbar.vue'
   import auth from './modules/auth'
   import router from './router'
@@ -20,7 +21,11 @@
     name: 'app',
     components: {Navbar},
     created () {
-      if (!auth.user.authenticated) {
+      if (_.startsWith('/participant', this.$route.path)) {
+        console.log('> Publich accessible', this.$route.path)
+      } else if (_.startsWith('/mechanical-turk', this.$route.path)) {
+        console.log('> Publich accessible', this.$route.path)
+      } else if (!auth.user.authenticated) {
         router.push('/login')
       }
     }

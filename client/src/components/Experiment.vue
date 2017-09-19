@@ -266,7 +266,7 @@
         let experimentId = this.$route.params.experimentId
         let participants = this.$data.experiment.participants
         rpc
-          .rpcRun('inviteParticipant', experimentId, 'test@test.com')
+          .rpcRun('publicInviteParticipant', experimentId, 'test@test.com')
           .then((res) => {
             console.log('>> Experiment.makeInvite', res.data)
             participants.push(res.data.participant)

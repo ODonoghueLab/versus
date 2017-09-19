@@ -190,7 +190,7 @@
     mounted() {
       let participateId = this.$route.params.participateId
       rpc
-        .rpcRun('getParticipant', participateId)
+        .rpcRun('publicGetParticipant', participateId)
         .then(this.handleRes)
     },
     methods: {
@@ -243,7 +243,7 @@
           this.$data.comparison.choice = item.value
         }
         rpc
-          .rpcRun('chooseItem', participateId, this.$data.comparison)
+          .rpcRun('publicChooseItem', participateId, this.$data.comparison)
           .then(this.handleRes)
       },
       getImageUrl (item) {
@@ -257,7 +257,7 @@
         }
         rpc
           .rpcRun(
-            'saveParticipantUserDetails', participateId, details)
+            'publicSaveParticipantUserDetails', participateId, details)
           .then(this.handleRes)
       },
       getMaxComparison () {

@@ -48,7 +48,7 @@
       console.log('> MturkParticipant.mounted', this.$data.experimentId)
       rpc
         .rpcRun(
-          'inviteParticipant', this.$data.experimentId, 'test@test.com')
+          'publicInviteParticipant', this.$data.experimentId, 'test@test.com')
         .then((res) => {
           console.log('>> Experiment.makeInvite', res.data)
           this.$data.participateId = res.data.participant.participateId

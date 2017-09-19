@@ -111,7 +111,7 @@ module.exports = {
       })
   },
 
-  inviteParticipant (experimentId, email) {
+  publicInviteParticipant (experimentId, email) {
     return models
       .createParticipant(
         experimentId, email)
@@ -131,7 +131,7 @@ module.exports = {
       })
   },
 
-  getParticipant (participateId) {
+  publicGetParticipant (participateId) {
     return models
       .fetchParticipant(participateId)
       .then(participant => {
@@ -139,17 +139,17 @@ module.exports = {
           .fetchExperiment(participant.ExperimentId)
           .then(experiment => {
             if (participant.user === null) {
-              console.log('>> router.getParticipant none found')
+              console.log('>> router.publicGetParticipant none found')
               return {new: true, nImage: experiment.Images.length}
             }
             const state = participant.state
-            console.log('> getParticipant state', state)
+            console.log('> publicGetParticipant state', state)
             if (tree.isDone(state)) {
-              console.log('>> router.getParticipant done')
+              console.log('>> router.publicGetParticipant done')
               return {done: true, surveyCode: state.surveyCode}
             } else {
               const comparison = tree.getComparison(participant.state)
-              console.log('>> router.getParticipant comparison', comparison)
+              console.log('>> router.publicGetParticipant comparison', comparison)
               return {
                 comparison,
                 attr: experiment.attr
@@ -159,7 +159,7 @@ module.exports = {
       })
   },
 
-  chooseItem (participateId, comparison) {
+  publicChooseItem (participateId, comparison) {
     return models
       .fetchParticipant(participateId)
       .then(participant => {
@@ -186,7 +186,7 @@ module.exports = {
       })
   },
 
-  saveParticipantUserDetails (participateId, details) {
+  publicSaveParticipantUserDetails (participateId, details) {
     return models
       .saveParticipant(participateId, {user: details})
       .then(participant => {
