@@ -100,8 +100,6 @@
                 </div>
               <md-button
                   class="choice"
-                  :disabled="loadingA"
-                  v-bind:class="[loadingA ? 'choice-loading' : '']"
                   @click="choose(comparison.itemA)">
                 <img :src="imageA">
                 <div style="width: 100%; text-align: center; color: #DDD">
@@ -120,9 +118,7 @@
               </div>
               <md-button
                   @click="choose(comparison.itemB)"
-                  :disabled="loadingB"
-                  class="choice"
-                  v-bind:class="[loadingB ? 'choice-loading' : '']">
+                  class="choice">
                 <img :src="imageB">
                 <div style="width: 100%; text-align: center; color: #DDD">
                   {{comparison.itemB.value}}
@@ -232,6 +228,9 @@
         }
       },
       choose (item) {
+        if (this.$data.loadingA || this.$data.loadingB) {
+          return
+        }
         let participateId = this.$route.params.participateId
         if (item.value === this.$data.comparison.itemA.value) {
           this.$data.loadingA = true
@@ -243,9 +242,11 @@
         } else {
           this.$data.comparison.choice = item.value
         }
-        rpc
-          .rpcRun('chooseItem', participateId, this.$data.comparison)
-          .then(this.handleRes)
+        setTimeout(() => {
+          rpc
+            .rpcRun('chooseItem', participateId, this.$data.comparison)
+            .then(this.handleRes)
+        }, 1000)
       },
       getImageUrl (item) {
         return config.apiUrl + item.url

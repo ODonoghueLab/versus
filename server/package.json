@@ -31,6 +31,7 @@
   "dependencies": {
     "bcryptjs": "*",
     "body-parser": "~1.15.1",
+    "connect-multiparty": "^2.0.0",
     "debug": "~2.2.0",
     "del": "*",
     "express": "~4.13.4",

@@ -129,3 +129,22 @@ router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
     throw new Error(`Remote uploadFn ${fnName} not found`)
   }
 })
+
+
+var multipart = require('connect-multiparty');
+var uploader = require('./modules/uploader-node.js')('tmp');
+// Configure access control allow origin header stuff
+var ACCESS_CONTROLL_ALLOW_ORIGIN = true;
+
+// Handle uploads through Uploader.js
+router.post('/api/rpc-new-upload', multipart(), function(req, res) {
+  uploader.post(req, function(status, filename, original_filename, identifier) {
+    console.log('>> router.rpc-new-upload', status, original_filename, identifier);
+    if (ACCESS_CONTROLL_ALLOW_ORIGIN) {
+      res.header("Access-Control-Allow-Origin", "*");
+    }
+    setTimeout(function () {
+      res.send(status);
+    }, 500);
+  });
+});
