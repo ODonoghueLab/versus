@@ -101,7 +101,7 @@
               <md-button
                   class="choice"
                   @click="choose(comparison.itemA)">
-                <img :src="imageA">
+                <md-image :md-src="imageA"></md-image>
                 <div style="width: 100%; text-align: center; color: #DDD">
                   {{comparison.itemA.value}}
                 </div>
@@ -119,7 +119,7 @@
               <md-button
                   @click="choose(comparison.itemB)"
                   class="choice">
-                <img :src="imageB">
+                <md-image :md-src="imageB"></md-image>
                 <div style="width: 100%; text-align: center; color: #DDD">
                   {{comparison.itemB.value}}
                 </div>
@@ -168,6 +168,10 @@
   import config from '../config'
   import util from '../modules/util'
   import rpc from '../modules/rpc'
+
+  function delay (timeMs) {
+    return new Promise(resolve => { setTimeout(resolve, timeMs) })
+  }
 
   export default {
     name: 'invite',
@@ -219,12 +223,15 @@
               newComparison.itemB = dummy
             }
           }
-          this.$data.loadingA = false
-          this.$data.loadingB = false
           this.$data.comparison = newComparison
+          this.$data.attr = res.data.attr
           this.$data.imageB = this.getImageUrl(newComparison.itemB)
           this.$data.imageA = this.getImageUrl(newComparison.itemA)
-          this.$data.attr = res.data.attr
+          delay(100)
+            .then(() => {
+              this.$data.loadingA = false
+              this.$data.loadingB = false
+            })
         }
       },
       choose (item) {
@@ -242,9 +249,12 @@
         } else {
           this.$data.comparison.choice = item.value
         }
-        rpc
-          .rpcRun('publicChooseItem', participateId, this.$data.comparison)
-          .then(this.handleRes)
+        delay(1000)
+          .then(() => {
+            rpc
+              .rpcRun('publicChooseItem', participateId, this.$data.comparison)
+              .then(this.handleRes)
+          })
       },
       getImageUrl (item) {
         return config.apiUrl + item.url

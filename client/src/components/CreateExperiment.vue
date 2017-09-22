@@ -75,7 +75,7 @@
         fileStr: '',
         attr: {
           title: 'Which image looks better?',
-          blurb: 'Take your time',
+          blurb: 'Click on the image that looks better. Take your time',
           name: ''
         },
         isUploading: false
