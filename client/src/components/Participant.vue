@@ -238,21 +238,13 @@
           delay (300)
             .then(() => {
 
-              let newImageA = new Image;
-              newImageA.src = this.getImageUrl(newComparison.itemA)
-              newImageA.onload = () => {
-                this.$data.imageA = this.getImageUrl(newComparison.itemA)
-                this.$data.loadingA = false
-              }
+              this.$data.imageA = this.getImageUrl(newComparison.itemA)
+              this.$data.loadingA = false
 
-              let newImageB = new Image;
-              newImageB.src = this.getImageUrl(newComparison.itemB)
-              newImageB.onload = () => {
-                this.$data.imageB = this.getImageUrl(newComparison.itemB)
-                this.$data.loadingB = false
-              }
+              this.$data.imageB = this.getImageUrl(newComparison.itemB)
+              this.$data.loadingB = false
             })
-          
+
         }
       },
       choose (item) {
