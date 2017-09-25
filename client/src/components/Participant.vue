@@ -258,12 +258,9 @@
         } else {
           this.$data.comparison.choice = item.value
         }
-        delay(1000)
-          .then(() => {
-            rpc
-              .rpcRun('publicChooseItem', participateId, this.$data.comparison)
-              .then(this.handleRes)
-          })
+        rpc
+          .rpcRun('publicChooseItem', participateId, this.$data.comparison)
+          .then(this.handleRes)
       },
       getImageUrl (item) {
         return config.apiUrl + item.url
