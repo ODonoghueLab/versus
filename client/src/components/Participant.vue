@@ -90,14 +90,14 @@
           <br>
         </md-layout>
 
-        <md-layout>
+        <md-layout v-if="imageA && imageB">
           <md-layout md-flex="50" md-align="end">
-            <md-whiteframe v-if="imageA" md-elevation="5" style="margin-right: 1em">
+            <md-whiteframe md-elevation="5" style="margin-right: 1em">
               <div style="height: 12px;">
                 <md-progress
-                  v-if="loadingA"
-                  md-indeterminate></md-progress>
-                </div>
+                    v-if="loadingA"
+                    md-indeterminate></md-progress>
+              </div>
               <md-button
                   class="choice"
                   @click="choose(comparison.itemA)">
@@ -110,7 +110,7 @@
           </md-layout>
 
           <md-layout md-flex="50" md-align="start">
-            <md-whiteframe v-if="imageB" md-elevation="5" style="margin-left: 0.7em">
+            <md-whiteframe md-elevation="5" style="margin-left: 0.7em">
               <div style="height: 12px">
                 <md-progress
                     v-if="loadingB"
@@ -126,7 +126,12 @@
               </md-button>
             </md-whiteframe>
           </md-layout>
+
         </md-layout>
+
+        <div v-else>
+          Loading images
+        </div>
 
         <md-layout
             v-if="comparison.isRepeat"
