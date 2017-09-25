@@ -90,57 +90,59 @@
           <br>
         </md-layout>
 
-        <md-layout v-if="imageA && imageB">
-          <md-layout md-flex="50" md-align="end">
-            <md-whiteframe md-elevation="5" style="margin-right: 1em">
-              <div style="height: 12px;">
-                <md-progress
-                    v-if="loadingA"
-                    md-indeterminate></md-progress>
-              </div>
-              <md-button
-                  class="choice"
-                  @click="choose(comparison.itemA)">
-                <md-image :md-src="imageA"></md-image>
-                <div style="width: 100%; text-align: center; color: #DDD">
-                  {{comparison.itemA.value}}
+        <div v-if="imageA && imageB">
+          <md-layout>
+            <md-layout md-flex="50" md-align="end">
+              <md-whiteframe md-elevation="5" style="margin-right: 1em">
+                <div style="height: 12px;">
+                  <md-progress
+                      v-if="loadingA"
+                      md-indeterminate></md-progress>
                 </div>
-              </md-button>
-            </md-whiteframe>
+                <md-button
+                    class="choice"
+                    @click="choose(comparison.itemA)">
+                  <md-image :md-src="imageA"></md-image>
+                  <div style="width: 100%; text-align: center; color: #DDD">
+                    {{comparison.itemA.value}}
+                  </div>
+                </md-button>
+              </md-whiteframe>
+            </md-layout>
+
+            <md-layout md-flex="50" md-align="start">
+              <md-whiteframe md-elevation="5" style="margin-left: 0.7em">
+                <div style="height: 12px">
+                  <md-progress
+                      v-if="loadingB"
+                      md-indeterminate></md-progress>
+                </div>
+                <md-button
+                    @click="choose(comparison.itemB)"
+                    class="choice">
+                  <md-image :md-src="imageB"></md-image>
+                  <div style="width: 100%; text-align: center; color: #DDD">
+                    {{comparison.itemB.value}}
+                  </div>
+                </md-button>
+              </md-whiteframe>
+            </md-layout>
+
           </md-layout>
 
-          <md-layout md-flex="50" md-align="start">
-            <md-whiteframe md-elevation="5" style="margin-left: 0.7em">
-              <div style="height: 12px">
-                <md-progress
-                    v-if="loadingB"
-                    md-indeterminate></md-progress>
-              </div>
-              <md-button
-                  @click="choose(comparison.itemB)"
-                  class="choice">
-                <md-image :md-src="imageB"></md-image>
-                <div style="width: 100%; text-align: center; color: #DDD">
-                  {{comparison.itemB.value}}
-                </div>
-              </md-button>
-            </md-whiteframe>
+          <md-layout
+              v-if="comparison.isRepeat"
+              md-align="center"
+              style="padding-top: 1em; color: #DDD"
+              md-flex="100">
+            repeat
+            <br>
           </md-layout>
-
-        </md-layout>
+        </div>
 
         <div v-else>
           Loading images
         </div>
-
-        <md-layout
-            v-if="comparison.isRepeat"
-            md-align="center"
-            style="padding-top: 1em; color: #DDD"
-            md-flex="100">
-          repeat
-          <br>
-        </md-layout>
 
       </md-layout>
     </div>
@@ -233,19 +235,24 @@
           this.$data.imageB = null
           this.$data.imageA = null
 
-          let newImageA = new Image;
-          newImageA.src = this.getImageUrl(newComparison.itemA)
-          newImageA.onload = () => {
-            this.$data.imageA = this.getImageUrl(newComparison.itemA)
-            this.$data.loadingA = false
-          }
+          delay (300)
+            .then(() => {
 
-          let newImageB = new Image;
-          newImageB.src = this.getImageUrl(newComparison.itemB)
-          newImageB.onload = () => {
-            this.$data.imageB = this.getImageUrl(newComparison.itemB)
-            this.$data.loadingB = false
-          }
+              let newImageA = new Image;
+              newImageA.src = this.getImageUrl(newComparison.itemA)
+              newImageA.onload = () => {
+                this.$data.imageA = this.getImageUrl(newComparison.itemA)
+                this.$data.loadingA = false
+              }
+
+              let newImageB = new Image;
+              newImageB.src = this.getImageUrl(newComparison.itemB)
+              newImageB.onload = () => {
+                this.$data.imageB = this.getImageUrl(newComparison.itemB)
+                this.$data.loadingB = false
+              }
+            })
+          
         }
       },
       choose (item) {
