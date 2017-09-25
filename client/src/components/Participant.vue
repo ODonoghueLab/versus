@@ -92,7 +92,7 @@
 
         <md-layout>
           <md-layout md-flex="50" md-align="end">
-            <md-whiteframe md-elevation="5" style="margin-right: 1em">
+            <md-whiteframe v-if="imageA" md-elevation="5" style="margin-right: 1em">
               <div style="height: 12px;">
                 <md-progress
                   v-if="loadingA"
@@ -110,7 +110,7 @@
           </md-layout>
 
           <md-layout md-flex="50" md-align="start">
-            <md-whiteframe md-elevation="5" style="margin-left: 0.7em">
+            <md-whiteframe v-if="imageB" md-elevation="5" style="margin-left: 0.7em">
               <div style="height: 12px">
                 <md-progress
                     v-if="loadingB"
@@ -225,10 +225,12 @@
           }
           this.$data.comparison = newComparison
           this.$data.attr = res.data.attr
-          this.$data.imageB = this.getImageUrl(newComparison.itemB)
-          this.$data.imageA = this.getImageUrl(newComparison.itemA)
-          delay(100)
+          this.$data.imageB = null
+          this.$data.imageA = null
+          delay(600)
             .then(() => {
+              this.$data.imageB = this.getImageUrl(newComparison.itemB)
+              this.$data.imageA = this.getImageUrl(newComparison.itemA)
               this.$data.loadingA = false
               this.$data.loadingB = false
             })
