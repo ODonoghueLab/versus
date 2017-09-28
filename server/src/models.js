@@ -1,6 +1,7 @@
 const path = require('path')
 const fs = require('fs')
 
+const rimraf = require("rimraf")
 const _ = require('lodash')
 const bcrypt = require('bcryptjs')
 const Sequelize = require('sequelize')
@@ -300,6 +301,37 @@ function storeFiles (uploadedFiles, checkFilesForError) {
     }
   })
 }
+
+
+function cleanupOrphanedImageFiles() {
+  Image.findAll()
+    .then(images => {
+      let filenames = _.map(images, i => i.dataValues.url)
+      filenames = _.map(filenames, f => 'files/' + f.slice(6, f.length))
+
+      function isDirInFilenames(d) {
+        for (let f of filenames) {
+          if (_.includes(f, d)) {
+            return true
+          }
+        }
+        return false
+      }
+
+      var expDirs = fs.readdirSync('files')
+      for (let expDir of expDirs) {
+        if (!isDirInFilenames(expDir)) {
+          rimraf('files/' + expDir, () => {
+            console.log('> Models.init delete outdated directory', expDir)
+          })
+        }
+      }
+    })
+}
+
+
+cleanupOrphanedImageFiles()
+
 
 module.exports = {
   createUser,

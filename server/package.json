@@ -43,6 +43,7 @@
     "passport-local": "*",
     "pg": "^6.1.0",
     "pg-hstore": "^2.3.2",
+    "rimraf": "^2.6.2",
     "sequelize": "^3.24.3",
     "sequelize-json": "^2.1.2",
     "shortid": "^2.2.8",
