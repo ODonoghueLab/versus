@@ -63,21 +63,23 @@ The project consists of two parts:
 
    In development mode, a client-server can be run that serves the client, and watches for changes in the source. On detecting changes, the client-server re-compiles the client and force reloads the client in the browser. 
 
-   The IP of the backend-server is set in the file `<versus>/server/src/config.js`. This file is auto-generated if it does not exist.
+   The IP of the client-server in development is set in the file `<versus>/client/src/config.js`. Similarly, it is auto-generated if it does not exist. 
 
    In production mode, there is no need for a client-server, as the backend-server can directly serve the compiled client.
 
 2. The back-end server processes the data from the web-client, stores the image files, and stores results to a database. 
 
-   The IP of the client-server in development is set in the file `<versus>/client/src/config.js`. Similarly, it is auto-generated if it does not exist. 
-
-   The backend-server is built on Node Express.
-
-   he user authentication is done through passport, using a local strategy
-
-   The backend-server talks to the database through the Sequelize ORM. The default database is a simple single-file Sqlite3 database and writes to the file `<versus>/server/database.sqlite`. The database configuration is also defined in `<versus>/client/src/config.js`.
-
-   The database schema only uses database fields that can work with other databases in Sequelize. The database can be changed in the server config file `<versus>/client/src/config.js`. If you do use another database, you will have to set it up yourself. For instance to setup Postgres on Linux, here's an [installation guide](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-postgresql-on-ubuntu-16-04).
+   The IP of the backend-server is set in the file `<versus>/server/src/config.js`. This file is auto-generated if it does not exist.
 
    ​
 
+   ​
+## Mechanical Turk
+
+## RPC-JSON api 
+
+### Client side
+
+### Server side
+
+## User authentication

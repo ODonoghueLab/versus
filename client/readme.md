@@ -1,48 +1,68 @@
-# BaseGui
 
-This is a pre-built web-client that works with an RPC-JSON api.
+# Versus Web-client
 
-The web-client uses the vue.js framework and is written with vue components.
+Versus web-client is:
 
-The vue.js client is built on the hot-reload template, which is useful for
-development, and can be compiled to the dist directory for production.
+-  standalone Javascript single-page-application
+- written in ECMAScript 6
+- uses the Vue framework
+- built on the default vue-loader template (checkout the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader)).
+- compiled using webpack
+- talks to the server via a ajax api, using the RPC-JSON protocol
 
-The web-client makes rpc calls to a web-server at localhost:3000.
+## Files
 
-A local-based user system is implemented with register/login/edit-user pages.
-The user and a hashed-password is stored in local-storage to maintain
-permanent sessions until logout. On load, the loacl-storage is checked for an
-exisiting user, and the credentials are sent to login.
+The entry point to the web-client is `client/index.html`. It will refer to javascript files in the `client/src` directory:
 
-Verification on the server is assumed after login, for rpc calls that require
-a login.
+- `main.js` - entry point of app, called from `index.html` in the parent directory
+- `router.js` - defines all the pages, and their associated Vue components
+- `config.js` - defines the url for the ajax api calls
+- `App.vue` - the top-level Vue component
 
-Configuration is in src/config.js that sets the ip:port combo that the client
-expects.
+Since the web-client is a Vue.js app, it makes heavy use of `.vue` components, which wraps Javascript/HTML/CSS together into single files for specific functionality. This makes it the code particularly easy to read and reason about. The specific Vue components, corresponding to elements and pages are defined in the `client/src/components` directory. They are:
 
-## Build Setup
+- `Navbar.vue` - defines the navigation bar at the top of all 
+- `Home.vue` - home page with introduction, and buttons to `login` or `register`
+- `Register.vue` - user registration page
+- `Login.vue` - user login page
+- `UserExperiments.vue` - the user's home page, listing available experiments, with a button to create a new experiment
+- `CreateExperiment.vue` - page to create new experiment, with image upload
+- `Experiment.vue` - the page to show/edit an experiment, invite participants and download results
+- `Participant.vue` - a publicly-accessible page, for the user to run through the image comparisons of the 2FAC experiment, will issue a survey link at the end of the run
+- `MturkParticipant.vue` - a welcome page for mechanical turk workers for a given experiment, creates a new partcipant, and a button the new page created for the participant
 
-``` bash
-# install dependencies
-npm install
+## Configuration
 
-# serve with hot reload at localhost:8080
-npm run dev
+The web-client needs to be compiled to be used. There are two options for this.
 
-# build for production with minification
-npm run build
+1. In development, the compilation can be done with the Vue hot-reloading client-server. This can be run:
 
-# build for production and view the bundle analyzer report
-npm run build --report
+   ```bash
+   npm run dev
+   ```
 
-# run unit tests
-npm run unit
+   The web-client will now be available at `localhost:8080`.
 
-# run e2e tests
-npm run e2e
+2. In production, the web-client must be compiled to static form:
 
-# run all tests
-npm test
-```
+   ```bash
+   npm run build
+   ```
 
-For detailed explanation on how things work, checkout the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+   and will be compiled to the `build` directory, with the entry point at `build/index.html`.
+
+The web-client will make cross-origin-site JSON api calls to the url designated in `src/config.js`. By default, this is `localhost:3000`, but you should put in the full IP address of the backend-server.
+
+## User system
+
+The user system is a basic email/password authentication system. Passwords are hashed.
+
+On registration, the email/passwords are sent to the server, and the user login. 
+
+Currently, the web-client works on a persistent login session, once logged-in,  user email and hashed password are stored in local-storage. On startup, the web-client looks for existing credentials, and validates it with the server. 
+
+To control access to pages, the authentication methods are defined for the page routes in `src/router.js`. Routes can bypass the user authentication.
+
+The web-app provides a basic user edit page.
+
+The JSON-api calls will be authenticated depending on the name of the calling function. Calling api functions that start with `public*` can be called without authentication - these can be used for publicly accessible pages.
