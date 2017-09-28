@@ -322,7 +322,7 @@ function cleanupOrphanedImageFiles() {
       for (let expDir of expDirs) {
         if (!isDirInFilenames(expDir)) {
           rimraf('files/' + expDir, () => {
-            console.log('> Models.init delete outdated directory', expDir)
+            console.log('> Models.cleanupOrphanedImageFiles deleted', expDir)
           })
         }
       }

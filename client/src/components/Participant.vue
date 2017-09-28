@@ -6,50 +6,22 @@
         Welcome to Versus!
       </h2>
       <p>
-        You have been invited to participate in an experiment on Versus.
+        You have been invited to participate in an experiment on Versus. Experiments on Versus are easy.
       </p>
-      <p>
-        Experiments on Versus are easy, all you need to do
-        is view the two images and click on the one you believe is better.
-      </p>
-
       <p>
         You will be ranking {{nImage}} images,
         with at most {{getMaxComparison()}} image comparisons, of which
-        {{Math.ceil(.2*getMaxComparison())}} will be repeated.
-
+        {{Math.ceil(.2*getMaxComparison())}} will be repeated in a
+        random order.
       </p>
 
       <p>
-        To participate in this experiment, enter your age and gender below and click start.
+        For each comparison, all you need to do
+        is view the two images and click on the one you believe is better.
       </p>
 
-      <form v-on:submit.prevent="enterUser">
-        <div style="display: flex">
-          <md-input-container
-              style="width: 3em">
-            <label for="age"> Age</label>
-            <md-input
-                type="number"
-                v-model.number="age"
-                min="1"
-                max="100">
-            </md-input>
-          </md-input-container>
-          <md-input-container
-              style="width: 10em; margin-left: 1em;">
-            <label for="gender"> Gender</label>
-            <md-select
-                name="gender"
-                v-model="gender"
-                id="gender">
-              <md-option value="male">male</md-option>
-              <md-option value="female">female</md-option>
-              <md-option value="other">other</md-option>
-            </md-select>
-          </md-input-container>
-        </div>
 
+      <form v-on:submit.prevent="enterUser">
         <md-button
             @click="enterUser"
             class="md-raised md-primary"
@@ -271,10 +243,7 @@
       },
       enterUser() {
         let participateId = this.$route.params.participateId
-        let details = {
-          age: this.$data.age,
-          gender: this.$data.gender
-        }
+        let details = {}
         rpc
           .rpcRun(
             'publicSaveParticipantUserDetails', participateId, details)
