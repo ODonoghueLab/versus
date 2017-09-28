@@ -55,14 +55,12 @@ The web-client will make cross-origin-site JSON api calls to the url designated 
 
 ## User system
 
-The user system is a basic email/password authentication system. Passwords are hashed.
+The user system is a basic email/password authentication system. Passwords are hashed. The web-client provides a register, login, and edit-user page.
 
-On registration, the email/passwords are sent to the server, and the user login. 
+n registration, the email/passwords are sent to the server, and the user login. 
 
 Currently, the web-client works on a persistent login session, once logged-in,  user email and hashed password are stored in local-storage. On startup, the web-client looks for existing credentials, and validates it with the server. 
 
-To control access to pages, the authentication methods are defined for the page routes in `src/router.js`. Routes can bypass the user authentication.
-
-The web-app provides a basic user edit page.
+To control access to pages on initialisation, in `src/App.vue`, the initial route is scanned to redirect to login.
 
 The JSON-api calls will be authenticated depending on the name of the calling function. Calling api functions that start with `public*` can be called without authentication - these can be used for publicly accessible pages.
