@@ -131,41 +131,24 @@
 
       <h3 class="md-title">Images</h3>
 
-      <md-layout>
-
+      <md-layout md-gutter="16">
         <md-card
-          v-for="(url, index) in baseRanks"
-          :key="index"
-          style="
-            text-align: center;
-            padding: 0.5em;
-            width: 400px">
-
-          <md-layout
-              md-gutter
-              md-row
-              md-align="start"
-              md-vertical-align="center">
-
-            <md-layout style="flex: 1">
-              <md-card-header style="text-align: left">
-                <p class="body">
-                  {{ index + 1 }}: {{ getBaseUrl(url) }}
-                </p>
-              </md-card-header>
-            </md-layout>
-
-            <md-whiteframe>
-              <img
-                style="height: 100px"
-                :src="getFullUrl(url)">
-              </img>
-            </md-whiteframe>
-
-          </md-layout>
-
+            v-for="(url, index) in baseRanks"
+            :key="index"
+            style="
+              text-align: center;
+              padding: 0.5em;
+              margin-right: 0.5em;
+              margin-bottom: 0.5em;">
+          <md-card-header style="text-align: left">
+            <p class="body">
+              {{ index + 1 }}: {{ getBaseUrl(url) }}
+            </p>
+          </md-card-header>
+          <md-card-media>
+            <img style="width: 150px" :src="getFullUrl(url)">
+          </md-card-media>
         </md-card>
-
       </md-layout>
 
     </md-whiteframe>

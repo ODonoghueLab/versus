@@ -186,8 +186,8 @@ function setNextRepeatComparison (state) {
  * 2. parent indices match
  * 3. children indices match
  *
- * @param nodes
- * @returns {boolean}
+ * @param {List of nodes} the nodes are defined in newNode()
+ * @returns {boolean} true if binary tree is consistent
  */
 function checkNodes (nodes) {
   let nNullParent = 0

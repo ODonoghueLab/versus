@@ -150,11 +150,11 @@
 
 </template>
 
-<!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style>
   @import 'https://fonts.googleapis.com/css?family=Lato:300';
 </style>
 
+<!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style scoped>
   .done {
     width: 100vw;
@@ -166,7 +166,6 @@
     font-weight: lighter;
     text-align: center;
   }
-
 </style>
 
 <script>
@@ -175,6 +174,7 @@
   import config from '../config'
   import util from '../modules/util'
   import rpc from '../modules/rpc'
+
 
   function delay (timeMs) {
     return new Promise(resolve => { setTimeout(resolve, timeMs) })

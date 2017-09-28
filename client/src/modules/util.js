@@ -39,12 +39,4 @@ export default {
     document.body.removeChild(a)
   },
 
-  sleep(ms) {
-    let start = new Date().getTime()
-    let expire = start + ms
-    while (new Date().getTime() < expire) {
-    }
-  }
-
-
 }

@@ -41,16 +41,4 @@ module.exports = {
     return l
   },
 
-  /**
-   * Synchronous sleep function, useful for debugging
-   *
-   * @param ms
-   */
-  sleep(ms) {
-    let start = new Date().getTime()
-    let expire = start + ms
-    while (new Date().getTime() < expire) {
-    }
-  }
-
 }
