@@ -179,9 +179,7 @@ module.exports = {
             }
             return models
               .saveParticipant(participateId, {state})
-              .then(() => {
-                return payload
-              })
+              .then(() => payload)
           })
       })
   },

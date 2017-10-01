@@ -34,6 +34,7 @@
     "connect-multiparty": "^2.0.0",
     "debug": "~2.2.0",
     "del": "*",
+    "denodeify": "^1.2.1",
     "express": "~4.13.4",
     "express-session": "*",
     "fs-extra": "^4.0.1",
