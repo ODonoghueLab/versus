@@ -150,7 +150,6 @@ function isStringInStringList(str, stringList) {
 }
 
 function cleanupOrphanedImageFiles() {
-  console.log('> models.cleanupOrphanedImageFiles')
   return Experiment
     .findAll({
       include: [{model: Image, as: 'Images'}]
@@ -168,17 +167,15 @@ function cleanupOrphanedImageFiles() {
       let promises = []
       for (let expDir of fs.readdirSync('files')) {
         if (!isStringInStringList(expDir, filenames)) {
-          promises.push(rimraf('files/' + expDir)
-            .then(() => {
-              console.log('> Models.cleanupOrphanedImageFiles deleted', expDir)
-            }))
+          promises.push(
+            rimraf('files/' + expDir)
+              .then(() => {
+                console.log('> Models.cleanupOrphanedImageFiles deleted', expDir)
+              }))
         }
       }
 
-      return Promise
-        .all(promises).then(() => {
-          console.log('> Models.cleanupOrphanedImageFiles all done')
-        })
+      return Promise.all(promises)
     })
 }
 
@@ -308,8 +305,7 @@ function deleteExperiment (experimentId) {
   return Experiment
     .destroy({where: {id: experimentId}})
     .then(() => {
-      cleanupOrphanedImageFiles()
-        .then
+      return cleanupOrphanedImageFiles()
     })
 }
 
