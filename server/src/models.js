@@ -43,9 +43,9 @@ const Participant = db.define('Participant', {
     type: Sequelize.UUID,
     defaultValue: Sequelize.UUIDV4
   },
-  email: Sequelize.STRING,
-  user: sequelizeJson(db, 'Participant', 'user'),
+  attr: sequelizeJson(db, 'Participant', 'attr'),
   state: sequelizeJson(db, 'Participant', 'state'),
+  states: sequelizeJson(db, 'Participant', 'states'),
 })
 
 const Experiment = db.define('Experiment', {
@@ -63,14 +63,21 @@ Image.belongsTo(Experiment, {onDelete: 'cascade'})
 Participant.belongsTo(Experiment)
 User.belongsToMany(Experiment, {through: UserExperiment})
 
-/* access functions - only returns JSON literals */
-
 function unwrapInstance (instance) {
   if (instance === null) {
     return null
   } else {
     return instance.get({plain: true})
   }
+}
+
+function isStringInStringList(str, testStrList) {
+  for (let testStr of testStrList) {
+    if (_.includes(testStr, str)) {
+      return true
+    }
+  }
+  return false
 }
 
 // File handling functions
@@ -140,30 +147,18 @@ function storeFiles (uploadedFiles, checkFilesForError) {
   })
 }
 
-function isStringInStringList(str, stringList) {
-  for (let strFromList of stringList) {
-    if (_.includes(strFromList, str)) {
-      return true
-    }
-  }
-  return false
-}
-
-function cleanupOrphanedImageFiles() {
+function cleanupImages() {
   return Experiment
-    .findAll({
-      include: [{model: Image, as: 'Images'}]
-    })
+    .findAll(
+      {include: [{model: Image, as: 'Images'}]})
     .then(experiments => {
-
       let filenames = []
       for (let experiment of experiments) {
         for (let image of experiment.Images) {
-          let f = image.dataValues.url
-          filenames.push('files/' + f.slice(6, f.length))
+          let url = image.dataValues.url
+          filenames.push('files/' + url.slice(6, url.length))
         }
       }
-
       let promises = []
       for (let expDir of fs.readdirSync('files')) {
         if (!isStringInStringList(expDir, filenames)) {
@@ -174,18 +169,21 @@ function cleanupOrphanedImageFiles() {
               }))
         }
       }
-
       return Promise.all(promises)
     })
 }
 
-/**
- * Module Initialization on startup
- */
-function init() {
-  cleanupOrphanedImageFiles()
-    .then('> models.init cleaned up Images')
+function getStructureIdFromPath (p) {
+   let tokens = path.basename(p).split('_')
+   if (tokens.length > 0) {
+     return tokens[0]
+   } else {
+     return ''
+   }
 }
+
+
+/* Access functions - promises that returns JSON literals from the database */
 
 // User functions
 
@@ -244,6 +242,7 @@ function checkUserWithPassword (user, password) {
 // Experiment functions
 
 function createExperiment (userId, attr, imageUrls) {
+  console.log('> models.createExperiment')
   return new Promise((resolve, reject) => {
     Experiment
       .create({attr})
@@ -305,7 +304,7 @@ function deleteExperiment (experimentId) {
   return Experiment
     .destroy({where: {id: experimentId}})
     .then(() => {
-      return cleanupOrphanedImageFiles()
+      return cleanupImages()
     })
 }
 
@@ -326,10 +325,21 @@ function createParticipant (experimentId, email) {
   return findExperiment(experimentId)
     .then(experiment => {
       const images = experiment.Images
-      const state = tree.newState(_.map(images, 'url'))
+      const urls = _.map(images, 'url')
+      let states = {}
+      for (let structureId of experiment.attr.structureIds) {
+        let theseUrls = _.filter(urls, u => _.includes(u, structureId))
+        states[structureId] = tree.newState(theseUrls)
+      }
+      const state = tree.newState(urls)
       return Participant
-        .create({email, state})
+        .create(
+          {attr: { email: email, user: null }, state, states})
         .then((participant) => {
+          let result = unwrapInstance(participant)
+          for (let [structureId, state] of _.toPairs(result.states)) {
+            console.log('> models.createParticipant', structureId, state.imageUrls)
+          }
           return experiment
             .addParticipant(participant)
             .then(() => {
@@ -353,17 +363,38 @@ function deleteParticipant (participateId) {
 }
 
 function saveParticipant (participateId, values) {
+  let keys = _.keys(values)
+  for (let key of keys) {
+    console.log('> saveParticipant input key', key, values[key])
+  }
   return findParticipant(participateId)
     .then(participant => {
+      console.log('> saveParticipant values', values)
       return participant
         .updateAttributes(values)
-        .then(unwrapInstance)
+        .then(participant => {
+          let payload = unwrapInstance(participant)
+          for (let key of keys) {
+            console.log('> saveParticipant payload key', key, payload[key])
+          }
+          return payload
+        })
     })
+}
+
+/**
+ * Module Initialization on startup
+ */
+function init() {
+  cleanupImages()
+    .then(() => console.log('> Models.init done'))
 }
 
 init()
 
 module.exports = {
+  storeFiles,
+  getStructureIdFromPath,
   createUser,
   fetchUser,
   checkUserWithPassword,
@@ -376,6 +407,5 @@ module.exports = {
   createParticipant,
   fetchParticipant,
   saveParticipant,
-  deleteParticipant,
-  storeFiles
+  deleteParticipant
 }

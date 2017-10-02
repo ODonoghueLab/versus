@@ -243,10 +243,10 @@
       },
       enterUser() {
         let participateId = this.$route.params.participateId
-        let details = {}
+        let user = {}
         rpc
           .rpcRun(
-            'publicSaveParticipantUserDetails', participateId, details)
+            'publicSaveParticipantUserDetails', participateId, user)
           .then(this.handleRes)
       },
       getMaxComparison () {

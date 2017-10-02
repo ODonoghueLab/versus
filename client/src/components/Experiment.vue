@@ -93,14 +93,14 @@
               </router-link>
             </md-table-cell>
             <md-table-cell>
-              {{ participant.state.surveyCode }}
+              {{ participant.attr.surveyCode }}
             </md-table-cell>
             <md-table-cell>
-              {{ participant.state.comparisons.length }}
+              {{ participant.nComparisonDone }}
             </md-table-cell>
             <md-table-cell>
               <span v-if="participant.consistency">
-                {{ participant.consistency }}/{{ participant.state.repeatComparisonIndices.length}}
+                {{ participant.consistency }}/{{ participant.nRepeatTotal}}
               </span>
             </md-table-cell>
             <md-table-cell>
@@ -191,13 +191,17 @@
 
           let participants = experiment.participants
           for (let participant of participants) {
-            let state = participant.state
-            participant.bestImageKey = path.basename(state.ranks[0])
-            if (participant.state.consistencies.length > 0) {
-              let c = participant.state.consistencies
-              participant.consistency = _.sum(c)
+            participant.consistency = 0
+            participant.nComparisonDone = 0
+            participant.nRepeatTotal = 0
+            for (let state of _.values(participant.states)) {
+              console.log('> Experiment.init state', util.jstr(state))
+              participant.nRepeatTotal += state.consistencies.length
+              participant.consistency += _.sum(state.consistencies)
+              participant.nComparisonDone += state.comparisons.length
             }
           }
+          console.log('> Experiment.mounted participants', participants)
 
           this.$data.experiment = experiment
 

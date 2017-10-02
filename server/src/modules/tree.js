@@ -316,8 +316,8 @@ function isAllRepeatComparisonsMade (state) {
  * Checks that the choices in each individual comparison are
  * consistent with the final sorted list generated from the binary tree
  *
- * @param state
- * @returns {boolean}
+ * @param state - the binary tree state
+ * @returns {boolean} - true if comparisons are consistent
  */
 function checkComparisons (state) {
   let sortedImages = _.map(getOrderedNodeList(state), n => n.iImage)

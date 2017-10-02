@@ -2,6 +2,68 @@ const path = require('path')
 const _ = require('lodash')
 const models = require('./models')
 const tree = require('./modules/tree')
+const shortid = require('shortid')
+
+
+function isStatesDone (states) {
+  for (let state of _.values(states)) {
+    if (!tree.isDone(state)) {
+      return false
+    }
+  }
+  return true
+}
+
+
+function getUnfinishedState (states) {
+  let todoStates = []
+  for (let state of _.values(states)) {
+    if (!tree.isDone(state)) {
+      todoStates.push(state)
+    }
+  }
+  let i = _.random(todoStates.length - 1)
+  return todoStates[i]
+}
+
+
+function getComparison (participateId) {
+  return models
+    .fetchParticipant(participateId)
+    .then(participant => {
+      return models
+        .fetchExperiment(participant.ExperimentId)
+        .then(experiment => {
+          if (participant.attr.user === null) {
+            console.log('>> getComparison no user found')
+            return {new: true, nImage: experiment.Images.length}
+          }
+          if (isStatesDone(participant.states)) {
+            let attr = participant.attr
+            // this is needed to store consistency
+            let states = participant.states
+            if (!attr.surveyCode) {
+              attr.surveyCode = shortid.generate()
+            }
+            return models
+              .saveParticipant(participateId, {states, attr})
+              .then(() => {
+                return {done: true, surveyCode: attr.surveyCode}
+              })
+          } else {
+            const state = getUnfinishedState(participant.states)
+            const comparison = tree.getComparison(state)
+            let payload = {
+              comparison,
+              attr: experiment.attr
+            }
+            console.log('>> getComparison comparison', payload)
+            return payload
+          }
+        })
+    })
+}
+
 
 module.exports = {
 
@@ -132,31 +194,7 @@ module.exports = {
   },
 
   publicGetParticipant (participateId) {
-    return models
-      .fetchParticipant(participateId)
-      .then(participant => {
-        return models
-          .fetchExperiment(participant.ExperimentId)
-          .then(experiment => {
-            if (participant.user === null) {
-              console.log('>> router.publicGetParticipant none found')
-              return {new: true, nImage: experiment.Images.length}
-            }
-            const state = participant.state
-            console.log('> publicGetParticipant state', state)
-            if (tree.isDone(state)) {
-              console.log('>> router.publicGetParticipant done')
-              return {done: true, surveyCode: state.surveyCode}
-            } else {
-              const comparison = tree.getComparison(participant.state)
-              console.log('>> router.publicGetParticipant comparison', comparison)
-              return {
-                comparison,
-                attr: experiment.attr
-              }
-            }
-          })
-      })
+    return getComparison(participateId)
   },
 
   publicChooseItem (participateId, comparison) {
@@ -166,37 +204,27 @@ module.exports = {
         return models
           .fetchExperiment(participant.ExperimentId)
           .then(experiment => {
-            let state = participant.state
+            let urlA = comparison.itemA.url
+            let structureId = models.getStructureIdFromPath(urlA)
+            let states = participant.states
+            let state = states[structureId]
             tree.makeChoice(state, comparison)
-            let payload
-            if (tree.isDone(state)) {
-              payload = {done: true, surveyCode: state.surveyCode}
-            } else {
-              payload = {
-                comparison: tree.getComparison(state),
-                attr: experiment.attr
-              }
-            }
             return models
-              .saveParticipant(participateId, {state})
-              .then(() => payload)
+              .saveParticipant(participateId, {states})
+              .then(() => {
+                return getComparison(participateId)
+              })
           })
       })
   },
 
-  publicSaveParticipantUserDetails (participateId, details) {
+  publicSaveParticipantUserDetails (participateId, user) {
+    console.log('> handlers.publicSaveParticipantUserDetails user', user)
     return models
-      .saveParticipant(participateId, {user: details})
+      .saveParticipant(participateId, {attr: {user: user}})
       .then(participant => {
-        return models
-          .fetchExperiment(participant.ExperimentId)
-          .then(experiment => {
-            return {
-              comparison: tree.getComparison(participant.state),
-              attr: experiment.attr
-            }
-          })
-        })
+        return getComparison(participateId)
+      })
   },
 
   // Upload functions - first parameter is always a filelist object
@@ -232,6 +260,15 @@ module.exports = {
       .storeFiles(
         files, checkImageFilesForError)
       .then((paths) => {
+        structureIds = []
+        for (let path of paths) {
+          let structureId = models.getStructureIdFromPath(path)
+          if (!_.includes(structureIds, structureId)) {
+            structureIds.push(structureId)
+          }
+        }
+        attr.structureIds = structureIds
+        console.log('>> routes.uploadImagesAndCreateExperiment structureIds', structureIds)
         console.log('>> routes.uploadImagesAndCreateExperiment paths', paths)
         return models
           .createExperiment(
