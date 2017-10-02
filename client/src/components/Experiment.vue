@@ -131,25 +131,30 @@
 
       <h3 class="md-title">Images</h3>
 
-      <md-layout md-gutter="16">
-        <md-card
-            v-for="(url, index) in baseRanks"
-            :key="index"
-            style="
+      <md-whiteframe
+          v-for="(structureId, index) in structureIds"
+          :key="index">
+        <h4>{{structureId}}</h4>
+        <md-layout md-gutter="16">
+          <md-card
+              v-for="(url, index2) in images[structureId]"
+              :key="index2"
+              style="
               text-align: center;
               padding: 0.5em;
               margin-right: 0.5em;
               margin-bottom: 0.5em;">
-          <md-card-header style="text-align: left">
-            <p class="body">
-              {{ index + 1 }}: {{ getBaseUrl(url) }}
-            </p>
-          </md-card-header>
-          <md-card-media>
-            <img style="width: 150px" :src="getFullUrl(url)">
-          </md-card-media>
-        </md-card>
-      </md-layout>
+            <md-card-header style="text-align: left">
+              <p class="body">
+                {{ index2 + 1 }}: {{ getBaseUrl(url) }}
+              </p>
+            </md-card-header>
+            <md-card-media>
+              <img style="width: 150px" :src="getFullUrl(url)">
+            </md-card-media>
+          </md-card>
+        </md-layout>
+      </md-whiteframe>
 
     </md-whiteframe>
 
@@ -172,7 +177,8 @@
     data () {
       return {
         experiment: {},
-        baseRanks: [],
+        images: {},
+        structureIds: [],
       }
     },
     mounted () {
@@ -181,13 +187,18 @@
         .rpcRun('getExperiment', experimentId)
         .then((res) => {
           let experiment = res.data.experiment
+          let urls = _.map(experiment.Images, i => i.url)
 
-          if (!('baseRanks' in experiment.attr)) {
-            experiment.attr.baseRanks = _.map(
-              experiment.Images,
-              image => image.url
-            )
+          let images = {}
+          let structureIds = experiment.attr.structureIds
+          this.$data.structureIds = structureIds
+
+          console.log('> Experiment.mounted structureIds', structureIds)
+          for (let structureId of experiment.attr.structureIds) {
+            images[structureId] = _.filter(
+              urls, u => _.includes(u, structureId))
           }
+          console.log('> Experiment.mounted images', images)
 
           let participants = experiment.participants
           for (let participant of participants) {
@@ -195,7 +206,7 @@
             participant.nComparisonDone = 0
             participant.nRepeatTotal = 0
             for (let state of _.values(participant.states)) {
-              console.log('> Experiment.init state', util.jstr(state))
+//              console.log('> Experiment.init state', util.jstr(state))
               participant.nRepeatTotal += state.consistencies.length
               participant.consistency += _.sum(state.consistencies)
               participant.nComparisonDone += state.comparisons.length
@@ -205,7 +216,7 @@
 
           this.$data.experiment = experiment
 
-          this.$data.baseRanks = experiment.attr.baseRanks
+          this.$data.images = images
 
         })
 
@@ -265,25 +276,9 @@
       },
       saveExperimentAttr () {
         let experiment = this.$data.experiment
-        experiment.attr.baseRanks = this.$data.baseRanks
         rpc
           .rpcRun('saveExperimentAttr', experiment.id, experiment.attr)
           .then((res) => {
-            console.log('>> Experiment.saveExperimentAttr.res', res.data)
-            let newDatasets = getPartcipantImageOrderDatasets(experiment)
-            let datasets = this.chartData.data.datasets
-            for (let i = 0; i < newDatasets.length; i += 1) {
-              datasets[i].data = newDatasets[i].data
-              this.chart.update()
-            }
-            {
-              let newDatasets = getPartcipantImageWeightDatasets(experiment)
-              let datasets = this.chartData2.data.datasets
-              for (let i = 0; i < newDatasets.length; i += 1) {
-                datasets[i].data = newDatasets[i].data
-                this.chart2.update()
-              }
-            }
           })
       },
       getMturkLink () {
