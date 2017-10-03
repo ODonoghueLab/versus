@@ -9,9 +9,9 @@
         You have been invited to participate in an experiment on Versus. Experiments on Versus are easy.
       </p>
       <p>
-        You will be ranking {{nImage}} images,
-        with at most {{getMaxComparison()}} image comparisons, of which
-        {{Math.ceil(.2*getMaxComparison())}} will be repeated in a
+        You will be ranking {{params.nImage}} images,
+        with at most {{params.maxComparisons}} image comparisons, of which
+        {{params.nRepeat}} will be repeated in a
         random order.
       </p>
 
@@ -161,8 +161,7 @@
         nImage: null,
         imageA: null,
         imageB: null,
-        age: 18,
-        gender: 'female',
+        params: null,
         done: false,
         start: false,
         comparison: null,
@@ -184,7 +183,7 @@
         if (res.data.new) {
           console.log('>> Invite.handleRes new')
           this.$data.start = true
-          this.$data.nImage = res.data.nImage
+          this.$data.params = res.data.params
         } else if (res.data.done) {
           console.log('>> Invite.handleRes done')
           this.$data.done = true
@@ -207,7 +206,7 @@
           this.$data.imageB = null
           this.$data.imageA = null
 
-          delay (300)
+          delay (200)
             .then(() => {
 
               this.$data.imageA = this.getImageUrl(newComparison.itemA)
@@ -249,14 +248,6 @@
             'publicSaveParticipantUserDetails', participateId, user)
           .then(this.handleRes)
       },
-      getMaxComparison () {
-        let n = this.$data.nImage
-        if (n > 0) {
-          return Math.ceil(n * Math.log2(n))
-        }
-        return null
-      }
-
     }
   }
 </script>

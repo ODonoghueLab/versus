@@ -129,29 +129,29 @@
         padding: 1em;
         margin-bottom: 1em">
 
-      <h3 class="md-title">Images</h3>
+      <h2 class="md-title">Images</h2>
 
       <md-whiteframe
           v-for="(structureId, index) in structureIds"
-          :key="index">
-        <h4>{{structureId}}</h4>
-        <md-layout md-gutter="16">
+          :key="index"
+          style="
+            padding: 0.5em;
+            margin-top: 0.5em;">
+        <h2 class="md-subheading">{{structureId}}</h2>
+        <md-layout
+            style="padding-top: 0.5em">
           <md-card
               v-for="(url, index2) in images[structureId]"
               :key="index2"
               style="
-              text-align: center;
-              padding: 0.5em;
-              margin-right: 0.5em;
-              margin-bottom: 0.5em;">
-            <md-card-header style="text-align: left">
-              <p class="body">
-                {{ index2 + 1 }}: {{ getBaseUrl(url) }}
-              </p>
-            </md-card-header>
+                margin-right: 0.5em;
+                margin-bottom: 0.5em;">
             <md-card-media>
               <img style="width: 150px" :src="getFullUrl(url)">
             </md-card-media>
+            <md-card-content style="text-align: left">
+              {{ index2 + 1 }}: {{ getBaseUrl(url) }}
+            </md-card-content>
           </md-card>
         </md-layout>
       </md-whiteframe>

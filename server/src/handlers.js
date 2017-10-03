@@ -27,6 +27,24 @@ function getUnfinishedState (states) {
 }
 
 
+function getStatesParams (states) {
+  let params = {
+    nImage: 0,
+    maxComparisons: 0,
+    nRepeat: 0
+  }
+  for (let state of _.values(states)) {
+    let n = state.imageUrls.length
+    let maxComparisons = Math.ceil(n * Math.log2(n))
+    let nRepeat = Math.ceil(state.probRepeat * maxComparisons)
+    params.nImage += n
+    params.maxComparisons += maxComparisons
+    params.nRepeat += nRepeat
+  }
+  return {params, new: true}
+}
+
+
 function getComparison (participateId) {
   return models
     .fetchParticipant(participateId)
@@ -35,8 +53,8 @@ function getComparison (participateId) {
         .fetchExperiment(participant.ExperimentId)
         .then(experiment => {
           if (participant.attr.user === null) {
-            console.log('>> getComparison no user found')
-            return {new: true, nImage: experiment.Images.length}
+            console.log('>> handlers.getComparison no user found')
+            return getStatesParams (participant.states)
           }
           if (isStatesDone(participant.states)) {
             let attr = participant.attr
@@ -57,7 +75,7 @@ function getComparison (participateId) {
               comparison,
               attr: experiment.attr
             }
-            console.log('>> getComparison comparison', payload)
+            console.log('>> handlers.getComparison comparison', payload)
             return payload
           }
         })
@@ -221,7 +239,7 @@ module.exports = {
   publicSaveParticipantUserDetails (participateId, user) {
     console.log('> handlers.publicSaveParticipantUserDetails user', user)
     return models
-      .saveParticipant(participateId, {attr: {user: user}})
+      .saveParticipantAttr(participateId, {user: user})
       .then(participant => {
         return getComparison(participateId)
       })

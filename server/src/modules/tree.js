@@ -16,7 +16,6 @@
 
 
 const _ = require('lodash')
-const shortid = require('shortid')
 const util = require('./util')
 
 
@@ -68,7 +67,6 @@ function newState (imageUrls) {
     consistencies: [], // list of (0, 1) for consistency of repeated comparisons
     fractions: [], // list of number of winning votes for each image-url
     ranks: [], // ranked list of the image-url for user preference
-    surveyCode: null
   }
 }
 
@@ -378,10 +376,6 @@ function isDone (state) {
     console.log('> tree.isDone fractions', state.fractions)
   }
 
-  if (state.surveyCode === null) {
-    state.surveyCode = shortid.generate()
-  }
-
   let result = checkComparisons(state)
   console.log('> tree.isDone checkComparisons', result)
 
@@ -407,11 +401,16 @@ function isDone (state) {
 function getComparison (state) {
 
   let doRepeatComparison = false
+
   if (isAllImagesTested(state)) {
     doRepeatComparison = true
   } else {
     if (state.iComparisonRepeat !== null) {
-      if (Math.random() <= state.probRepeat) {
+
+      // Here is the random probability to do a repeat
+      let rand = Math.random()
+      console.log('> tree.getComparison', rand, state.probRepeat)
+      if (rand <= state.probRepeat) {
         doRepeatComparison = true
       }
     }

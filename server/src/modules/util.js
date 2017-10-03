@@ -1,3 +1,5 @@
+const _ = require('lodash')
+
 module.exports = {
 
   /**
@@ -40,5 +42,22 @@ module.exports = {
     }
     return l
   },
+
+  /**
+   * Checks if str is a sub-string in any string of a list
+   * of tesStrList
+   *
+   * @param str
+   * @param testStrList
+   * @returns {boolean}
+   */
+  isStringInStringList (str, testStrList) {
+    for (let testStr of testStrList) {
+      if (_.includes(testStr, str)) {
+        return true
+      }
+    }
+    return false
+  }
 
 }

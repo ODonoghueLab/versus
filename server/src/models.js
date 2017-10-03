@@ -12,6 +12,7 @@ const sequelizeJson = require('sequelize-json')
 
 const config = require('./config')
 const conn = require('./conn')
+const util = require('./modules/util')
 let db = conn.db
 
 /**
@@ -44,7 +45,6 @@ const Participant = db.define('Participant', {
     defaultValue: Sequelize.UUIDV4
   },
   attr: sequelizeJson(db, 'Participant', 'attr'),
-  state: sequelizeJson(db, 'Participant', 'state'),
   states: sequelizeJson(db, 'Participant', 'states'),
 })
 
@@ -63,6 +63,13 @@ Image.belongsTo(Experiment, {onDelete: 'cascade'})
 Participant.belongsTo(Experiment)
 User.belongsToMany(Experiment, {through: UserExperiment})
 
+
+/**
+ * Converts a Sequelize record into a JSON-literal object
+ *
+ * @param {SequelizeRecord} instance - a Sequelize Record
+ * @returns {Object|null} JSON-literal object or null if unsuccessfull
+ */
 function unwrapInstance (instance) {
   if (instance === null) {
     return null
@@ -71,14 +78,6 @@ function unwrapInstance (instance) {
   }
 }
 
-function isStringInStringList(str, testStrList) {
-  for (let testStr of testStrList) {
-    if (_.includes(testStr, str)) {
-      return true
-    }
-  }
-  return false
-}
 
 // File handling functions
 
@@ -161,7 +160,7 @@ function cleanupImages() {
       }
       let promises = []
       for (let expDir of fs.readdirSync('files')) {
-        if (!isStringInStringList(expDir, filenames)) {
+        if (!util.isStringInStringList(expDir, filenames)) {
           promises.push(
             rimraf('files/' + expDir)
               .then(() => {
@@ -183,7 +182,10 @@ function getStructureIdFromPath (p) {
 }
 
 
-/* Access functions - promises that returns JSON literals from the database */
+/**
+ * Access functions - promises that returns JSON
+ * literals from the database
+ **/
 
 // User functions
 
@@ -363,19 +365,27 @@ function deleteParticipant (participateId) {
 }
 
 function saveParticipant (participateId, values) {
-  let keys = _.keys(values)
-  for (let key of keys) {
-    console.log('> saveParticipant input key', key, values[key])
-  }
   return findParticipant(participateId)
     .then(participant => {
-      console.log('> saveParticipant values', values)
       return participant
         .updateAttributes(values)
+        .then(unwrapInstance)
+    })
+}
+
+function saveParticipantAttr (participateId, newAttr) {
+  return findParticipant(participateId)
+    .then(participant => {
+      let attr = unwrapInstance(participant).attr
+      for (let key of _.keys(attr)) {
+        attr[key] = newAttr[key]
+      }
+      return participant
+        .updateAttributes({attr})
         .then(participant => {
           let payload = unwrapInstance(participant)
-          for (let key of keys) {
-            console.log('> saveParticipant payload key', key, payload[key])
+          for (let key of _.keys(payload.attr)) {
+            console.log('> saveParticipant payload key', key, payload.attr[key])
           }
           return payload
         })
@@ -407,5 +417,6 @@ module.exports = {
   createParticipant,
   fetchParticipant,
   saveParticipant,
-  deleteParticipant
+  deleteParticipant,
+  saveParticipantAttr
 }

@@ -1,21 +1,38 @@
 <template>
-  <div style="padding: 1em">
+  <md-layout
+      md-align="center"
+      style="padding: 1em">
     <md-layout
         md-column
-        md-align="center"
-        style="text-align: center">
+        md-flex="30"
+        md-flex-medium="60"
+        md-flex-small="80"
+        style="width: 500px; text-align: center">
       <h2 class="md-display-2">
         Welcome to Versus
       </h2>
       <p>
-        Versus is a tool to enable you to do simple visual quality analysis.
+        Versus is a tool for testing visual
+        quality analysis,
+        by allowing "participants" to
+        rank a set of images.
       </p>
       <p>
-        We have a simple 2FCA option.
+        Currently, we only
+        provide a two-alternative forced-choice (2FCA)
+        option,
+        where a set of images is ranked by
+        considering a series of comparison
+        between two images.
       </p>
-      <p></p>
-      <p></p>
-      <p></p>
+      <p>
+        Repository at <a href="https://github.com/ODonoghueLab/versus">https://github.com/ODonoghueLab/versus</a>
+      </p>
+      <p>
+      </p>
+      <p>
+        To setup a set of images for analysis:
+      </p>
       <md-layout
           md-align="center"
           md-vertical-align="center">
@@ -35,7 +52,7 @@
         </router-link>
       </md-layout>
     </md-layout>
-  </div>
+  </md-layout>
 </template>
 
 <script>
