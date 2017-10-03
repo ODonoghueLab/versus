@@ -172,7 +172,7 @@ function cleanupImages() {
     })
 }
 
-function getStructureIdFromPath (p) {
+function getImageSetIdFromPath (p) {
    let tokens = path.basename(p).split('_')
    if (tokens.length > 0) {
      return tokens[0]
@@ -329,9 +329,9 @@ function createParticipant (experimentId, email) {
       const images = experiment.Images
       const urls = _.map(images, 'url')
       let states = {}
-      for (let structureId of experiment.attr.structureIds) {
-        let theseUrls = _.filter(urls, u => _.includes(u, structureId))
-        states[structureId] = tree.newState(theseUrls)
+      for (let imageSetId of experiment.attr.imageSetIds) {
+        let theseUrls = _.filter(urls, u => _.includes(u, imageSetId))
+        states[imageSetId] = tree.newState(theseUrls)
       }
       const state = tree.newState(urls)
       return Participant
@@ -339,8 +339,8 @@ function createParticipant (experimentId, email) {
           {attr: { email: email, user: null }, state, states})
         .then((participant) => {
           let result = unwrapInstance(participant)
-          for (let [structureId, state] of _.toPairs(result.states)) {
-            console.log('> models.createParticipant', structureId, state.imageUrls)
+          for (let [imageSetId, state] of _.toPairs(result.states)) {
+            console.log('> models.createParticipant', imageSetId, state.imageUrls)
           }
           return experiment
             .addParticipant(participant)
@@ -404,7 +404,7 @@ init()
 
 module.exports = {
   storeFiles,
-  getStructureIdFromPath,
+  getImageSetIdFromPath,
   createUser,
   fetchUser,
   checkUserWithPassword,

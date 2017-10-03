@@ -132,16 +132,16 @@
       <h2 class="md-title">Images</h2>
 
       <md-whiteframe
-          v-for="(structureId, index) in structureIds"
+          v-for="(imageSetId, index) in imageSetIds"
           :key="index"
           style="
             padding: 0.5em;
             margin-top: 0.5em;">
-        <h2 class="md-subheading">{{structureId}}</h2>
+        <h2 class="md-subheading">{{imageSetId}}</h2>
         <md-layout
             style="padding-top: 0.5em">
           <md-card
-              v-for="(url, index2) in images[structureId]"
+              v-for="(url, index2) in images[imageSetId]"
               :key="index2"
               style="
                 margin-right: 0.5em;
@@ -178,7 +178,7 @@
       return {
         experiment: {},
         images: {},
-        structureIds: [],
+        imageSetIds: [],
       }
     },
     mounted () {
@@ -190,13 +190,13 @@
           let urls = _.map(experiment.Images, i => i.url)
 
           let images = {}
-          let structureIds = experiment.attr.structureIds
-          this.$data.structureIds = structureIds
+          let imageSetIds = experiment.attr.imageSetIds
+          this.$data.imageSetIds = imageSetIds
 
-          console.log('> Experiment.mounted structureIds', structureIds)
-          for (let structureId of experiment.attr.structureIds) {
-            images[structureId] = _.filter(
-              urls, u => _.includes(u, structureId))
+          console.log('> Experiment.mounted imageSetIds', imageSetIds)
+          for (let imageSetId of experiment.attr.imageSetIds) {
+            images[imageSetId] = _.filter(
+              urls, u => _.includes(u, imageSetId))
           }
           console.log('> Experiment.mounted images', images)
 

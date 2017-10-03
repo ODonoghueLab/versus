@@ -223,9 +223,9 @@ module.exports = {
           .fetchExperiment(participant.ExperimentId)
           .then(experiment => {
             let urlA = comparison.itemA.url
-            let structureId = models.getStructureIdFromPath(urlA)
+            let imageSetId = models.getImageSetIdFromPath(urlA)
             let states = participant.states
-            let state = states[structureId]
+            let state = states[imageSetId]
             tree.makeChoice(state, comparison)
             return models
               .saveParticipant(participateId, {states})
@@ -278,15 +278,15 @@ module.exports = {
       .storeFiles(
         files, checkImageFilesForError)
       .then((paths) => {
-        structureIds = []
+        imageSetIds = []
         for (let path of paths) {
-          let structureId = models.getStructureIdFromPath(path)
-          if (!_.includes(structureIds, structureId)) {
-            structureIds.push(structureId)
+          let imageSetId = models.getImageSetIdFromPath(path)
+          if (!_.includes(imageSetIds, imageSetId)) {
+            imageSetIds.push(imageSetId)
           }
         }
-        attr.structureIds = structureIds
-        console.log('>> routes.uploadImagesAndCreateExperiment structureIds', structureIds)
+        attr.imageSetIds = imageSetIds
+        console.log('>> routes.uploadImagesAndCreateExperiment imageSetIds', imageSetIds)
         console.log('>> routes.uploadImagesAndCreateExperiment paths', paths)
         return models
           .createExperiment(
