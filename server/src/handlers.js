@@ -16,14 +16,18 @@ function isStatesDone (states) {
 
 
 function getUnfinishedState (states) {
-  let todoStates = []
-  for (let state of _.values(states)) {
+  let choices = []
+  for (let [id, state] of _.toPairs(states)) {
     if (!tree.isDone(state)) {
-      todoStates.push(state)
+      for (let j of _.range(state.imageUrls.length)) {
+        choices.push(id)
+      }
     }
   }
-  let i = _.random(todoStates.length - 1)
-  return todoStates[i]
+  console.log('> handlers.getUnfinishedState', choices)
+  let i = _.random(choices.length - 1)
+  let id = choices[i]
+  return states[id]
 }
 
 
