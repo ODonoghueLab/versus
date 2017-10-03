@@ -24,9 +24,7 @@ function getUnfinishedState (states) {
       }
     }
   }
-  console.log('> handlers.getUnfinishedState', choices)
-  let i = _.random(choices.length - 1)
-  let id = choices[i]
+  let id = choices[_.random(choices.length - 1)]
   return states[id]
 }
 

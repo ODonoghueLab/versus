@@ -2,6 +2,8 @@ import Vue from 'vue'
 import Router from 'vue-router'
 Vue.use(Router)
 
+import auth from './modules/auth.js'
+
 import Home from './components/Home'
 import UserExperiments from './components/UserExperiments'
 import Experiment from './components/Experiment'
@@ -60,6 +62,33 @@ let router = new Router({
       component: MturkParticipant
     }
   ]
+})
+
+function isStringInStringList (str, testStrList) {
+  for (let testStr of testStrList) {
+    if (_.includes(str, testStr)) {
+      return true
+    }
+  }
+  return false
+}
+
+let publicTokens = [
+  '/mechanical-turk', '/participant', '/login', '/register']
+
+router.beforeEach((to, from, next) => {
+  if (isStringInStringList(to.path, publicTokens) || to.path === '/') {
+    console.log('> router.beforeEach public', to.path)
+    next()
+  } else {
+    if (!auth.user.authenticated) {
+      console.log('> router.beforeEach blocked', to.path, 'to /')
+      next('/login')
+    } else {
+      console.log('> router.beforeEach authenticated', to.path)
+      next()
+    }
+  }
 })
 
 export default router

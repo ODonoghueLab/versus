@@ -20,16 +20,6 @@
   export default {
     name: 'app',
     components: {Navbar},
-    created () {
-      if (_.startsWith('/participant', this.$route.path)) {
-        console.log('> Publicly accessible', this.$route.path)
-      } else if (_.startsWith('/mechanical-turk', this.$route.path)) {
-        console.log('> Publicly accessible', this.$route.path)
-      } else if (!auth.user.authenticated) {
-        console.log('> Not logged-in: denied access to', this.$route.path)
-        router.push('/login')
-      }
-    }
   }
 </script>
 

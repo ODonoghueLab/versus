@@ -5,20 +5,20 @@
     <md-layout
         md-column
         md-flex="30"
-        md-flex-medium="60"
+        md-flex-medium="50"
         md-flex-small="80"
         style="width: 500px; text-align: center">
       <h2 class="md-display-2">
         Welcome to Versus
       </h2>
       <p>
-        Versus is a tool for testing visual
+        Versus is a tool for visual
         quality analysis,
         by allowing "participants" to
         rank a set of images.
       </p>
       <p>
-        Currently, we only
+        Currently, we
         provide a two-alternative forced-choice (2FCA)
         option,
         where a set of images is ranked by
