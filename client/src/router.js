@@ -64,6 +64,7 @@ let router = new Router({
   ]
 })
 
+
 function isStringInStringList (str, testStrList) {
   for (let testStr of testStrList) {
     if (_.includes(str, testStr)) {
@@ -73,11 +74,14 @@ function isStringInStringList (str, testStrList) {
   return false
 }
 
-let publicTokens = [
+
+let publicPathTokens = [
   '/mechanical-turk', '/participant', '/login', '/register']
 
+
 router.beforeEach((to, from, next) => {
-  if (isStringInStringList(to.path, publicTokens) || to.path === '/') {
+  if (isStringInStringList(to.path, publicPathTokens)
+       || to.path === '/') {
     console.log('> router.beforeEach public', to.path)
     next()
   } else {

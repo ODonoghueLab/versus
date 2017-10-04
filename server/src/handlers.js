@@ -47,7 +47,7 @@ function getStatesParams (states) {
 }
 
 
-function getComparison (participateId) {
+function getNextComparison (participateId) {
   return models
     .fetchParticipant(participateId)
     .then(participant => {
@@ -68,6 +68,7 @@ function getComparison (participateId) {
             return models
               .saveParticipant(participateId, {states, attr})
               .then(() => {
+                console.log('>> handlers.getComparison done', attr.surveyCode)
                 return {done: true, surveyCode: attr.surveyCode}
               })
           } else {
@@ -214,7 +215,7 @@ module.exports = {
   },
 
   publicGetParticipant (participateId) {
-    return getComparison(participateId)
+    return getNextComparison(participateId)
   },
 
   publicChooseItem (participateId, comparison) {
@@ -232,7 +233,7 @@ module.exports = {
             return models
               .saveParticipant(participateId, {states})
               .then(() => {
-                return getComparison(participateId)
+                return getNextComparison(participateId)
               })
           })
       })
@@ -243,7 +244,7 @@ module.exports = {
     return models
       .saveParticipantAttr(participateId, {user: user})
       .then(participant => {
-        return getComparison(participateId)
+        return getNextComparison(participateId)
       })
   },
 

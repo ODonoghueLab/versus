@@ -358,7 +358,7 @@ function isDone (state) {
 
   if (state.ranks.length === 0) {
     let sortedNodes = getOrderedNodeList(state)
-    state.ranks = _.map(sortedNodes, node => state.imageUrls[node.iImage])
+    state.rankedImageUrls = _.map(sortedNodes, node => state.imageUrls[node.iImage])
     console.log('> tree.isDone sorted nodes', sortedNodes)
     console.log('> tree.isDone ranks', state.ranks)
   }

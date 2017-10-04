@@ -39,4 +39,19 @@ export default {
     document.body.removeChild(a)
   },
 
+  /**
+   * Returns an n-length array of v values
+   *
+   * @param n
+   * @param v
+   * @returns {Array}
+   */
+  makeArray (n, v) {
+    let l = []
+    for (let i = 0; i < n; i += 1) {
+      l.push(v)
+    }
+    return l
+  },
+
 }

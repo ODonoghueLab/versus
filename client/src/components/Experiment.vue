@@ -65,7 +65,7 @@
       </md-button>
 
       <md-button class="md-raised" @click="downloadResults()">
-        Download Results
+        Download "results.csv"
       </md-button>
 
       <md-table v-if="experiment.participants">
@@ -172,6 +172,73 @@
   import util from '../modules/util'
   import rpc from '../modules/rpc'
 
+  // https://appendto.com/2017/04/use-javascript-to-export-your-data-as-csv/
+  function downloadCSV(csv, filename) {
+      var data, filename, link;
+
+      if (csv == null) return;
+
+      filename = filename || 'export.csv';
+
+      if (!csv.match(/^data:text\/csv/i)) {
+          csv = 'data:text/csv;charset=utf-8,' + csv;
+      }
+      data = encodeURI(csv);
+
+      link = document.createElement('a');
+      link.setAttribute('href', data);
+      link.setAttribute('download', filename);
+      link.click();
+  }
+
+  function downloadResults(experiment) {
+
+    let isFoundHeader = false
+    let imageSet = {}
+
+    let headerRow = ['participantId', 'surveyCode']
+    let rows = []
+
+    for (let participant of experiment.participants) {
+
+      if (!isFoundHeader) {
+        for (let [imageSetId, state] of _.toPairs(participant.states)) {
+          imageSet[imageSetId] = {
+            imageUrls: state.imageUrls,
+            iImage: {}
+          }
+          headerRow = _.concat(headerRow, state.imageUrls)
+          _.each(state.imageUrls, (url, i) => {
+            imageSet[imageSetId].iImage[url] = i
+          })
+        }
+        isFoundHeader = true
+        console.log('> downloadResults header', headerRow)
+      }
+
+      let row = [participant.participateId, participant.attr.surveyCode]
+
+      for (let [imageSetId, state] of _.toPairs(participant.states)) {
+        let thisRow = util.makeArray(state.rankedImageUrls.length, 0)
+        _.each(state.rankedImageUrls, (url, iRank) => {
+          thisRow[imageSet[imageSetId].iImage[url]] = iRank
+        })
+        row = _.concat(row, thisRow)
+      }
+
+      console.log('> donwloadResults row', row)
+
+      rows.push(row)
+    }
+
+    headerRow = _.map(headerRow, h => path.basename(h))
+    let result = headerRow.join(',') + '\n'
+    for (let row of rows) {
+      result += row.join(',') + '\n'
+    }
+    downloadCSV(result, 'results.csv')
+  }
+
   export default {
     name: 'experiment',
     data () {
@@ -230,20 +297,8 @@
         return path.basename(url)
       },
       downloadResults () {
-        console.log('>> Experiment.downloadResults')
-        let experiment = this.$data.experiment
-        let participants = experiment.participants
-        let payload = _.map(participants, participant => {
-          return {
-            user: participant.user,
-            ranks: participant.state.ranks,
-            time: {
-              start: participant.createdAt,
-              end: participant.updatedAt
-            }
-          }
-        })
-        util.downloadObject('results.json', payload)
+        downloadResults(this.$data.experiment)
+//        util.downloadObject('results.json', payload)
       },
       reformatDate (participant, key) {
         if (key in participant) {
