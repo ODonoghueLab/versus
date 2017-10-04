@@ -66,7 +66,7 @@ function newState (imageUrls) {
     // the following are only calculated when done
     consistencies: [], // list of (0, 1) for consistency of repeated comparisons
     fractions: [], // list of number of winning votes for each image-url
-    ranks: [], // ranked list of the image-url for user preference
+    rankedImageUrls: [], // ranked list of the image-url for user preference
   }
 }
 

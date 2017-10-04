@@ -219,10 +219,12 @@
       let row = [participant.participateId, participant.attr.surveyCode]
 
       for (let [imageSetId, state] of _.toPairs(participant.states)) {
-        let thisRow = util.makeArray(state.rankedImageUrls.length, 0)
-        _.each(state.rankedImageUrls, (url, iRank) => {
-          thisRow[imageSet[imageSetId].iImage[url]] = iRank
-        })
+        let thisRow = util.makeArray(state.rankedImageUrls.length, '')
+        if (!_.isUndefined(state.rankedImageUrls) && (state.rankedImageUrls.length > 0)) {
+          _.each(state.rankedImageUrls, (url, iRank) => {
+            thisRow[imageSet[imageSetId].iImage[url]] = iRank
+          })
+        }
         row = _.concat(row, thisRow)
       }
 
@@ -298,7 +300,6 @@
       },
       downloadResults () {
         downloadResults(this.$data.experiment)
-//        util.downloadObject('results.json', payload)
       },
       reformatDate (participant, key) {
         if (key in participant) {
