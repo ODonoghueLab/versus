@@ -256,7 +256,7 @@
         .rpcRun('getExperiment', experimentId)
         .then((res) => {
           let experiment = res.data.experiment
-          let urls = _.map(experiment.Images, i => i.url)
+          let urls = _.map(experiment.images, i => i.url)
 
           let images = {}
           let imageSetIds = experiment.attr.imageSetIds

@@ -56,7 +56,7 @@ const UserExperiment = db.define('UserExperiment', {
   permission: Sequelize.INTEGER
 })
 
-Experiment.hasMany(Image, {as: 'Images'})
+Experiment.hasMany(Image, {as: 'images'})
 Experiment.belongsToMany(User, {through: UserExperiment})
 Experiment.hasMany(Participant, {as: 'participants'})
 Image.belongsTo(Experiment, {onDelete: 'cascade'})
@@ -149,11 +149,11 @@ function storeFiles (uploadedFiles, checkFilesForError) {
 function cleanupImages() {
   return Experiment
     .findAll(
-      {include: [{model: Image, as: 'Images'}]})
+      {include: [{model: Image, as: 'images'}]})
     .then(experiments => {
       let filenames = []
       for (let experiment of experiments) {
-        for (let image of experiment.Images) {
+        for (let image of experiment.images) {
           let url = image.dataValues.url
           filenames.push('files/' + url.slice(6, url.length))
         }
@@ -281,7 +281,7 @@ function findExperiment (experimentId) {
   return Experiment.findOne({
     where: {id: experimentId},
     include: [
-      {model: Image, as: 'Images'},
+      {model: Image, as: 'images'},
       {model: User, as: 'Users'},
       {model: Participant, as: 'participants'}
     ]
@@ -326,7 +326,7 @@ function fetchExperiments (userId) {
 function createParticipant (experimentId, email) {
   return findExperiment(experimentId)
     .then(experiment => {
-      const images = experiment.Images
+      const images = experiment.images
       const urls = _.map(images, 'url')
       let states = {}
       for (let imageSetId of experiment.attr.imageSetIds) {
