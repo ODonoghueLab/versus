@@ -356,11 +356,11 @@ function isDone (state) {
     console.log('> tree.isDone consistencies', state.consistencies)
   }
 
-  if (state.ranks.length === 0) {
+  if (state.rankedImageUrls.length === 0) {
     let sortedNodes = getOrderedNodeList(state)
     state.rankedImageUrls = _.map(sortedNodes, node => state.imageUrls[node.iImage])
     console.log('> tree.isDone sorted nodes', sortedNodes)
-    console.log('> tree.isDone ranks', state.ranks)
+    console.log('> tree.isDone rankedImageUrls', state.rankedImageUrls)
   }
 
   if (state.fractions.length === 0) {
