@@ -3,8 +3,8 @@ import _ from 'lodash'
 import config from '../config'
 
 /**
- * rpc module provides a clean rpc interface for JSON-based
- * api with the server
+ * @fileOverview rpc module provides a clean rpc interface for JSON-based
+ * api with the server.
  */
 
 // important for using with passport.js

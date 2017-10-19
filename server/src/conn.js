@@ -1,14 +1,14 @@
 /**
- * Centralized place to declare main app and db variables
- * so that circular references are avoided when loading
- * models.js, router.js and app.js
- **/
+ * @fileoverview Centralized place to declare the main Express app and
+ * Sequelize db variables so that circular references are
+ * avoided when loading models.js, router.js and app.js
+ */
 
 // Initialize express app
 const express = require('express')
 const app = express()
 
-// initialize database using Sequelize
+// Initialize database using Sequelize
 const env = process.env.NODE_ENV || 'development'
 const dbConfig = require('./config')[env]
 const Sequelize = require('sequelize')

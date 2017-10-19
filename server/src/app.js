@@ -1,17 +1,29 @@
+/**
+ * @fileoverview The Versus web-server is an Express App.
+ * It hooks up to Sequelize for db and Passport for
+ * session management.
+ *
+ * Here, the middleware for Express is defined, and the
+ * router is loaded in. This includes access to files
+ * that have been uploaded to the server.
+ *
+ * As well the server also serves the  production version of
+ * the web-client.
+ */
+
+
 const path = require('path')
 const express = require('express')
 
-// Defines express app and sqlalchemy db together
-// This avoids problems of circular definitions
+// Defines express app and sqlalchemy db here to avoid circular dependencies
 const conn = require('./conn')
 let app = conn.app
 module.exports = app
 
 // Middleware Configuration
 
-// Cross-origin-resource-sharing to allow testing with
-// vue client that uses hot-reloading in the browser
-app.use(function (req, res, next) {
+// Cross-origin-resource-sharing for hot-reloading client
+app.use(function(req, res, next) {
   res.header('Access-Control-Allow-Credentials', true)
   res.header('Access-Control-Allow-Origin', req.headers.origin)
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
@@ -30,7 +42,7 @@ app.use(logger('dev'))
 // Parse Json in body
 const bodyParser = require('body-parser')
 app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.urlencoded({extended: false}))
 
 // Session management for validated users
 const session = require('express-session')
@@ -103,7 +115,7 @@ app.get('*', (req, res) => {
 
 // Catch 404 and forward to Error Handler
 app.use((req, res, next) => {
-  res.status(404).render('404', { url: req.originalUrl })
+  res.status(404).render('404', {url: req.originalUrl})
   const err = new Error('Not Found')
   err.status = 404
   next(err)
@@ -113,12 +125,12 @@ app.use((req, res, next) => {
 if (app.get('env') === 'development') {
   app.use((err, req, res) => {
     res.status(err.status || 500)
-      .render('error', { message: err.message, error: err })
+      .render('error', {message: err.message, error: err})
   })
 }
 
 // Production Error Handler (no stack-traces printed)
 app.use((err, req, res) => {
   res.status(err.status || 500)
-    .render('error', { message: err.message, error: {} })
+    .render('error', {message: err.message, error: {}})
 })

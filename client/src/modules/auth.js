@@ -1,3 +1,9 @@
+/**
+ * @fileOverview Authentication module. Provides routines
+ * to authenticate with the server, as well as a central
+ * location to access the user credentials.
+ */
+
 import _ from 'lodash'
 import SHA224 from '../modules/sha224/sha224'
 

@@ -1,5 +1,5 @@
 /**
- * Implementation of the binary-tree method for
+ * @fileoverview Implementation of the binary-tree method for
  * efficient paired comparions "Efficient method
  * for paired comparison", Silverstein & Farrell
  * Journal of Electronic Imaging (2001) 10(2), 394–398
@@ -12,6 +12,11 @@
  *
  * This implementation written by (c) 2017 Bosco K. Ho,
  * based on the work of Tylor Stewart
+ *
+ * The entire state is stored in a JSON-literal that is
+ * passed around to the different function. This allows
+ * an the state to be easily stored in a JSON filed in
+ * a database, and to be transferred as JSON in a web-call.
  */
 
 
@@ -19,9 +24,13 @@ const _ = require('lodash')
 const util = require('./util')
 
 
+// probability that a repeat comparison will be chosen
 let probRepeat = 0.2
 
 
+/**
+ * Creates a new node, defined by its index i
+ */
 function newNode (i, iImage, left, right, parent) {
   return {i, iImage, left, right, parent}
 }
@@ -30,9 +39,8 @@ function newNode (i, iImage, left, right, parent) {
 /**
  * Initialize the binary choice tree with all associated parameters
  * required to keep track of the tree, repeats and user statistics
- *
  * @param imageUrls
- * @returns {{imageUrls: *, nodes: [null], iNodeRoot: number, iNodeCompare: number, testImageIndices: *, iImageTest, probRepeat: number, totalRepeat: number, fractions: Array, ranks: Array, comparisons: Array, comparisonIndices: Array, repeatComparisonIndices: Array, consistencies: Array}}
+ * @returns {ob} State of the binary-choice-tree
  */
 function newState (imageUrls) {
 
@@ -74,12 +82,34 @@ function newState (imageUrls) {
 
 
 /**
+ * Creates a comparison data structure that will be sent to
+ * web-client and stored in a state
+ * @param {obj} state
+ * @param {Number} iImageA
+ * @param {Number} iImageB
+ * @returns {obj} comparison
+ */
+function makeComparison (state, iImageA, iImageB) {
+  return {
+    itemA: {value: iImageA, url: state.imageUrls[iImageA]},
+    itemB: {value: iImageB, url: state.imageUrls[iImageB]},
+    choice: null,
+    isRepeat: false,
+    repeat: null,
+    startTime: getCurrentTimeStr(),
+    endTime: null,
+    repeatStartTime: null,
+    repeatEndTime: null,
+  }
+}
+
+
+/**
  * Sorts the nodes into an ordered list based on
  * the position in the binary tree with left-most
  * first
- *
- * @param state
- * @returns {Array} of nodes
+ * @param {obj State JSON literal
+ * @returns {Array} of nodes sorted in order
  */
 function getOrderedNodeList (state) {
   let sortedNodes = []
@@ -103,7 +133,7 @@ function getOrderedNodeList (state) {
  * new tree
  *
  * @param {Array} of sorted nodes
- * @returns {node} the root node of the re-balanced tree
+ * @returns {obj} the root node of the re-balanced tree
  */
 function balanceSubTree (sortedNodes) {
   const nNode = sortedNodes.length
@@ -135,6 +165,11 @@ function balanceSubTree (sortedNodes) {
 }
 
 
+/**
+ * Creates a new node based on the current image being tested
+ * @param {obj} state
+ * @returns {Number} index to the new node in state
+ */
 function insertNewNode (state) {
   let iNewNode = state.nodes.length
   let node = newNode(iNewNode, state.iImageTest, null, null, state.iNodeCompare)
@@ -149,7 +184,7 @@ function getNextImage (state) {
     state.iImageTest = null
   }
 
-  // rebalance the tree
+  // Rebalance the tree
   let sortedNodes = getOrderedNodeList(state)
   let newRootNode = balanceSubTree(sortedNodes)
   newRootNode.parent = null
@@ -163,8 +198,6 @@ function getNextImage (state) {
     state.testImageIndices)
 
   console.log('> tree.getNextImage consistency', checkNodes(state.nodes))
-
-  console.log(state.nodes)
 }
 
 
@@ -186,7 +219,7 @@ function setNextRepeatComparison (state) {
  * 2. parent indices match
  * 3. children indices match
  *
- * @param {List of nodes} the nodes are defined in newNode()
+ * @param {array} of nodes as defined in newNode()
  * @returns {boolean} true if binary tree is consistent
  */
 function checkNodes (nodes) {
@@ -197,14 +230,14 @@ function checkNodes (nodes) {
     if (node.parent === null) {
       nNullParent += 1
     } else {
-      // check parent
+      // Checks children point to node correctly
       let parent = nodes[node.parent]
       if ((parent.left !== node.i) && (parent.right !== node.i)) {
         pass = false
       }
     }
 
-    // check children
+    // Checks children points to node correctly
     for (let iChildNode of [node.left, node.right]) {
       if (iChildNode !== null) {
         if (iChildNode >= nodes.length) {
@@ -220,7 +253,7 @@ function checkNodes (nodes) {
 
   }
 
-  // check for a unique root
+  // Check tree has one unique root
   if (nNullParent !== 1) {
     pass = false
   }
@@ -255,7 +288,7 @@ function makeChoice (state, comparison) {
       'iImageTest', state.iImageTest,
       '- chosenImageIndex', chosenImageIndex)
 
-    // go right branch if iImageTest is chosen (preferred)
+    // Go right branch if iImageTest is chosen (preferred)
     if (chosenImageIndex === state.iImageTest) {
       if (compareNode.right === null) {
         compareNode.right = insertNewNode(state)
@@ -264,6 +297,7 @@ function makeChoice (state, comparison) {
         state.iNodeCompare = compareNode.right
       }
     } else {
+      // Else left branch if image at node is chosen (preferred)
       if (compareNode.left === null) {
         compareNode.left = insertNewNode(state)
         getNextImage(state)
@@ -285,21 +319,6 @@ function makeChoice (state, comparison) {
 }
 
 
-function makeComparison (state, iImageA, iImageB) {
-  return {
-    itemA: {value: iImageA, url: state.imageUrls[iImageA]},
-    itemB: {value: iImageB, url: state.imageUrls[iImageB]},
-    choice: null,
-    isRepeat: false,
-    repeat: null,
-    startTime: getCurrentTimeStr(),
-    endTime: null,
-    repeatStartTime: null,
-    repeatEndTime: null,
-  }
-}
-
-
 function isAllImagesTested (state) {
   return (state.testImageIndices.length === 0)
     && (state.iImageTest === null)
@@ -315,8 +334,7 @@ function isAllRepeatComparisonsMade (state) {
 /**
  * Checks that the choices in each individual comparison are
  * consistent with the final sorted list generated from the binary tree
- *
- * @param state - the binary tree state
+ * @param {obj} state - the binary tree state
  * @returns {boolean} - true if comparisons are consistent
  */
 function checkComparisons (state) {

@@ -4,7 +4,6 @@ module.exports = {
 
   /**
    * Returns a nicely formatted string of JSON-literal
-   *
    * @param o
    */
   jstr (o) {
@@ -14,7 +13,6 @@ module.exports = {
   /**
    * In-place removal of item from a list of dictionaries, using the key
    * to make the comparison for equality for the item
-   *
    * @param aList
    * @param item
    * @param key
@@ -30,7 +28,6 @@ module.exports = {
 
   /**
    * Returns an n-length array of v values
-   *
    * @param n
    * @param v
    * @returns {Array}
@@ -46,7 +43,6 @@ module.exports = {
   /**
    * Checks if str is a sub-string in any string of a list
    * of tesStrList
-   *
    * @param str
    * @param testStrList
    * @returns {boolean}

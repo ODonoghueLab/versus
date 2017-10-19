@@ -1,9 +1,30 @@
 const path = require('path')
+
 const _ = require('lodash')
-const models = require('./models')
-const tree = require('./modules/tree')
 const shortid = require('shortid')
 
+const models = require('./models')
+const tree = require('./modules/tree')
+
+/**
+
+handlers.js - this module holds all the functions that are accessible
+to the web-client in the JSON-RPC api. It binds the database to the
+binary-tree search functions
+
+Any functions defined in the module exports can be accessed by the
+correspoding `rpc` module in the client. These are accessed by their
+names, where a name starting with public are publically accessible
+api's. All other functions need the user to have already logged-in.
+
+The functions must return a promise that returns a JSON-literal.
+For security, all returned functions must be wrapped in a dictionary.
+
+Functions that handle file-uploads from the client start with
+upload, and the first parameter will be a filelist object that
+determines the names and locations of the uploaded files on the
+server.
+*/
 
 function isStatesDone (states) {
   for (let state of _.values(states)) {
@@ -87,6 +108,31 @@ function getNextComparison (participateId) {
           }
         })
     })
+}
+
+/**
+ * Checks a filelist if they are image files that can
+ * be usefully displayed, used by uploadImagesAndCreateExperiment
+ *
+ * @param {FileList} files
+ * @returns {String} - an error str if problem, else null string if correct
+ */
+function checkImageFilesForError (files) {
+  if (files.length < 2) {
+    return 'Minimum two images.'
+  }
+  for (let file of files) {
+    // handle formats
+    const extname = path.extname(file.originalname).toLowerCase()
+    if (!_.includes(['.png', '.jpg', '.gif'], extname)) {
+      return `only png's, jpg's, gif's`
+    }
+    // size checking
+    if (file.size / 1000000 > 2) {
+      return 'Please Keep Images Under 2MB'
+    }
+  }
+  return ''
 }
 
 
@@ -248,32 +294,6 @@ module.exports = {
   // Upload functions - first parameter is always a filelist object
 
   uploadImagesAndCreateExperiment (files, userId, attr) {
-
-    /**
-     * Checks a filelist if they are image files that can
-     * be usefully displayed
-     *
-     * @param {FileList} files
-     * @returns {String} - an error str, or null string if correct
-     */
-    function checkImageFilesForError (files) {
-      if (files.length < 2) {
-        return 'Minimum two images.'
-      }
-      for (let file of files) {
-        // handle formats
-        const extname = path.extname(file.originalname).toLowerCase()
-        if (!_.includes(['.png', '.jpg', '.gif'], extname)) {
-          return `only png's, jpg's, gif's`
-        }
-        // size checking
-        if (file.size / 1000000 > 2) {
-          return 'Please Keep Images Under 2MB'
-        }
-      }
-      return ''
-    }
-
     return models
       .storeFiles(
         files, checkImageFilesForError)
@@ -291,11 +311,10 @@ module.exports = {
         attr.params = getParams(_.values(nImage), tree.probRepeat)
         attr.imageSetIds = imageSetIds
         console.log('>> routes.uploadImagesAndCreateExperiment attr', attr)
+        let urls = _.map(paths, f => '/file/' + f)
         return models
           .createExperiment(
-            userId,
-            attr,
-            _.map(paths, f => '/file/' + f))
+            userId, attr, urls)
           .then(experiment => {
             console.log('> routers.uploadImagesAndCreateExperiment output', experiment)
             return {
@@ -305,7 +324,6 @@ module.exports = {
           })
       })
   }
-
 }
 
 

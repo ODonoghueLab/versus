@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Defines the routes available for the webapp and
+ * some guards for routes that require user authentication
+ */
+
 import Vue from 'vue'
 import Router from 'vue-router'
 Vue.use(Router)

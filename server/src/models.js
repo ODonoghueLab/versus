@@ -10,17 +10,29 @@ const Sequelize = require('sequelize')
 const tree = require('./modules/tree')
 const sequelizeJson = require('sequelize-json')
 
+const util = require('./modules/util')
 const config = require('./config')
 const conn = require('./conn')
-const util = require('./modules/util')
 let db = conn.db
 
 /**
- * Definitions of the database for Versus
- *
- * sequelize-json is used as it works with Sqlite, Postgres, and MySQL
- * be sure to use updateAttributes, and not update for sequelize-json
- */
+
+Definitions of the database for Versus
+
+Sequelize is used to interact with the database, as it is 
+quite flexible in terms of the target database. 
+Versus makes extensive use of JSON, and so, in terms of
+flexibility, sequelize-json is used to map JSON in 
+sequelize as sequelize-json works with Sqlite, Postgres, and MySQL.
+For the sequelize-json JSON fields, be sure to use updateAttributes, 
+and not update
+
+The database is not meant to be accessed directly by the web-handlers.
+These are meant to be accessed directly by the access functions
+defined below. These functions take JSON literals as parameters
+and returns the data in the database as JSON-literals wrapped in
+a promise.
+*/
 
 const User = db.define('User', {
   name: Sequelize.STRING,
@@ -28,7 +40,7 @@ const User = db.define('User', {
   password: Sequelize.STRING
 })
 
-// passwords are salted
+// Passwords are salted
 User.beforeValidate((user) => {
   user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10))
 })
@@ -65,7 +77,7 @@ User.belongsToMany(Experiment, {through: UserExperiment})
 
 
 /**
- * Converts a Sequelize record into a JSON-literal object
+ * Converts a Sequelize record into a JSON-literal
  *
  * @param {SequelizeRecord} instance - a Sequelize Record
  * @returns {Object|null} JSON-literal object or null if unsuccessfull
@@ -99,18 +111,18 @@ function unwrapInstance (instance) {
  */
 function storeFiles (uploadedFiles, checkFilesForError) {
 
+  async function rollback () {
+    for (let f of uploadedFiles) {
+      await del(f.path)
+    }
+  }
+
   return new Promise((resolve, reject) => {
 
     const experimentDir = String(new Date().getTime())
     const fullExperimentDir = path.join(config.filesDir, experimentDir)
     if (!fs.existsSync(fullExperimentDir)) {
       fs.mkdirSync(fullExperimentDir, 0o744)
-    }
-
-    function rollback () {
-      for (let i = 0; i < uploadedFiles.length; i += 1) {
-        del(uploadedFiles[i].path)
-      }
     }
 
     const inputPaths = []
@@ -146,32 +158,35 @@ function storeFiles (uploadedFiles, checkFilesForError) {
   })
 }
 
-function cleanupImages() {
-  return Experiment
-    .findAll(
+/** 
+ * Checks files stored on server against the database
+ * and deletes any files that are not matched with database entries
+ */
+async function cleanupImages() {
+  let experiments = await Experiment.findAll(
       {include: [{model: Image, as: 'images'}]})
-    .then(experiments => {
-      let filenames = []
-      for (let experiment of experiments) {
-        for (let image of experiment.images) {
-          let url = image.dataValues.url
-          filenames.push('files/' + url.slice(6, url.length))
-        }
-      }
-      let promises = []
-      for (let expDir of fs.readdirSync('files')) {
-        if (!util.isStringInStringList(expDir, filenames)) {
-          promises.push(
-            rimraf('files/' + expDir)
-              .then(() => {
-                console.log('> Models.cleanupOrphanedImageFiles deleted', expDir)
-              }))
-        }
-      }
-      return Promise.all(promises)
-    })
+
+  let filenames = []
+  for (let experiment of experiments) {
+    for (let image of experiment.images) {
+      let url = image.dataValues.url
+      filenames.push('files/' + url.slice(6, url.length))
+    }
+  }
+
+  for (let expDir of fs.readdirSync('files')) {
+    if (!util.isStringInStringList(expDir, filenames)) {
+      await rimraf('files/' + expDir)
+      console.log('> Models.cleanupOrphanedImageFiles deleted dir', expDir)
+    }
+  }
 }
 
+/**
+ * Key function to return imageSetId from a path name, else empty string
+ * These function should be used to allow unique imageSetIds to be
+ * extracted across the app.
+ */
 function getImageSetIdFromPath (p) {
    let tokens = path.basename(p).split('_')
    if (tokens.length > 0) {
@@ -183,9 +198,11 @@ function getImageSetIdFromPath (p) {
 
 
 /**
- * Access functions - promises that returns JSON
- * literals from the database
- **/
+ * Access functions - returns promises for JSON literals
+ * extracted from the database. These access functions
+ * provides an abstraction that insulates the database
+ * from the api
+ */
 
 // User functions
 
@@ -227,6 +244,10 @@ function fetchUser (values) {
     })
 }
 
+/**
+ * Returns a promise that returns a user literal if successful
+ * or null if unsuccessful
+ */
 function checkUserWithPassword (user, password) {
   return new Promise((resolve) => {
     bcrypt.compare(password, user.password, (err, isMatch) => {

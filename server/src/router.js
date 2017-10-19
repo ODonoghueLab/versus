@@ -13,19 +13,34 @@ const del = require('del')
 const passport = require('passport')
 const express = require('express')
 
+/**
+Main router for the Versus server. This provides the main
+interface for the RPC-JSON api architecture.
+
+As well the server provides a generic file upload/download
+that will store files directly on the server, which will be 
+available for the web-client via a get call
+*/
+
+
+// the router is defined here, and exported for the main express app
 const router = express.Router()
 module.exports = router
 
 
-/**
- * These are the rpc remote functions that take JSON object parameters
- * and return JSON objects
- */
+// the remote functions availabe for the RPC-JSON api
 const remoteRunFns = require('./handlers')
 
 
 /**
+ * This is the main interface to the JSON-RPC api. It is a post
+ * handler, where the function name and args are passed in
+ * the body as JSON. 
  *
+ * Because of the special semantics in initiating/terminating
+ * user sessions with login/logut, they are specially
+ * handled here, otherwise all functions are sent to the matching
+ * functions found in the exports of `handlers.js`.
  */
 router.post('/api/rpc-run', (req, res, next) => {
   let args = req.body.args
@@ -95,11 +110,11 @@ router.post('/api/rpc-run', (req, res, next) => {
 /**
  * Returns a file stored on the server
  */
-router.get('/file/:experimentDir/:basename', (req, res) => {
+router.get('/file/:timestampDir/:basename', (req, res) => {
   let basename = req.params.basename
-  let experimentDir = req.params.experimentDir
-  console.log('>> router.file', experimentDir, basename)
-  let filename = path.join(config.filesDir, experimentDir, basename)
+  let timestampDir = req.params.timestampDir
+  console.log('>> router.file', timestampDir, basename)
+  let filename = path.join(config.filesDir, timestampDir, basename)
   let mimeType = mime.lookup(filename)
   res.setHeader('Content-disposition', `attachment; filename=${basename}`)
   res.setHeader('Content-type', mimeType)

@@ -7,10 +7,9 @@ export default {
   /**
    * In-place deletion of item from a list. Assumes item is an object
    * and key gives the field that identifies the item
-   *
-   * @param [Array of Ojbects] aList - an array of items
-   * @param [Object] item - target item
-   * @param [str] key - field in item for identification
+   * @param [Array <obj>] aList - an array of items
+   * @param [obj] item - target item
+   * @param [string] key - field in item for identification
    */
   removeItem (aList, item, key) {
     for (let i = aList.length - 1; i >= 0; i -= 1) {
@@ -21,9 +20,9 @@ export default {
   },
 
   /**
-   * Saves
-   * @param {*} fname
-   * @param {*} obj
+   * Forces the browser to download a json file from the client
+   * @param {string} fname
+   * @param {obj} obj - data to download
    */
   downloadObject (fname, obj) {
     let s = JSON.stringify(obj, null, 2)
@@ -41,7 +40,6 @@ export default {
 
   /**
    * Returns an n-length array of v values
-   *
    * @param n
    * @param v
    * @returns {Array}
