@@ -12,21 +12,20 @@
         Welcome to Versus
       </h2>
       <p>
-        Versus is a tool for visual
-        quality analysis,
-        by allowing "participants" to
-        rank a set of images.
+        Versus is a tool to facilitate the complete
+        ranking of a set of images for visual
+        quality analysis. It is designed to work both
+        locally and with
+        <a href="https://requester.mturk.com/">Mechanical Turk</a>.
       </p>
       <p>
         Currently, we
         provide a two-alternative forced-choice (2FCA)
-        option,
-        where a set of images is ranked by
-        considering a series of comparison
+        option, whereby images a ranked via a series of comparisons
         between two images.
       </p>
       <p>
-        Repository at <a href="https://github.com/ODonoghueLab/versus">https://github.com/ODonoghueLab/versus</a>
+        Repository and further instructions at <a href="https://github.com/ODonoghueLab/versus">https://github.com/ODonoghueLab/versus</a>
       </p>
       <p>
       </p>
