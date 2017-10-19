@@ -310,15 +310,10 @@ function deleteExperiment (experimentId) {
     })
 }
 
-function fetchExperiments (userId) {
-  return Experiment
-    .findAll(
+async function fetchExperiments (userId) {
+  let experiments = await Experiment.findAll(
       {include: [{model: User, where: {id: userId}}]})
-    .then(
-      experiments => {
-        let results = _.map(experiments, unwrapInstance)
-        return results
-      })
+  return _.map(experiments, unwrapInstance)
 }
 
 // Participant functions
@@ -352,8 +347,7 @@ function createParticipant (experimentId, email) {
 }
 
 function findParticipant (participateId) {
-  return Participant
-    .findOne({where: {participateId}})
+  return Participant.findOne({where: {participateId}})
 }
 
 function fetchParticipant (participateId) {
@@ -373,6 +367,14 @@ function saveParticipant (participateId, values) {
     })
 }
 
+/**
+ * Saves attributes into the attr JSON field, being careful not to
+ * overwrite other fields in the attr JSON structure
+ *
+ * @param participateId
+ * @param newAttr
+ * @returns {Promise.<TResult>|*}
+ */
 function saveParticipantAttr (participateId, newAttr) {
   return findParticipant(participateId)
     .then(participant => {
@@ -395,9 +397,9 @@ function saveParticipantAttr (participateId, newAttr) {
 /**
  * Module Initialization on startup
  */
-function init() {
-  cleanupImages()
-    .then(() => console.log('> Models.init done'))
+async function init() {
+  await cleanupImages()
+  console.log('> Models.init done')
 }
 
 init()

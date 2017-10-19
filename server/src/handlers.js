@@ -15,7 +15,7 @@ function isStatesDone (states) {
 }
 
 
-function getUnfinishedState (states) {
+function getRandomUnfinishedState (states) {
   let choices = []
   for (let [id, state] of _.toPairs(states)) {
     if (!tree.isDone(state)) {
@@ -29,21 +29,20 @@ function getUnfinishedState (states) {
 }
 
 
-function getStatesParams (states) {
+function getParams (imageSizes, probRepeat) {
   let params = {
     nImage: 0,
     maxComparisons: 0,
     nRepeat: 0
   }
-  for (let state of _.values(states)) {
-    let n = state.imageUrls.length
+  for (let n of imageSizes) {
     let maxComparisons = Math.ceil(n * Math.log2(n))
-    let nRepeat = Math.ceil(state.probRepeat * maxComparisons)
+    let nRepeat = Math.ceil(probRepeat * maxComparisons)
     params.nImage += n
     params.maxComparisons += maxComparisons
     params.nRepeat += nRepeat
   }
-  return {params, new: true}
+  return params
 }
 
 
@@ -56,7 +55,12 @@ function getNextComparison (participateId) {
         .then(experiment => {
           if (participant.attr.user === null) {
             console.log('>> handlers.getComparison no user found')
-            return getStatesParams (participant.states)
+            let imageSizes = _.map(
+              _.values(participant.states),
+              s => s.imageUrls.length)
+            let params = getParams(imageSizes, tree.probRepeat)
+            let payload = {params, new: true}
+            return payload
           }
           if (isStatesDone(participant.states)) {
             let attr = participant.attr
@@ -72,7 +76,7 @@ function getNextComparison (participateId) {
                 return {done: true, surveyCode: attr.surveyCode}
               })
           } else {
-            const state = getUnfinishedState(participant.states)
+            const state = getRandomUnfinishedState(participant.states)
             const comparison = tree.getComparison(state)
             let payload = {
               comparison,
@@ -194,13 +198,9 @@ module.exports = {
       })
   },
 
-  publicInviteParticipant (experimentId, email) {
-    return models
-      .createParticipant(
-        experimentId, email)
-      .then((participant) => {
-        return {participant}
-      })
+  async publicInviteParticipant (experimentId, email) {
+    let participant = await models.createParticipant(experimentId, email)
+    return {participant}
   },
 
   deleteParticipant (participantId) {
@@ -218,25 +218,22 @@ module.exports = {
     return getNextComparison(participateId)
   },
 
-  publicChooseItem (participateId, comparison) {
-    return models
-      .fetchParticipant(participateId)
-      .then(participant => {
-        return models
-          .fetchExperiment(participant.ExperimentId)
-          .then(experiment => {
-            let urlA = comparison.itemA.url
-            let imageSetId = models.getImageSetIdFromPath(urlA)
-            let states = participant.states
-            let state = states[imageSetId]
-            tree.makeChoice(state, comparison)
-            return models
-              .saveParticipant(participateId, {states})
-              .then(() => {
-                return getNextComparison(participateId)
-              })
-          })
-      })
+  async publicChooseItem (participateId, comparison) {
+    let participant = await models.fetchParticipant(
+      participateId)
+
+    let experiment = await models.fetchExperiment(
+      participant.ExperimentId)
+
+    let urlA = comparison.itemA.url
+    let imageSetId = models.getImageSetIdFromPath(urlA)
+    let states = participant.states
+    let state = states[imageSetId]
+    tree.makeChoice(state, comparison)
+
+    await models.saveParticipant(participateId, {states})
+
+    return getNextComparison(participateId)
   },
 
   publicSaveParticipantUserDetails (participateId, user) {
@@ -281,16 +278,19 @@ module.exports = {
       .storeFiles(
         files, checkImageFilesForError)
       .then((paths) => {
-        imageSetIds = []
+        let imageSetIds = []
+        let nImage = {}
         for (let path of paths) {
           let imageSetId = models.getImageSetIdFromPath(path)
           if (!_.includes(imageSetIds, imageSetId)) {
             imageSetIds.push(imageSetId)
+            nImage[imageSetId] = 0
           }
+          nImage[imageSetId] += 1
         }
+        attr.params = getParams(_.values(nImage), tree.probRepeat)
         attr.imageSetIds = imageSetIds
-        console.log('>> routes.uploadImagesAndCreateExperiment imageSetIds', imageSetIds)
-        console.log('>> routes.uploadImagesAndCreateExperiment paths', paths)
+        console.log('>> routes.uploadImagesAndCreateExperiment attr', attr)
         return models
           .createExperiment(
             userId,

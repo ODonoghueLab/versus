@@ -19,6 +19,9 @@ const _ = require('lodash')
 const util = require('./util')
 
 
+let probRepeat = 0.2
+
+
 function newNode (i, iImage, left, right, parent) {
   return {i, iImage, left, right, parent}
 }
@@ -32,7 +35,6 @@ function newNode (i, iImage, left, right, parent) {
  * @returns {{imageUrls: *, nodes: [null], iNodeRoot: number, iNodeCompare: number, testImageIndices: *, iImageTest, probRepeat: number, totalRepeat: number, fractions: Array, ranks: Array, comparisons: Array, comparisonIndices: Array, repeatComparisonIndices: Array, consistencies: Array}}
  */
 function newState (imageUrls) {
-  let probRepeat = 0.2
 
   let nImage = imageUrls.length
   let maxNComparison = Math.floor(nImage * Math.log2(nImage))
@@ -436,6 +438,7 @@ function getComparison (state) {
 module.exports = {
   isDone,
   newState,
+  probRepeat,
   makeChoice,
   getComparison,
 }
