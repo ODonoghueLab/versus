@@ -168,6 +168,15 @@
 
   let preloadImages = {}
 
+  function preloadImage(url) {
+    if (!(url in preloadImages)) {
+      let img = new Image
+      img.src = config.apiUrl + url
+      preloadImages[url] = img
+      console.log('> Particpant.preloadImage', img.src)
+    }
+  }
+
   export default {
     name: 'invite',
     data() {
@@ -194,7 +203,7 @@
         .then(this.handleRes)
     },
     methods: {
-      handleRes(res) {
+      async handleRes(res) {
         console.log('>> Invite.handleRes received data', res.data)
         this.$data.start = false
         this.$data.done = false
@@ -212,14 +221,6 @@
           this.$data.nNodeTotal = res.data.nNodeTotal
           this.$data.imageB = null
           this.$data.imageA = null
-          for (let url of res.data.urls) {
-            if (!(url in preloadImages)) {
-              let img = new Image
-              img.src = config.apiUrl + url
-              preloadImages[url] = img
-              console.log('> Particpant.handleRes preload', img.src)
-            }
-          }
 
           let comparison = this.$data.comparison
           let newComparison = res.data.comparison
@@ -234,16 +235,20 @@
             }
           }
           this.$data.comparison = newComparison
+          preloadImage(newComparison.itemA.url)
+          preloadImage(newComparison.itemB.url)
 
-          delay (200)
-            .then(() => {
+          await delay (200)
 
-              this.$data.imageA = this.getImageUrl(newComparison.itemA)
-              this.$data.loadingA = false
+          this.$data.imageA = this.getImageUrl(newComparison.itemA)
+          this.$data.loadingA = false
 
-              this.$data.imageB = this.getImageUrl(newComparison.itemB)
-              this.$data.loadingB = false
-            })
+          this.$data.imageB = this.getImageUrl(newComparison.itemB)
+          this.$data.loadingB = false
+
+          for (let url of res.data.urls) {
+            preloadImage(url)
+          }
 
         }
       },
