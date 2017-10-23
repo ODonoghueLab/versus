@@ -217,6 +217,7 @@
               let img = new Image
               img.src = config.apiUrl + url
               preloadImages[url] = img
+              console.log('> Particpant.handleRes preload', img.src)
             }
           }
 
