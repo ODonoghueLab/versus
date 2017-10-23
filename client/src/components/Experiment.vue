@@ -1,6 +1,6 @@
 <template>
   <div
-    style="
+      style="
       padding-left: 1em;
       padding-right: 1em;">
 
@@ -16,8 +16,8 @@
 
 
     <md-whiteframe
-      v-if="experiment.attr"
-      style="
+        v-if="experiment.attr"
+        style="
         padding: 1em;
         margin-bottom: 1em">
 
@@ -49,7 +49,7 @@
 
 
     <md-whiteframe
-      style="
+        style="
         padding: 1em;
         margin-bottom: 1em">
 
@@ -125,7 +125,7 @@
 
 
     <md-whiteframe
-      style="
+        style="
         padding: 1em;
         margin-bottom: 1em">
 
@@ -173,25 +173,24 @@
   import rpc from '../modules/rpc'
 
   // https://appendto.com/2017/04/use-javascript-to-export-your-data-as-csv/
-  function downloadCSV(csv, filename) {
-      var data, filename, link;
+  function downloadCSV (csv, filename) {
+    filename = filename || 'export.csv'
 
-      if (csv == null) return;
+    if (csv === null) {
+      return
+    }
+    if (!csv.match(/^data:text\/csv/i)) {
+      csv = 'data:text/csv;charset=utf-8,' + csv
+    }
+    let data = encodeURI(csv)
 
-      filename = filename || 'export.csv';
-
-      if (!csv.match(/^data:text\/csv/i)) {
-          csv = 'data:text/csv;charset=utf-8,' + csv;
-      }
-      data = encodeURI(csv);
-
-      link = document.createElement('a');
-      link.setAttribute('href', data);
-      link.setAttribute('download', filename);
-      link.click();
+    let link = document.createElement('a')
+    link.setAttribute('href', data)
+    link.setAttribute('download', filename)
+    link.click()
   }
 
-  function downloadResults(experiment) {
+  function makeResultCsv (experiment) {
 
     let isFoundHeader = false
     let imageSet = {}
@@ -213,7 +212,7 @@
           })
         }
         isFoundHeader = true
-        console.log('> downloadResults header', headerRow)
+        console.log('> makeResultCsv header', headerRow)
       }
 
       let row = [participant.participateId, participant.attr.surveyCode]
@@ -228,7 +227,7 @@
         row = _.concat(row, thisRow)
       }
 
-      console.log('> donwloadResults row', row)
+      console.log('> makeResultCsv row', row)
 
       rows.push(row)
     }
@@ -238,7 +237,8 @@
     for (let row of rows) {
       result += row.join(',') + '\n'
     }
-    downloadCSV(result, 'results.csv')
+
+    return result
   }
 
   export default {
@@ -299,7 +299,8 @@
         return path.basename(url)
       },
       downloadResults () {
-        downloadResults(this.$data.experiment)
+        let csv = makeResultCsv(this.$data.experiment)
+        downloadCSV(csv, 'results.csv')
       },
       reformatDate (participant, key) {
         if (key in participant) {

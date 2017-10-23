@@ -1,6 +1,6 @@
 /**
  * @fileoverview Implementation of the binary-tree method for
- * efficient paired comparions "Efficient method
+ * efficient paired comparisons "Efficient method
  * for paired comparison", Silverstein & Farrell
  * Journal of Electronic Imaging (2001) 10(2), 394–398
  *
@@ -39,8 +39,8 @@ function newNode (i, iImage, left, right, parent) {
 /**
  * Initialize the binary choice tree with all associated parameters
  * required to keep track of the tree, repeats and user statistics
- * @param imageUrls
- * @returns {ob} State of the binary-choice-tree
+ * @param {Array<String>} imageUrls
+ * @returns {Object} State of the binary-choice-tree
  */
 function newState (imageUrls) {
 
@@ -84,10 +84,10 @@ function newState (imageUrls) {
 /**
  * Creates a comparison data structure that will be sent to
  * web-client and stored in a state
- * @param {obj} state
+ * @param {Object} state
  * @param {Number} iImageA
  * @param {Number} iImageB
- * @returns {obj} comparison
+ * @returns {Object} comparison
  */
 function makeComparison (state, iImageA, iImageB) {
   return {
@@ -108,7 +108,7 @@ function makeComparison (state, iImageA, iImageB) {
  * Sorts the nodes into an ordered list based on
  * the position in the binary tree with left-most
  * first
- * @param {obj State JSON literal
+ * @param {Object} state - JSON literal
  * @returns {Array} of nodes sorted in order
  */
 function getOrderedNodeList (state) {
@@ -130,10 +130,12 @@ function getOrderedNodeList (state) {
 /**
  * Balances the binary tree represented by the order of
  * the sorted nodes and returns the root node of the
- * new tree
+ * new tree. Balancing the tree involves setting up
+ * the appropriate left/right children and parent pointers
+ * where the root node's parent is null
  *
- * @param {Array} of sorted nodes
- * @returns {obj} the root node of the re-balanced tree
+ * @param {Array<Node>} sortedNodes - sorted nodes
+ * @returns {Object} the root node of the re-balanced tree
  */
 function balanceSubTree (sortedNodes) {
   const nNode = sortedNodes.length
@@ -167,12 +169,13 @@ function balanceSubTree (sortedNodes) {
 
 /**
  * Creates a new node based on the current image being tested
- * @param {obj} state
+ * @param {Object} state
  * @returns {Number} index to the new node in state
  */
 function insertNewNode (state) {
   let iNewNode = state.nodes.length
-  let node = newNode(iNewNode, state.iImageTest, null, null, state.iNodeCompare)
+  let node = newNode(
+    iNewNode, state.iImageTest, null, null, state.iNodeCompare)
   state.nodes.push(node)
   return iNewNode
 }
@@ -214,12 +217,12 @@ function setNextRepeatComparison (state) {
 
 
 /**
- * Checks for the consistency of the binary tree in terms of
- * 1. one root node
+ * Checks the consistency of the binary tree in terms of
+ * 1. one root node;
  * 2. parent indices match
  * 3. children indices match
  *
- * @param {array} of nodes as defined in newNode()
+ * @param {array<node>} nodes as defined in newNode()
  * @returns {boolean} true if binary tree is consistent
  */
 function checkNodes (nodes) {
@@ -334,7 +337,7 @@ function isAllRepeatComparisonsMade (state) {
 /**
  * Checks that the choices in each individual comparison are
  * consistent with the final sorted list generated from the binary tree
- * @param {obj} state - the binary tree state
+ * @param {Object} state - the binary tree state
  * @returns {boolean} - true if comparisons are consistent
  */
 function checkComparisons (state) {

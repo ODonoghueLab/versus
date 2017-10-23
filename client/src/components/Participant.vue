@@ -74,7 +74,9 @@
                 <md-button
                     class="choice"
                     @click="choose(comparison.itemA)">
-                  <md-image :md-src="imageA"></md-image>
+                  <div id="img-a">
+                    <md-image :md-src="imageA"></md-image>
+                  </div>
                   <div style="width: 100%; text-align: center; color: #DDD">
                     {{comparison.itemA.value}}
                   </div>
@@ -92,7 +94,9 @@
                 <md-button
                     @click="choose(comparison.itemB)"
                     class="choice">
-                  <md-image :md-src="imageB"></md-image>
+                  <div id="img-b">
+                    <md-image :md-src="imageB"></md-image>
+                  </div>
                   <div style="width: 100%; text-align: center; color: #DDD">
                     {{comparison.itemB.value}}
                   </div>
@@ -110,6 +114,15 @@
             repeat
             <br>
           </md-layout>
+
+          <md-layout
+              md-align="center"
+              style="padding-top: 1em;"
+              md-flex="100">
+            Images ranked: {{ nNodeTotal }} / {{ nImageTotal }}
+            <br>
+          </md-layout>
+
         </div>
 
         <div v-else>
@@ -142,15 +155,18 @@
 
 <script>
   import axios from 'axios'
+  import $ from 'jquery'
+
   import auth from '../modules/auth'
   import config from '../config'
   import util from '../modules/util'
   import rpc from '../modules/rpc'
 
-
   function delay (timeMs) {
     return new Promise(resolve => { setTimeout(resolve, timeMs) })
   }
+
+  let preloadImages = {}
 
   export default {
     name: 'invite',
@@ -166,6 +182,8 @@
         start: false,
         comparison: null,
         surveyCode: null,
+        nImageTotal: 0,
+        nNodeTotal: 0,
         attr: {},
       }
     },
@@ -177,7 +195,7 @@
     },
     methods: {
       handleRes(res) {
-        console.log('>> Invite.handleRes received data', util.jstr(res.data))
+        console.log('>> Invite.handleRes received data', res.data)
         this.$data.start = false
         this.$data.done = false
         if (res.data.new) {
@@ -189,6 +207,19 @@
           this.$data.done = true
           this.$data.surveyCode = res.data.surveyCode
         } else if (res.data.comparison) {
+          this.$data.attr = res.data.attr
+          this.$data.nImageTotal = res.data.nImageTotal
+          this.$data.nNodeTotal = res.data.nNodeTotal
+          this.$data.imageB = null
+          this.$data.imageA = null
+          for (let url of res.data.urls) {
+            if (!(url in preloadImages)) {
+              let img = new Image
+              img.src = config.apiUrl + url
+              preloadImages[url] = img
+            }
+          }
+
           let comparison = this.$data.comparison
           let newComparison = res.data.comparison
           console.log('>> Invite.handleRes comparison', newComparison)
@@ -202,9 +233,6 @@
             }
           }
           this.$data.comparison = newComparison
-          this.$data.attr = res.data.attr
-          this.$data.imageB = null
-          this.$data.imageA = null
 
           delay (200)
             .then(() => {
