@@ -70,13 +70,18 @@ function getParams (imageSizes, probRepeat) {
 async function getNextComparison (participateId) {
 
   let participant = await models.fetchParticipant(participateId)
+
   let states = participant.states
   let imageSizes = _.map(_.values(states), s => s.imageUrls.length)
   let nodeSetSizes = _.map(_.values(states), s => s.nodes.length)
-  let nNodeTotal = _.sum(nodeSetSizes)
-  let nImageTotal = _.sum(imageSizes)
+  let progress = {
+    nNodeTotal: _.sum(nodeSetSizes),
+    nImageTotal: _.sum(imageSizes)
+  }
+
   let experiment = await models.fetchExperiment(participant.ExperimentId)
-  const urls = _.map(experiment.images, 'url')
+  let heading = experiment.attr
+  let urls = _.map(experiment.images, 'url')
 
   let isRunning = !isStatesDone(states)
   let isUserInitialized = participant.attr.user !== null
@@ -87,12 +92,7 @@ async function getNextComparison (participateId) {
 
     const state = getRandomUnfinishedState(states)
     const comparison = tree.getComparison(state)
-    payload = {
-      comparison,
-      attr: experiment.attr,
-      urls,
-      progress: {nImageTotal, nNodeTotal}
-    }
+    payload = {comparison, urls, progress, heading}
 
   } else if (!isUserInitialized) {
 

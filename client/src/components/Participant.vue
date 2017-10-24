@@ -9,9 +9,9 @@
         You have been invited to participate in an experiment on Versus. Experiments on Versus are easy.
       </p>
       <p>
-        You will be ranking {{experimentAttr.nImage}} images,
-        with at most {{experimentAttr.maxComparisons}} image comparisons, of which
-        {{experimentAttr.nRepeat}} will be repeated in a
+        You will be ranking {{experiment.nImage}} images,
+        with at most {{experiment.maxComparisons}} image comparisons, of which
+        {{experiment.nRepeat}} will be repeated in a
         random order.
       </p>
 
@@ -54,11 +54,11 @@
       <md-layout md-align="center" v-if="comparison">
 
         <md-layout md-align="center" md-flex="100">
-          <h2 class="md-display-2"> {{titleAttr.title}} </h2>
+          <h2 class="md-display-2"> {{heading.title}} </h2>
         </md-layout>
 
         <md-layout md-align="center" md-flex="100">
-          <p> {{titleAttr.blurb}}</p>
+          <p> {{heading.blurb}}</p>
           <br>
         </md-layout>
 
@@ -75,7 +75,7 @@
                     class="choice"
                     @click="choose(comparison.itemA)">
                   <div id="img-a">
-                    <md-image :md-src="getImageUrl(comparison.itemA)"></md-image>
+                    <md-image :md-src="imageA"></md-image>
                   </div>
                   <div style="width: 100%; text-align: center; color: #DDD">
                     {{comparison.itemA.value}}
@@ -95,7 +95,7 @@
                     @click="choose(comparison.itemB)"
                     class="choice">
                   <div id="img-b">
-                    <md-image :md-src="getImageUrl(comparison.itemB)"></md-image>
+                    <md-image :md-src="imageB"></md-image>
                   </div>
                   <div style="width: 100%; text-align: center; color: #DDD">
                     {{comparison.itemB.value}}
@@ -186,11 +186,11 @@
         loadingB: false,
         imageA: null,
         imageB: null,
-        experimentAttr: null,
+        experiment: null,
         comparison: null,
         surveyCode: null,
         progress: {},
-        titleAttr: {},
+        heading: {},
       }
     },
     mounted() {
@@ -206,41 +206,47 @@
         if (res.data.new) {
           console.log('>> Invite.handleRes new')
           this.$data.status = 'start'
-          this.$data.experimentAttr = res.data.params
+          this.$data.experiment = res.data.params
         } else if (res.data.done) {
           console.log('>> Invite.handleRes done')
           this.$data.status = 'done'
           this.$data.surveyCode = res.data.surveyCode
         } else if (res.data.comparison) {
           this.$data.status = 'running'
-          this.$data.titleAttr = res.data.attr
+
+          this.$data.heading = res.data.heading
           this.$data.progress = res.data.progress
+
+          // turn off loading bars
+          this.$data.loadingA = false
+          this.$data.loadingB = false
+
+          // clear screen
           this.$data.imageB = null
           this.$data.imageA = null
 
-          let comparison = this.$data.comparison
+          let oldComparison = this.$data.comparison
           let newComparison = res.data.comparison
-          console.log('>> Invite.handleRes comparison', newComparison)
-          if (comparison) {
+          if (oldComparison) {
             // swap to match existing choices on screen
-            if ((newComparison.itemA.value == comparison.itemB.value)
-              | (newComparison.itemB.value == comparison.itemA.value)) {
+            if ((newComparison.itemA.value == oldComparison.itemB.value)
+              | (newComparison.itemB.value == oldComparison.itemA.value)) {
               let dummy = newComparison.itemA
               newComparison.itemA = newComparison.itemB
               newComparison.itemB = dummy
             }
           }
           this.$data.comparison = newComparison
+          console.log('>> Invite.handleRes comparison', newComparison)
+
           preloadImage(newComparison.itemA.url)
           preloadImage(newComparison.itemB.url)
 
+          // wait to allow screen to clear properly
           await delay (200)
 
           this.$data.imageA = this.getImageUrl(newComparison.itemA)
-          this.$data.loadingA = false
-
           this.$data.imageB = this.getImageUrl(newComparison.itemB)
-          this.$data.loadingB = false
 
           _.map(res.data.urls, preloadImage)
 
