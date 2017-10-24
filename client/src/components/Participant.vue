@@ -1,7 +1,7 @@
 <template>
   <div style="padding-left: 1em; text-align: left">
 
-    <div v-if="start">
+    <div v-if="status == 'start'">
       <h2 class="md-display-2">
         Welcome to Versus!
       </h2>
@@ -9,9 +9,9 @@
         You have been invited to participate in an experiment on Versus. Experiments on Versus are easy.
       </p>
       <p>
-        You will be ranking {{params.nImage}} images,
-        with at most {{params.maxComparisons}} image comparisons, of which
-        {{params.nRepeat}} will be repeated in a
+        You will be ranking {{experimentAttr.nImage}} images,
+        with at most {{experimentAttr.maxComparisons}} image comparisons, of which
+        {{experimentAttr.nRepeat}} will be repeated in a
         random order.
       </p>
 
@@ -31,7 +31,7 @@
       </form>
     </div>
 
-    <div v-else-if="done" class="done">
+    <div v-else-if="status == 'done'" class="done">
       <md-layout
           class="md-display-2 done"
           md-align="center"
@@ -50,15 +50,15 @@
       </md-layout>
     </div>
 
-    <div v-else>
+    <div v-else-if="status == 'running'">
       <md-layout md-align="center" v-if="comparison">
 
         <md-layout md-align="center" md-flex="100">
-          <h2 class="md-display-2"> {{attr.title}} </h2>
+          <h2 class="md-display-2"> {{titleAttr.title}} </h2>
         </md-layout>
 
         <md-layout md-align="center" md-flex="100">
-          <p> {{attr.blurb}}</p>
+          <p> {{titleAttr.blurb}}</p>
           <br>
         </md-layout>
 
@@ -75,7 +75,7 @@
                     class="choice"
                     @click="choose(comparison.itemA)">
                   <div id="img-a">
-                    <md-image :md-src="imageA"></md-image>
+                    <md-image :md-src="getImageUrl(comparison.itemA)"></md-image>
                   </div>
                   <div style="width: 100%; text-align: center; color: #DDD">
                     {{comparison.itemA.value}}
@@ -95,7 +95,7 @@
                     @click="choose(comparison.itemB)"
                     class="choice">
                   <div id="img-b">
-                    <md-image :md-src="imageB"></md-image>
+                    <md-image :md-src="getImageUrl(comparison.itemB)"></md-image>
                   </div>
                   <div style="width: 100%; text-align: center; color: #DDD">
                     {{comparison.itemB.value}}
@@ -119,14 +119,14 @@
               md-align="center"
               style="padding-top: 1em;"
               md-flex="100">
-            Images ranked: {{ nNodeTotal }} / {{ nImageTotal }}
+            Images ranked: {{ progress.nNodeTotal }} / {{ progress.nImageTotal }}
             <br>
           </md-layout>
 
         </div>
 
         <div v-else>
-          Loading images
+          Loading images...
         </div>
 
       </md-layout>
@@ -166,13 +166,13 @@
     return new Promise(resolve => { setTimeout(resolve, timeMs) })
   }
 
-  let preloadImages = {}
+  let loadedImages = {}
 
   function preloadImage(url) {
-    if (!(url in preloadImages)) {
+    if (!(url in loadedImages)) {
       let img = new Image
       img.src = config.apiUrl + url
-      preloadImages[url] = img
+      loadedImages[url] = img
       console.log('> Particpant.preloadImage', img.src)
     }
   }
@@ -181,19 +181,16 @@
     name: 'invite',
     data() {
       return {
+        status: null,
         loadingA: false,
         loadingB: false,
-        nImage: null,
         imageA: null,
         imageB: null,
-        params: null,
-        done: false,
-        start: false,
+        experimentAttr: null,
         comparison: null,
         surveyCode: null,
-        nImageTotal: 0,
-        nNodeTotal: 0,
-        attr: {},
+        progress: {},
+        titleAttr: {},
       }
     },
     mounted() {
@@ -205,20 +202,19 @@
     methods: {
       async handleRes(res) {
         console.log('>> Invite.handleRes received data', res.data)
-        this.$data.start = false
-        this.$data.done = false
+        this.$data.status = ''
         if (res.data.new) {
           console.log('>> Invite.handleRes new')
-          this.$data.start = true
-          this.$data.params = res.data.params
+          this.$data.status = 'start'
+          this.$data.experimentAttr = res.data.params
         } else if (res.data.done) {
           console.log('>> Invite.handleRes done')
-          this.$data.done = true
+          this.$data.status = 'done'
           this.$data.surveyCode = res.data.surveyCode
         } else if (res.data.comparison) {
-          this.$data.attr = res.data.attr
-          this.$data.nImageTotal = res.data.nImageTotal
-          this.$data.nNodeTotal = res.data.nNodeTotal
+          this.$data.status = 'running'
+          this.$data.titleAttr = res.data.attr
+          this.$data.progress = res.data.progress
           this.$data.imageB = null
           this.$data.imageA = null
 
@@ -246,9 +242,7 @@
           this.$data.imageB = this.getImageUrl(newComparison.itemB)
           this.$data.loadingB = false
 
-          for (let url of res.data.urls) {
-            preloadImage(url)
-          }
+          _.map(res.data.urls, preloadImage)
 
         }
       },

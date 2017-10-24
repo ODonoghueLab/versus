@@ -91,8 +91,7 @@ async function getNextComparison (participateId) {
       comparison,
       attr: experiment.attr,
       urls,
-      nImageTotal,
-      nNodeTotal
+      progress: {nImageTotal, nNodeTotal}
     }
 
   } else if (!isUserInitialized) {
