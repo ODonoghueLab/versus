@@ -155,7 +155,6 @@
 
 <script>
   import axios from 'axios'
-  import $ from 'jquery'
 
   import auth from '../modules/auth'
   import config from '../config'
@@ -201,19 +200,20 @@
     },
     methods: {
       async handleRes(res) {
-        console.log('>> Invite.handleRes received data', res.data)
         this.$data.status = ''
+
         if (res.data.new) {
           console.log('>> Invite.handleRes new')
           this.$data.status = 'start'
           this.$data.experiment = res.data.params
+
         } else if (res.data.done) {
           console.log('>> Invite.handleRes done')
           this.$data.status = 'done'
           this.$data.surveyCode = res.data.surveyCode
+
         } else if (res.data.comparison) {
           this.$data.status = 'running'
-
           this.$data.heading = res.data.heading
           this.$data.progress = res.data.progress
 
@@ -224,6 +224,8 @@
           // clear screen
           this.$data.imageB = null
           this.$data.imageA = null
+          // allow screen to clear
+          await delay(200)
 
           let oldComparison = this.$data.comparison
           let newComparison = res.data.comparison
@@ -241,9 +243,6 @@
 
           preloadImage(newComparison.itemA.url)
           preloadImage(newComparison.itemB.url)
-
-          // wait to allow screen to clear properly
-          await delay (200)
 
           this.$data.imageA = this.getImageUrl(newComparison.itemA)
           this.$data.imageB = this.getImageUrl(newComparison.itemB)

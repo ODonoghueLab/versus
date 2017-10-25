@@ -33,7 +33,7 @@
     "body-parser": "~1.15.1",
     "connect-multiparty": "^2.0.0",
     "debug": "~2.2.0",
-    "del": "*",
+    "del": "^3.0.0",
     "denodeify": "^1.2.1",
     "express": "~4.13.4",
     "express-session": "*",

@@ -429,11 +429,8 @@ function getComparison (state) {
     doRepeatComparison = true
   } else {
     if (state.iComparisonRepeat !== null) {
-
       // Here is the random probability to do a repeat
-      let rand = Math.random()
-      console.log('> tree.getComparison', rand, state.probRepeat)
-      if (rand <= state.probRepeat) {
+      if (Math.random() <= state.probRepeat) {
         doRepeatComparison = true
       }
     }

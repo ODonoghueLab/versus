@@ -1,8 +1,9 @@
 const path = require('path')
 const fs = require('fs')
+const del = require('del')
 
 const denodeify = require('denodeify')
-const rimraf = denodeify(require("rimraf"))
+const rimraf = denodeify(require('rimraf'))
 const _ = require('lodash')
 const bcrypt = require('bcryptjs')
 const Sequelize = require('sequelize')
@@ -17,22 +18,22 @@ let db = conn.db
 
 /**
 
-Definitions of the database for Versus
+ Definitions of the database for Versus
 
-Sequelize is used to interact with the database, as it is 
-quite flexible in terms of the target database. 
-Versus makes extensive use of JSON, and so, in terms of
-flexibility, sequelize-json is used to map JSON in 
-sequelize as sequelize-json works with Sqlite, Postgres, and MySQL.
-For the sequelize-json JSON fields, be sure to use updateAttributes, 
-and not update
+ Sequelize is used to interact with the database, as it is
+ quite flexible in terms of the target database.
+ Versus makes extensive use of JSON, and so, in terms of
+ flexibility, sequelize-json is used to map JSON in
+ sequelize as sequelize-json works with Sqlite, Postgres, and MySQL.
+ For the sequelize-json JSON fields, be sure to use updateAttributes,
+ and not update
 
-The database is not meant to be accessed directly by the web-handlers.
-These are meant to be accessed directly by the access functions
-defined below. These functions take JSON literals as parameters
-and returns the data in the database as JSON-literals wrapped in
-a promise.
-*/
+ The database is not meant to be accessed directly by the web-handlers.
+ These are meant to be accessed directly by the access functions
+ defined below. These functions take JSON literals as parameters
+ and returns the data in the database as JSON-literals wrapped in
+ a promise.
+ */
 
 const User = db.define('User', {
   name: Sequelize.STRING,
@@ -93,6 +94,16 @@ function unwrapInstance (instance) {
 
 // File handling functions
 
+async function rollback (uploadedFiles) {
+  for (let f of uploadedFiles) {
+    if (fs.existsSync(f.path)) {
+      console.log('>> router.rollback delete', f.path)
+      await del(f.path)
+    }
+  }
+}
+
+
 /**
  * Stores the files in a unique sub-directory on the server in the
  * directory listed in the config.js file, where the
@@ -109,62 +120,50 @@ function unwrapInstance (instance) {
  * @param checkFilesForError
  * @returns {Promise}
  */
-function storeFiles (uploadedFiles, checkFilesForError) {
+async function storeFiles (uploadedFiles, checkFilesForError) {
 
-  async function rollback () {
-    for (let f of uploadedFiles) {
-      await del(f.path)
+  try {
+    const timestampDir = String(new Date().getTime())
+    const fullDir = path.join(config.filesDir, timestampDir)
+    if (!fs.existsSync(fullDir)) {
+      fs.mkdirSync(fullDir, 0o744)
     }
-  }
-
-  return new Promise((resolve, reject) => {
-
-    const experimentDir = String(new Date().getTime())
-    const fullExperimentDir = path.join(config.filesDir, experimentDir)
-    if (!fs.existsSync(fullExperimentDir)) {
-      fs.mkdirSync(fullExperimentDir, 0o744)
-    }
-
-    const inputPaths = []
-    const targetPaths = []
 
     let error = checkFilesForError(uploadedFiles)
-
     if (error) {
-      rollback()
-    } else {
-      for (let file of uploadedFiles) {
-        inputPaths.push(file.path)
-        let basename = path.basename(file.originalname)
-        let targetPath = path.join(experimentDir, basename)
-        targetPaths.push(targetPath)
-        let fullTargetPath = path.join(config.filesDir, targetPath)
-        try {
-          console.log(`>> router.storeFiles ${targetPath}`)
-          fs.renameSync(file.path, fullTargetPath)
-        } catch (err) {
-          error = err
-          rollback()
-          break
-        }
-      }
+      throw new Error(error)
     }
 
-    if (error) {
-      reject(error)
-    } else {
-      resolve(targetPaths)
+    let targetPaths = []
+    for (let file of uploadedFiles) {
+      let basename = path.basename(file.originalname)
+      let targetPath = path.join(timestampDir, basename)
+      targetPaths.push(targetPath)
+
+      let fullTargetPath = path.join(config.filesDir, targetPath)
+      fs.renameSync(file.path, fullTargetPath)
+
+      console.log(`>> router.storeFiles ${targetPath}`)
     }
-  })
+
+    return targetPaths
+
+  } catch (error) {
+
+    console.log('>> router.storeFiles error:', error)
+    await rollback(uploadedFiles)
+    throw error
+
+  }
 }
 
-/** 
+/**
  * Checks files stored on server against the database
  * and deletes any files that are not matched with database entries
  */
-async function cleanupImages() {
+async function cleanupImages () {
   let experiments = await Experiment.findAll(
-      {include: [{model: Image, as: 'images'}]})
+    {include: [{model: Image, as: 'images'}]})
 
   let filenames = []
   for (let experiment of experiments) {
@@ -188,12 +187,12 @@ async function cleanupImages() {
  * extracted across the app.
  */
 function getImageSetIdFromPath (p) {
-   let tokens = path.basename(p).split('_')
-   if (tokens.length > 0) {
-     return tokens[0]
-   } else {
-     return ''
-   }
+  let tokens = path.basename(p).split('_')
+  if (tokens.length > 0) {
+    return tokens[0]
+  } else {
+    return ''
+  }
 }
 
 
@@ -264,38 +263,17 @@ function checkUserWithPassword (user, password) {
 
 // Experiment functions
 
-function createExperiment (userId, attr, imageUrls) {
+async function createExperiment (userId, attr, imageUrls) {
   console.log('> models.createExperiment')
-  return new Promise((resolve, reject) => {
-    Experiment
-      .create({attr})
-      .then((experiment) => {
-        let chainedPromise = null
-        for (let url of imageUrls) {
-          let promise = Image
-            .create({url})
-            .then(image => {
-              experiment.addImage(image)
-            })
-          if (chainedPromise === null) {
-            chainedPromise = promise
-          } else {
-            chainedPromise = chainedPromise.then(() => promise)
-          }
-        }
-        chainedPromise
-          .then(() => {
-            experiment
-              .addUser(userId, {permission: 0})
-              .then(() => {
-                let result = unwrapInstance(experiment)
-                console.log('> models.createExperiment ready to resolve', result)
-                resolve(result)
-              })
-          })
-          .catch(reject)
-      })
-  })
+  let experiment = await Experiment.create({attr})
+  for (let url of imageUrls) {
+    let image = await Image.create({url})
+    await experiment.addImage(image)
+  }
+  await experiment.addUser(userId, {permission: 0})
+  let result = unwrapInstance(experiment)
+  console.log('> models.createExperiment', result)
+  return result
 }
 
 function findExperiment (experimentId) {
@@ -333,38 +311,34 @@ function deleteExperiment (experimentId) {
 
 async function fetchExperiments (userId) {
   let experiments = await Experiment.findAll(
-      {include: [{model: User, where: {id: userId}}]})
+    {include: [{model: User, where: {id: userId}}]})
   return _.map(experiments, unwrapInstance)
 }
 
 // Participant functions
 
-function createParticipant (experimentId, email) {
-  return findExperiment(experimentId)
-    .then(experiment => {
-      const images = experiment.images
-      const urls = _.map(images, 'url')
-      let states = {}
-      for (let imageSetId of experiment.attr.imageSetIds) {
-        let theseUrls = _.filter(urls, u => _.includes(u, imageSetId))
-        states[imageSetId] = tree.newState(theseUrls)
-      }
-      const state = tree.newState(urls)
-      return Participant
-        .create(
-          {attr: { email: email, user: null }, state, states})
-        .then((participant) => {
-          let result = unwrapInstance(participant)
-          for (let [imageSetId, state] of _.toPairs(result.states)) {
-            console.log('> models.createParticipant', imageSetId, state.imageUrls)
-          }
-          return experiment
-            .addParticipant(participant)
-            .then(() => {
-              return unwrapInstance(participant)
-            })
-        })
-    })
+async function createParticipant (experimentId, email) {
+  let experiment = await findExperiment(experimentId)
+
+  const images = experiment.images
+  const urls = _.map(images, 'url')
+  let states = {}
+  for (let imageSetId of experiment.attr.imageSetIds) {
+    let theseUrls = _.filter(urls, u => _.includes(u, imageSetId))
+    states[imageSetId] = tree.newState(theseUrls)
+  }
+  const state = tree.newState(urls)
+
+  let participant = await Participant.create(
+      {attr: {email: email, user: null}, state, states})
+
+  await experiment.addParticipant(participant)
+
+  let result = unwrapInstance(participant)
+  for (let [imageSetId, state] of _.toPairs(result.states)) {
+    console.log('> models.createParticipant', imageSetId, state.imageUrls)
+  }
+  return result
 }
 
 function findParticipant (participateId) {
@@ -392,33 +366,31 @@ function saveParticipant (participateId, values) {
  * Saves attributes into the attr JSON field, being careful not to
  * overwrite other fields in the attr JSON structure
  *
- * @param participateId
- * @param newAttr
- * @returns {Promise.<TResult>|*}
+ * @param {String} participateId
+ * @param {Object} newAttr
+ * @returns {Promise.<Object>}
  */
-function saveParticipantAttr (participateId, newAttr) {
-  return findParticipant(participateId)
-    .then(participant => {
-      let attr = unwrapInstance(participant).attr
-      for (let key of _.keys(attr)) {
-        attr[key] = newAttr[key]
-      }
-      return participant
-        .updateAttributes({attr})
-        .then(participant => {
-          let payload = unwrapInstance(participant)
-          for (let key of _.keys(payload.attr)) {
-            console.log('> saveParticipant payload key', key, payload.attr[key])
-          }
-          return payload
-        })
-    })
+async function saveParticipantAttr (participateId, newAttr) {
+  let participant = await findParticipant(participateId)
+
+  let attr = unwrapInstance(participant).attr
+  for (let key of _.keys(attr)) {
+    attr[key] = newAttr[key]
+  }
+
+  participant = await participant.updateAttributes({attr})
+
+  let payload = unwrapInstance(participant)
+  for (let key of _.keys(payload.attr)) {
+    console.log('> saveParticipant payload key', key, payload.attr[key])
+  }
+  return payload
 }
 
 /**
  * Module Initialization on startup
  */
-async function init() {
+async function init () {
   await cleanupImages()
   console.log('> Models.init done')
 }

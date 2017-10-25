@@ -51,9 +51,14 @@ export default {
 
   update (editUser) {
     let payload = _.cloneDeep(editUser)
-    payload.password = hashPassword(payload.password)
-    payload.passwordv = hashPassword(payload.passwordv)
-    console.log('>> auth.update', payload)
+    if ('password' in payload) {
+      payload.password = hashPassword(payload.password)
+    }
+    if ('passwordv' in payload) {
+      payload.passwordv = hashPassword(payload.passwordv)
+    }
+    payload.id = user.id
+    console.log('>> auth.update', editUser, payload)
     return rpc
       .rpcRun('updateUser', payload)
       .then(res => {

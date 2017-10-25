@@ -66,7 +66,7 @@ export default {
       passwordv: '',
       errors: []
     })
-    console.log('>> EditUser.data', payload)
+    console.log('>> EditUser.data', util.jstr(payload))
     return payload
   },
   methods: {

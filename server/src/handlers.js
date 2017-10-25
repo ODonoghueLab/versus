@@ -146,8 +146,8 @@ function checkImageFilesForError (files) {
 
 module.exports = {
 
-  publicRegisterUser (user) {
-    return new Promise(resolve => {
+  async publicRegisterUser (user) {
+    try {
       const keys = ['name', 'email', 'password', 'passwordv']
 
       let errors = []
@@ -171,28 +171,28 @@ module.exports = {
       }
 
       if (errors.length > 0) {
-        resolve({
+        return {
           success: false,
           errors: errors
-        })
+        }
       } else {
-        models
-          .createUser(values)
-          .then(() => {
-            resolve({success: true})
-          })
-          .catch(err => {
-            resolve({
-              success: false,
-              errors: ['Couldn\' register, is your email already in use?']
-            })
-          })
+        await models.createUser(values)
+        return {success: true}
       }
-    })
+
+    } catch(error) {
+
+      return {
+        success: false,
+        errors: ['Couldn\'t register, is your email already in use?']
+      }
+
+    }
   },
 
-  updateUser (user) {
-    return new Promise((resolve) => {
+  async updateUser (user) {
+    try {
+
       const keys = ['id', 'name', 'email', 'password']
       let values = {}
       for (let key of keys) {
@@ -200,24 +200,27 @@ module.exports = {
           values[key] = user[key]
         }
       }
-      if (values) {
-        models
-          .updateUser(values)
-          .then(user => {
-            console.log('>> router.updateUser success', values, user)
-            resolve({success: true})
-          })
-          .catch(err => {
-            console.log(`>> router.updateUser error`, err)
-            resolve({
-              success: false,
-              errors: ['Couldn\' register, is your email already in use?']
-            })
-          })
-      } else {
-        resolve({success: false})
+
+      if (!values) {
+        return {
+          sucess: false,
+          errors: ['No values to update']
+        }
       }
-    })
+
+      let updatedUser = await models.updateUser(values)
+      console.log('>> router.updateUser success', values, updatedUser)
+      return {success: true}
+
+    } catch(err) {
+
+      console.log(`>> router.updateUser error`, err)
+      return {
+        success: false,
+        errors: ['Couldn\'t update' + err]
+      }
+
+    }
   },
 
   getExperiments (userId) {
@@ -299,38 +302,41 @@ module.exports = {
       })
   },
 
-  // Upload functions - first parameter is always a filelist object
+  /**
+   * Upload functions - first parameter is always a filelist object
+   */
+  async uploadImagesAndCreateExperiment (files, userId, attr) {
+    try {
+      let paths = await models.storeFiles(files, checkImageFilesForError)
 
-  uploadImagesAndCreateExperiment (files, userId, attr) {
-    return models
-      .storeFiles(
-        files, checkImageFilesForError)
-      .then((paths) => {
-        let imageSetIds = []
-        let nImage = {}
-        for (let path of paths) {
-          let imageSetId = models.getImageSetIdFromPath(path)
-          if (!_.includes(imageSetIds, imageSetId)) {
-            imageSetIds.push(imageSetId)
-            nImage[imageSetId] = 0
-          }
-          nImage[imageSetId] += 1
+      let imageSetIds = []
+      let nImage = {}
+      for (let path of paths) {
+        let imageSetId = models.getImageSetIdFromPath(path)
+        if (!_.includes(imageSetIds, imageSetId)) {
+          imageSetIds.push(imageSetId)
+          nImage[imageSetId] = 0
         }
-        attr.params = getParams(_.values(nImage), tree.probRepeat)
-        attr.imageSetIds = imageSetIds
-        console.log('>> routes.uploadImagesAndCreateExperiment attr', attr)
-        let urls = _.map(paths, f => '/file/' + f)
-        return models
-          .createExperiment(
-            userId, attr, urls)
-          .then(experiment => {
-            console.log('> routers.uploadImagesAndCreateExperiment output', experiment)
-            return {
-              success: true,
-              experimentId: experiment.id
-            }
-          })
-      })
+        nImage[imageSetId] += 1
+      }
+      attr.params = getParams(_.values(nImage), tree.probRepeat)
+      attr.imageSetIds = imageSetIds
+      console.log('>> routes.uploadImagesAndCreateExperiment attr', attr)
+
+      let urls = _.map(paths, f => '/file/' + f)
+
+      let experiment = await models.createExperiment(userId, attr, urls)
+      console.log(
+        '> routers.uploadImagesAndCreateExperiment output', experiment)
+      return {
+        success: true,
+        experimentId: experiment.id
+      }
+    } catch(error) {
+      return {
+        success: false
+      }
+    }
   }
 }
 

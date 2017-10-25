@@ -250,45 +250,39 @@
         imageSetIds: [],
       }
     },
-    mounted () {
+    async mounted () {
       let experimentId = this.$route.params.experimentId
-      rpc
-        .rpcRun('getExperiment', experimentId)
-        .then((res) => {
-          let experiment = res.data.experiment
-          let urls = _.map(experiment.images, i => i.url)
+      let res = await rpc.rpcRun('getExperiment', experimentId)
 
-          let images = {}
-          let imageSetIds = experiment.attr.imageSetIds
-          this.$data.imageSetIds = imageSetIds
+      let experiment = res.data.experiment
+      let urls = _.map(experiment.images, i => i.url)
+      this.$data.experiment = experiment
 
-          console.log('> Experiment.mounted imageSetIds', imageSetIds)
-          for (let imageSetId of experiment.attr.imageSetIds) {
-            images[imageSetId] = _.filter(
-              urls, u => _.includes(u, imageSetId))
-          }
-          console.log('> Experiment.mounted images', images)
+      let imageSetIds = experiment.attr.imageSetIds
+      this.$data.imageSetIds = imageSetIds
+      console.log('> Experiment.mounted imageSetIds', imageSetIds)
 
-          let participants = experiment.participants
-          for (let participant of participants) {
-            participant.consistency = 0
-            participant.nComparisonDone = 0
-            participant.nRepeatTotal = 0
-            for (let state of _.values(participant.states)) {
-//              console.log('> Experiment.init state', util.jstr(state))
-              participant.nRepeatTotal += state.consistencies.length
-              participant.consistency += _.sum(state.consistencies)
-              participant.nComparisonDone += state.comparisons.length
-            }
-          }
-          console.log('> Experiment.mounted participants', participants)
+      let images = {}
+      for (let imageSetId of experiment.attr.imageSetIds) {
+        let containsSetId = u => _.includes(u, imageSetId)
+        images[imageSetId] = _.filter(urls, containsSetId)
+      }
+      console.log('> Experiment.mounted images', images)
+      this.$data.images = images
 
-          this.$data.experiment = experiment
-
-          this.$data.images = images
-
-        })
-
+      // calculate consistencies
+      let participants = experiment.participants
+      for (let participant of participants) {
+        participant.consistency = 0
+        participant.nComparisonDone = 0
+        participant.nRepeatTotal = 0
+        for (let state of _.values(participant.states)) {
+          participant.nRepeatTotal += state.consistencies.length
+          participant.consistency += _.sum(state.consistencies)
+          participant.nComparisonDone += state.comparisons.length
+        }
+      }
+      console.log('> Experiment.mounted participants', participants)
     },
 
     methods: {
