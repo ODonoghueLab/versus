@@ -391,6 +391,7 @@ async function saveParticipantAttr (participateId, newAttr) {
  * Module Initialization on startup
  */
 async function init () {
+  await db.sync()
   await cleanupImages()
   console.log('> Models.init done')
 }

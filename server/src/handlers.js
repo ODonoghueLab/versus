@@ -190,6 +190,13 @@ module.exports = {
     }
   },
 
+  /**
+   * Updates user where the id field is used to identify the user.
+   * Without the id set, the user will not be able to be retrieved
+   * from the database
+   * @param {Object} user
+   * @returns {Promise.<Object>}
+   */
   async updateUser (user) {
     try {
 
@@ -304,9 +311,15 @@ module.exports = {
 
   /**
    * Upload functions - first parameter is always a filelist object
+   * This is meant to be called by
+   *   `rpc.upload('uploadImagesAndCreateExperiment', userId, attr)`
+   * @param {Array<File>} files - a browser filelist object
+   * @param {String} userId
+   * @param {Object} attr
    */
   async uploadImagesAndCreateExperiment (files, userId, attr) {
     try {
+
       let paths = await models.storeFiles(files, checkImageFilesForError)
 
       let imageSetIds = []
@@ -332,10 +345,11 @@ module.exports = {
         success: true,
         experimentId: experiment.id
       }
+
     } catch(error) {
-      return {
-        success: false
-      }
+
+      return {success: false}
+
     }
   }
 }
