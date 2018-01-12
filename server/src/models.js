@@ -41,11 +41,6 @@ const User = db.define('User', {
   password: Sequelize.STRING
 })
 
-// Passwords are salted
-User.beforeValidate((user) => {
-  user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10))
-})
-
 const Image = db.define('Image', {
   url: Sequelize.STRING,
   filename: Sequelize.STRING
@@ -206,6 +201,8 @@ function getImageSetIdFromPath (p) {
 // User functions
 
 function createUser (values) {
+  console.log('models.createUser salt password', values.password)
+  values.password = bcrypt.hashSync(values.password, bcrypt.genSaltSync(10))
   return User
     .findOne({where: {id: values.id}})
     .then(user => {
@@ -222,6 +219,10 @@ function createUser (values) {
 }
 
 function updateUser (values) {
+  if (values.password) {
+    console.log('models.updateUser salt password', values.password)
+    values.password = bcrypt.hashSync(values.password, bcrypt.genSaltSync(10))
+  }
   return User
     .findOne({where: {id: values.id}})
     .then(user => {

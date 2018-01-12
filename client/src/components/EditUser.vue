@@ -39,12 +39,8 @@
       <md-button type="submit" class="md-raised md-primary">
         Update
       </md-button>
-      <div v-if="errors.length" class="card error">
-        <ul>
-          <li v-for="err in errors">
-            {{ err }}
-          </li>
-        </ul>
+      <div v-if="msg" class="card error">
+        {{ msg }}
       </div>
     </form>
   </div>
@@ -63,7 +59,7 @@
         title: 'Edit Your Details',
         rawPassword: '',
         rawPasswordConfirm: '',
-        errors: []
+        msg: ''
       })
       console.log('> EditUser.data', util.jstr(payload))
       return payload
@@ -78,25 +74,19 @@
             payload[key] = this.$data[key]
           }
         }
-        console.log('> EditUser.submit', util.jstr(payload))
 
         let res = await auth.update(payload)
 
         if (res.data.success) {
 
-          console.log('> Register.submit success: login')
-          await auth.login({
-            email: payload.email,
-            password: payload.password
-          })
-          this.$data.errors = ['success']
+          this.$data.msg = 'success'
           this.$router.push('/experiments')
 
         } else {
 
           console.log('> EditUser.submit fail')
           if (res.data.errors) {
-            this.$data.errors = res.data.errors
+            this.$data.msg = res.data.errors
           }
 
         }

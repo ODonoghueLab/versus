@@ -63,7 +63,7 @@ export default {
 
   update (editUser) {
     let payload = hashUserPassword(editUser)
-    console.log('> auth.update', payload)
+    console.log('> auth.update', util.jstr(payload))
     return rpc
       .rpcRun('updateUser', payload)
       .then(res => {
