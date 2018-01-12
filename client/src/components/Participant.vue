@@ -31,7 +31,7 @@
       </form>
     </div>
 
-    <div v-else-if="status == 'done'" class="done">
+    <div v-else-if="status === 'done'" class="done">
       <md-layout
           class="md-display-2 done"
           md-align="center"
@@ -50,7 +50,7 @@
       </md-layout>
     </div>
 
-    <div v-else-if="status == 'running'">
+    <div v-else-if="status === 'running'">
       <md-layout md-align="center" v-if="comparison">
 
         <md-layout md-align="center" md-flex="100">
@@ -203,12 +203,12 @@
         this.$data.status = ''
 
         if (res.data.new) {
-          console.log('>> Invite.handleRes new')
+          console.log('> Invite.handleRes new')
           this.$data.status = 'start'
           this.$data.experiment = res.data.params
 
         } else if (res.data.done) {
-          console.log('>> Invite.handleRes done')
+          console.log('> Invite.handleRes done')
           this.$data.status = 'done'
           this.$data.surveyCode = res.data.surveyCode
 
@@ -239,7 +239,7 @@
             }
           }
           this.$data.comparison = newComparison
-          console.log('>> Invite.handleRes comparison', newComparison)
+          console.log('> Invite.handleRes comparison', newComparison)
 
           preloadImage(newComparison.itemA.url)
           preloadImage(newComparison.itemB.url)

@@ -24,7 +24,7 @@
         <label>Password</label>
         <md-input
             type='password'
-            v-model='password'
+            v-model='rawPassword'
             placeholder='Password'>
         </md-input>
       </md-input-container>
@@ -32,7 +32,7 @@
         <label>Confirm Password</label>
         <md-input
             type='password'
-            v-model='passwordv'
+            v-model='rawPasswordConfirm'
             placeholder='Confirm Password'>
         </md-input>
       </md-input-container>
@@ -51,8 +51,7 @@
 </template>
 
 <script>
-import axios from 'axios'
-import Router from 'vue-router'
+
 import auth from '../modules/auth'
 
 export default {
@@ -62,8 +61,8 @@ export default {
       title: 'Please register to Versus',
       name: '',
       email: '',
-      password: '',
-      passwordv: '',
+      rawPassword: '',
+      rawPasswordConfirm: '',
       user: auth.user,
       errors: []
     }
@@ -73,20 +72,20 @@ export default {
       let payload = {
         name: this.$data.name,
         email: this.$data.email,
-        password: this.$data.password,
-        passwordv: this.$data.password
+        rawPassword: this.$data.rawPassword,
+        rawPasswordConfirm: this.$data.rawPasswordConfirm
       }
       auth
         .register(payload)
         .then((res) => {
           if (res.data.success) {
-            console.log('>> Register.submit success: login')
+            console.log('> Register.submit success: login')
             return auth.login({
               email: payload.email,
-              password: payload.password
+              rawPassword: payload.rawPassword
             })
           } else {
-            console.log('>> Register.submit fail', res.data)
+            console.log('> Register.submit fail', res.data)
             this.$data.errors = res.data.errors
             return { data: { success: false } }
           }

@@ -22,7 +22,7 @@
         <label>Password</label>
         <md-input
             type='password'
-            v-model='password'
+            v-model='rawPassword'
             placeholder='Password'>
         </md-input>
       </md-input-container>
@@ -49,8 +49,6 @@
 </template>
 
 <script>
-  import axios from 'axios'
-  import Router from 'vue-router'
   import auth from '../modules/auth'
 
   export default {
@@ -59,7 +57,7 @@
       return {
         title: 'Login to Versus',
         email: '',
-        password: '',
+        rawPassword: '',
         msg: ''
       }
     },
@@ -67,9 +65,9 @@
       submit(e) {
         let payload = {
           email: this.$data.email,
-          password: this.$data.password
+          rawPassword: this.$data.rawPassword
         }
-        console.log('>> Login.submit', payload)
+        console.log('> Login.submit', payload)
         auth
           .login(payload)
           .then((res) => {

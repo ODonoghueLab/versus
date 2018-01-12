@@ -6,11 +6,11 @@ const denodeify = require('denodeify')
 const rimraf = denodeify(require('rimraf'))
 const _ = require('lodash')
 const bcrypt = require('bcryptjs')
-const Sequelize = require('sequelize')
 
-const tree = require('./modules/tree')
+const Sequelize = require('sequelize')
 const sequelizeJson = require('sequelize-json')
 
+const tree = require('./modules/tree')
 const util = require('./modules/util')
 const config = require('./config')
 const conn = require('./conn')
@@ -213,6 +213,10 @@ function createUser (values) {
         return User
           .create(values)
           .then(unwrapInstance)
+          .then(user => {
+            console.log('> models.createUser', user)
+            return user
+          })
       }
     })
 }
@@ -225,6 +229,10 @@ function updateUser (values) {
         return user
           .updateAttributes(values)
           .then(unwrapInstance)
+          .then(user => {
+            console.log('> models.updateUser', user)
+            return user
+          })
       } else {
         return null
       }

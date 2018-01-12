@@ -168,7 +168,7 @@
   import path from 'path'
 
   import config from '../config'
-  import auth from '../modules/auth'
+
   import util from '../modules/util'
   import rpc from '../modules/rpc'
 
@@ -310,7 +310,7 @@
         rpc
           .rpcRun('deleteParticipant', participant.participateId)
           .then((res) => {
-            console.log('>> Experiment.deleteInvite', res.data)
+            console.log('> Experiment.deleteInvite', res.data)
             let participants = this.$data.experiment.participants
             util.removeItem(participants, participant, 'participateId')
           })
@@ -321,7 +321,7 @@
         rpc
           .rpcRun('publicInviteParticipant', experimentId, 'test@test.com')
           .then((res) => {
-            console.log('>> Experiment.makeInvite', res.data)
+            console.log('> Experiment.makeInvite', res.data)
             participants.push(res.data.participant)
           })
       },

@@ -148,7 +148,7 @@ module.exports = {
 
   async publicRegisterUser (user) {
     try {
-      const keys = ['name', 'email', 'password', 'passwordv']
+      const keys = ['name', 'email', 'password']
 
       let errors = []
       if (!user.name) {
@@ -158,10 +158,7 @@ module.exports = {
         errors.push('Please Enter Your Email')
       }
       if (!user.password) {
-        errors.push('Please Enter Both Password Fields')
-      }
-      if (user.password !== user.passwordv) {
-        errors.push('Passwords Do Not Match')
+        errors.push('Please Enter Password')
       }
 
       let values = {
@@ -210,13 +207,13 @@ module.exports = {
 
       if (!values) {
         return {
-          sucess: false,
+          success: false,
           errors: ['No values to update']
         }
       }
 
-      let updatedUser = await models.updateUser(values)
-      console.log('>> router.updateUser success', values, updatedUser)
+      console.log('>> handlers.updateUser', values)
+      await models.updateUser(values)
       return {success: true}
 
     } catch(err) {

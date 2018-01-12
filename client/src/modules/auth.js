@@ -19,52 +19,57 @@ let user = {
   authenticated: false
 }
 
+/**
+ * Converts user.rawPassword to hashed user.password
+ */
+function hashUserPassword (user) {
+  let result = _.cloneDeep(user)
+  if (!result.password && result.rawPassword) {
+    result.password = hashPassword(result.rawPassword)
+    delete result.rawPassword
+  }
+  if (result.rawPasswordConfirm) {
+    delete result.rawPasswordConfirm
+  }
+  return result
+}
+
 export default {
 
   user: user,
 
   login (newUser) {
-    let payload = _.cloneDeep(newUser)
-    payload.password = hashPassword(payload.password)
-    console.log('>> auth.login newUser', payload)
+    let payload = hashUserPassword(newUser)
+    console.log('> auth.login', payload)
     return rpc
       .rpcRun('login', payload)
       .then((res) => {
         if (res.data.success) {
           user.authenticated = true
           _.assign(user, res.data.user)
-          user.password = newUser.password
+          user.password = payload.password
           localStorage.setItem('user', util.jstr(user))
-          console.log('>> auth.login', util.jstr(user))
+          console.log('> auth.login save localStorage', util.jstr(user))
         }
         return res
       })
   },
 
   register (newUser) {
-    let payload = _.cloneDeep(newUser)
-    payload.password = hashPassword(payload.password)
-    payload.passwordv = hashPassword(payload.passwordv)
-    console.log('>> auth.register', payload)
+    let payload = hashUserPassword(newUser)
+    console.log('> auth.register', payload)
     return rpc.rpcRun('publicRegisterUser', payload)
   },
 
   update (editUser) {
-    let payload = _.cloneDeep(editUser)
-    if ('password' in payload) {
-      payload.password = hashPassword(payload.password)
-    }
-    if ('passwordv' in payload) {
-      payload.passwordv = hashPassword(payload.passwordv)
-    }
-    payload.id = user.id
-    console.log('>> auth.update', editUser, payload)
+    let payload = hashUserPassword(editUser)
+    console.log('> auth.update', payload)
     return rpc
       .rpcRun('updateUser', payload)
       .then(res => {
         if (res.data.success) {
           _.assign(user, payload)
-          console.log('>> auth.update', user)
+          console.log('> auth.update save localStorage', util.jstr(user))
           localStorage.setItem('user', JSON.stringify(user))
         }
         return res
@@ -74,7 +79,7 @@ export default {
   restoreLastUser () {
     let lastUser = JSON.parse(localStorage.getItem('user'))
     return new Promise(resolve => {
-      console.log('>> auth.restoreLastUser', lastUser)
+      console.log('> auth.restoreLastUser from localStorage', lastUser)
       if (lastUser) {
         this.login(lastUser)
           .then(resolve)

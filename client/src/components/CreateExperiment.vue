@@ -63,8 +63,6 @@
 </style>
 
 <script>
-  import axios from 'axios'
-  import _ from 'lodash'
   import auth from '../modules/auth'
   import rpc from '../modules/rpc'
   export default {
@@ -94,7 +92,7 @@
             this.$data.files, auth.user.id, this.$data.attr)
           .then(res => {
             this.$data.isUploading = false
-            console.log('>> CreateExperiment.submit', res.data)
+            console.log('> CreateExperiment.submit', res.data)
             let experimentId = res.data.experimentId
             this.$router.push('/experiment/' + experimentId)
           })

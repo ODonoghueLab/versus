@@ -81,6 +81,7 @@ passport.use(new LocalStrategy(
     models
       .fetchUser({email: email})
       .then(user => {
+        console.log('>> passport.LocalStrategy has email', email, password)
         if (user) {
           models
             .checkUserWithPassword(user, password)

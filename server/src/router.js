@@ -70,9 +70,11 @@ router.post('/api/rpc-run', (req, res, next) => {
           return next(error)
         }
         console.log('>> router.rpc-run.login success', user)
+        let returnUser = _.cloneDeep(user)
+        delete returnUser.password
         return res.json({
           success: true,
-          user: user
+          user: returnUser
         })
       })
     })(req, res, next)

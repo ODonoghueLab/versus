@@ -3,7 +3,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 cd $DIR
 
-open -a 'pycharm' .
+open -a 'webstorm' .
 
 osascript 2>/dev/null <<EOF
 
