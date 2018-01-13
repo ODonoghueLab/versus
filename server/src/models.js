@@ -41,14 +41,6 @@ const User = db.define('User', {
   password: Sequelize.STRING
 })
 
-User.beforeCreate((user) => {
-  user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10))
-})
-
-User.beforeUpdate((user) => {
-  user.password = bcrypt.hashSync(user.password, bcrypt.genSaltSync(10))
-})
-
 const Image = db.define('Image', {
   url: Sequelize.STRING,
   filename: Sequelize.STRING
@@ -208,13 +200,21 @@ function getImageSetIdFromPath (p) {
 
 // User functions
 
+function saltPassword (user) {
+  let result = _.cloneDeep(user)
+  if (result.password) {
+    result.password = bcrypt.hashSync(result.password, bcrypt.genSaltSync(10))
+  }
+  return result
+}
+
 function createUser (values) {
   return User
     .findOne({where: {id: values.id}})
     .then(user => {
       if (user === null) {
         return User
-          .create(values)
+          .create(saltPassword(values))
           .then(unwrapInstance)
       }
     })
@@ -226,7 +226,7 @@ function updateUser (values) {
     .then(user => {
       if (user) {
         return user
-          .updateAttributes(values)
+          .updateAttributes(saltPassword(values))
           .then(unwrapInstance)
       } else {
         return null
