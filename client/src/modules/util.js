@@ -52,4 +52,13 @@ export default {
     return l
   },
 
+  isStringInStringList (str, testStrList) {
+    for (let testStr of testStrList) {
+      if (_.includes(str, testStr)) {
+        return true
+      }
+    }
+    return false
+  }
+
 }

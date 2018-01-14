@@ -12,10 +12,7 @@
 </style>
 
 <script>
-  import _ from 'lodash'
   import Navbar from './components/Navbar.vue'
-  import auth from './modules/auth'
-  import router from './router'
 
   export default {
     name: 'app',

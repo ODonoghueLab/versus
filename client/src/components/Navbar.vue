@@ -1,9 +1,9 @@
 <template>
-  <md-toolbar class="md-dense">
+  <md-toolbar v-if="isShowNavbar" class="md-dense">
 
-    <md-icon md-src="./static/logo.png"></md-icon>
+    <md-icon md-src="./static/logo.png"/>
 
-    <h2 class="md-title" style="padding-left: 1em; flex: 1" >Versus</h2>
+    <h2 class="md-title" style="padding-left: 1em; flex: 1">Versus</h2>
 
     <span v-if="user.authenticated">
 
@@ -11,7 +11,7 @@
         Experiments
       </router-link>
 
-      <md-menu >
+      <md-menu>
 
         <md-button md-menu-trigger>
             {{user.name}}
@@ -33,32 +33,42 @@
   </md-toolbar>
 </template>
 
-<style scoped>
-</style>
-
 <script>
-
-  import axios from 'axios'
   import auth from '../modules/auth'
   import router from '../router'
+  import util from '../modules/util'
+
+  let publicPathTokens = [
+    '/mechanical-turk',
+    '/participant',
+    '/login',
+    '/register'
+  ]
 
   export default {
     name: 'navbar',
     data () {
       return {
-        user: auth.user
+        user: auth.user,
+      }
+    },
+    computed: {
+      isShowNavbar () {
+        if (this.$route.fullPath) {
+          if (util.isStringInStringList(this.$route.fullPath, publicPathTokens)) {
+            return false
+          }
+        }
+        return true
       }
     },
     methods: {
       editUser () {
         router.push('/edit-user')
       },
-      logout () {
-        auth
-          .logout()
-          .then(() => {
-            this.$router.push('/login')
-          })
+      async logout () {
+        await auth.logout()
+        this.$router.push('/login')
       }
     }
   }

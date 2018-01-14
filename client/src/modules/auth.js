@@ -2,6 +2,10 @@
  * @fileOverview Authentication module. Provides routines
  * to authenticate with the server, as well as a central
  * location to access the user credentials.
+ *
+ * Note: did not put in Vuex.store as the user login should
+ * be queried before Vue starts up, so make it a global
+ * outside Vue
  */
 
 import _ from 'lodash'
@@ -15,6 +19,7 @@ function hashPassword (password) {
   return SHA224(password).toString()
 }
 
+// global reference to user in the authentication system
 let user = {
   authenticated: false
 }
@@ -38,21 +43,24 @@ export default {
 
   user: user,
 
-  login (newUser) {
+  /**
+   * Queries server for user login with newUser. If
+   * newUser.rawPassword is given, will hash with SHA244
+   * to user.password. Then saves the user to localStorage
+   *
+   * @param {Object} newUser - {email, password, rawPassword}
+   */
+  async login (newUser) {
     let payload = hashUserPassword(newUser)
     console.log('> auth.login', payload)
-    return rpc
-      .rpcRun('login', payload)
-      .then((res) => {
-        if (res.data.success) {
-          user.authenticated = true
-          _.assign(user, res.data.user)
-          user.password = payload.password
-          localStorage.setItem('user', util.jstr(user))
-          console.log('> auth.login save localStorage', util.jstr(user))
-        }
-        return res
-      })
+    let res = await rpc.rpcRun('login', payload)
+    if (res.data.success) {
+      user.authenticated = true
+      _.assign(user, res.data.user)
+      user.password = payload.password
+      localStorage.setItem('user', util.jstr(user))
+    }
+    return res
   },
 
   register (newUser) {
@@ -61,33 +69,23 @@ export default {
     return rpc.rpcRun('publicRegisterUser', payload)
   },
 
-  update (editUser) {
+  async update (editUser) {
     let payload = hashUserPassword(editUser)
     console.log('> auth.update', util.jstr(payload))
-    return rpc
-      .rpcRun('updateUser', payload)
-      .then(res => {
-        if (res.data.success) {
-          _.assign(user, payload)
-          console.log('> auth.update save localStorage', util.jstr(user))
-          localStorage.setItem('user', JSON.stringify(user))
-        }
-        return res
-      })
+    let res = await rpc.rpcRun('updateUser', payload)
+    if (res.data.success) {
+      _.assign(user, payload)
+      localStorage.setItem('user', JSON.stringify(user))
+    }
+    return res
   },
 
-  restoreLastUser () {
+  async restoreLastUser () {
     let lastUser = JSON.parse(localStorage.getItem('user'))
-    return new Promise(resolve => {
-      console.log('> auth.restoreLastUser from localStorage', lastUser)
-      if (lastUser) {
-        this.login(lastUser)
-          .then(resolve)
-          .catch(resolve)
-      } else {
-        resolve()
-      }
-    })
+    console.log('> auth.restoreLastUser from localStorage', lastUser)
+    if (lastUser) {
+      return this.login(lastUser)
+    }
   },
 
   logout () {

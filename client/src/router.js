@@ -81,7 +81,11 @@ function isStringInStringList (str, testStrList) {
 
 
 let publicPathTokens = [
-  '/mechanical-turk', '/participant', '/login', '/register']
+  '/mechanical-turk',
+  '/participant',
+  '/login',
+  '/register'
+]
 
 
 router.beforeEach((to, from, next) => {
