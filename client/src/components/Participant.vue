@@ -160,8 +160,9 @@
   function preloadImage (url) {
     if (!(url in loadedImages)) {
       let img = new Image
-      img.src = config.apiUrl + url
-      loadedImages[url] = img
+      let src = config.apiUrl + url
+      img.src = src
+      loadedImages[src] = img
       console.log('> Particpant.preloadImage', img.src)
     }
   }
@@ -252,11 +253,12 @@
 
           _.map(res.data.urls, preloadImage)
 
-          while (!isImgLoaded(newComparison.itemA.url)
-              || !isImgLoaded(newComparison.itemB.url)) {
-            console.log('> Participant.handleRes waiting',
-              isImgLoaded(newComparison.itemA.url),
-              isImgLoaded(newComparison.itemB.url))
+          let imageUrlA = this.getImageUrl(newComparison.itemA)
+          let imageUrlB = this.getImageUrl(newComparison.itemB)
+
+          while (!isImgLoaded(imageUrlA)
+              || !isImgLoaded(imageUrlB)) {
+            console.log('> Participant.handleRes waiting', isImgLoaded(imageUrlA), isImgLoaded(imageUrlB))
             await delay(100)
           }
 
@@ -264,9 +266,9 @@
           this.$data.loadingA = false
           this.$data.loadingB = false
 
-          this.$data.imageA = this.getImageUrl(newComparison.itemA)
-          this.$data.imageB = this.getImageUrl(newComparison.itemB)
-
+          this.$data.imageA = imageUrlA
+          this.$data.imageB = imageUrlB
+          console.log(this.getImageUrl(imageUrlA), _.keys(loadedImages))
         }
       },
       choose (item) {
