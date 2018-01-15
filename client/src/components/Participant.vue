@@ -45,7 +45,7 @@
         <br>
         <md-whiteframe
           style="padding: 0.5em">
-          {{ surveyCode }}
+          {{surveyCode}}
         </md-whiteframe>
       </md-layout>
     </div>
@@ -109,7 +109,12 @@
           </md-layout>
         </md-layout>
 
-        <div v-else style="width: 100%; margin-top: 2em; text-align: center">
+        <div
+          v-else
+          style="
+              width: 100%;
+              margin-top: 2em;
+              text-align: center">
           Loading images...
           <br>
           <md-spinner :md-size="80" md-indeterminate/>
@@ -165,7 +170,7 @@
       let image = loadedImages[url]
       return image.complete && image.naturalHeight !== 0
     } else {
-      console.log('isImgLoaded not found', url, _.keys(loadedImages))
+      console.log('> isImgLoaded not found', url, _.keys(loadedImages))
       return false
     }
   }
@@ -261,7 +266,6 @@
 
           this.$data.imageA = imageUrlA
           this.$data.imageB = imageUrlB
-          console.log(this.getImageUrl(imageUrlA), _.keys(loadedImages))
         }
       },
       choose (item) {

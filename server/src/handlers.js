@@ -338,8 +338,10 @@ module.exports = {
       let urls = _.map(paths, f => '/file/' + f)
 
       let experiment = await models.createExperiment(userId, attr, urls)
+
       console.log(
         '> routers.uploadImagesAndCreateExperiment output', experiment)
+
       return {
         success: true,
         experimentId: experiment.id
@@ -347,7 +349,7 @@ module.exports = {
 
     } catch(error) {
 
-      return {success: false}
+      return {success: false, error: error.toString()}
 
     }
   }

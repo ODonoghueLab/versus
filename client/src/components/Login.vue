@@ -33,15 +33,15 @@
         login
       </md-button>
 
+      <div v-if="msg" style="color: red">
+        {{ msg }}
+      </div>
+
       <br>
       <br>
       <br>
       New to Versus? &nbsp;
       <router-link to="/register">Register</router-link>
-
-      <div v-if="msg" class="card error">
-        {{ msg }}
-      </div>
 
     </form>
 

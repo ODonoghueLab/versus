@@ -39,7 +39,7 @@
       <md-button type="submit" class="md-raised md-primary">
         Register
       </md-button>
-      <div v-if="errors.length" class="card error">
+      <div v-if="errors.length" style="color: red">
         <ul>
           <li v-for="err in errors">
             {{ err }}
