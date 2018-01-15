@@ -166,6 +166,16 @@
     }
   }
 
+  function isImgLoaded(url) {
+    if (url in loadedImages) {
+      let image = loadedImages[url]
+      return image.complete && image.naturalHeight !== 0
+    } else {
+      console.log('isImgLoaded not found', url, _.keys(loadedImages))
+      return false
+    }
+  }
+
   export default {
     name: 'invite',
     data () {
@@ -212,8 +222,6 @@
 
         } else if (res.data.comparison) {
 
-          _.map(res.data.urls, preloadImage)
-
           this.$data.status = 'running'
           this.$data.heading = res.data.heading
           this.$data.progress = res.data.progress
@@ -224,12 +232,9 @@
           // allow screen to clear
           await delay(200)
 
-          // turn off loading bars
-          this.$data.loadingA = false
-          this.$data.loadingB = false
-
           let oldComparison = this.$data.comparison
           let newComparison = res.data.comparison
+
           if (oldComparison) {
             // swap to match existing choices on screen
             if ((newComparison.itemA.value === oldComparison.itemB.value)
@@ -244,6 +249,20 @@
 
           preloadImage(newComparison.itemA.url)
           preloadImage(newComparison.itemB.url)
+
+          _.map(res.data.urls, preloadImage)
+
+          while (!isImgLoaded(newComparison.itemA.url)
+              || !isImgLoaded(newComparison.itemB.url)) {
+            console.log('> Participant.handleRes waiting',
+              isImgLoaded(newComparison.itemA.url),
+              isImgLoaded(newComparison.itemB.url))
+            await delay(100)
+          }
+
+          // turn off loading bars
+          this.$data.loadingA = false
+          this.$data.loadingB = false
 
           this.$data.imageA = this.getImageUrl(newComparison.itemA)
           this.$data.imageB = this.getImageUrl(newComparison.itemB)
