@@ -7,7 +7,8 @@ import Vue from 'vue'
 import Router from 'vue-router'
 Vue.use(Router)
 
-import auth from './modules/auth.js'
+import auth from './modules/auth'
+import util from './modules/util'
 
 import Home from './components/Home'
 import UserExperiments from './components/UserExperiments'
@@ -70,16 +71,6 @@ let router = new Router({
 })
 
 
-function isStringInStringList (str, testStrList) {
-  for (let testStr of testStrList) {
-    if (_.includes(str, testStr)) {
-      return true
-    }
-  }
-  return false
-}
-
-
 let publicPathTokens = [
   '/mechanical-turk',
   '/participant',
@@ -89,7 +80,7 @@ let publicPathTokens = [
 
 
 router.beforeEach((to, from, next) => {
-  if (isStringInStringList(to.path, publicPathTokens)
+  if (util.isStringInStringList(to.path, publicPathTokens)
        || to.path === '/') {
     console.log('> router.beforeEach public', to.path)
     next()

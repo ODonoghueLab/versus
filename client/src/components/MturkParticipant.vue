@@ -23,17 +23,7 @@
   </div>
 </template>
 
-<!-- Add 'scoped' attribute to limit CSS to this component only -->
-<style scoped>
-</style>
-
 <script>
-  import path from 'path'
-
-  import config from '../config'
-
-  import auth from '../modules/auth'
-  import util from '../modules/util'
   import rpc from '../modules/rpc'
 
   export default {

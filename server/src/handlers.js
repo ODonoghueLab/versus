@@ -73,11 +73,11 @@ async function getNextComparison (participateId) {
 
   let states = participant.states
   let imageSizes = _.map(_.values(states), s => s.imageUrls.length)
-  let nodeSetSizes = _.map(_.values(states), s => s.nodes.length)
-  let progress = {
-    nNodeTotal: _.sum(nodeSetSizes),
-    nImageTotal: _.sum(imageSizes)
+  let nComparison = 0
+  for (let state of _.values(states)) {
+    nComparison += state.comparisons.length
   }
+  let progress = {nComparison}
 
   let experiment = await models.fetchExperiment(participant.ExperimentId)
   let heading = experiment.attr
@@ -148,8 +148,6 @@ module.exports = {
 
   async publicRegisterUser (user) {
     try {
-      const keys = ['name', 'email', 'password']
-
       let errors = []
       if (!user.name) {
         errors.push('Please Enter Your User Name')
@@ -282,9 +280,6 @@ module.exports = {
   async publicChooseItem (participateId, comparison) {
     let participant = await models.fetchParticipant(
       participateId)
-
-    let experiment = await models.fetchExperiment(
-      participant.ExperimentId)
 
     let urlA = comparison.itemA.url
     let imageSetId = models.getImageSetIdFromPath(urlA)

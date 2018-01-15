@@ -41,8 +41,6 @@
   let publicPathTokens = [
     '/mechanical-turk',
     '/participant',
-    '/login',
-    '/register'
   ]
 
   export default {

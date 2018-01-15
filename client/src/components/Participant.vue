@@ -1,7 +1,7 @@
 <template>
   <div style="padding-left: 1em; text-align: left">
 
-    <div v-if="status == 'start'">
+    <div v-if="status === 'start'">
       <h2 class="md-display-2">
         Welcome to Versus!
       </h2>
@@ -23,9 +23,9 @@
 
       <form v-on:submit.prevent="enterUser">
         <md-button
-            @click="enterUser"
-            class="md-raised md-primary"
-            style="margin-left: 1em">
+          @click="enterUser"
+          class="md-raised md-primary"
+          style="margin-left: 1em">
           Look at images
         </md-button>
       </form>
@@ -33,10 +33,10 @@
 
     <div v-else-if="status === 'done'" class="done">
       <md-layout
-          class="md-display-2 done"
-          md-align="center"
-          md-column
-          md-vertical-align="center">
+        class="md-display-2 done"
+        md-align="center"
+        md-column
+        md-vertical-align="center">
         Your tests are done
         <br>
         Thank you
@@ -53,6 +53,13 @@
     <div v-else-if="status === 'running'">
       <md-layout md-align="center" v-if="comparison">
 
+        <md-layout
+          md-align="center"
+          style="padding-top: 1em;"
+          md-flex="100">
+          <md-progress :md-progress="progressPercent"/>
+        </md-layout>
+
         <md-layout md-align="center" md-flex="100">
           <h2 class="md-display-2"> {{heading.title}} </h2>
         </md-layout>
@@ -68,60 +75,44 @@
               <md-whiteframe md-elevation="5" style="margin-right: 1em">
                 <div style="height: 12px;">
                   <md-progress
-                      v-if="loadingA"
-                      md-indeterminate></md-progress>
+                    v-if="loadingA"
+                    md-indeterminate/>
                 </div>
-                <md-button
-                    class="choice"
-                    @click="choose(comparison.itemA)">
-                  <div id="img-a">
-                    <md-image :md-src="imageA"></md-image>
-                  </div>
-                  <div style="width: 100%; text-align: center; color: #DDD">
-                    {{comparison.itemA.value}}
-                  </div>
-                </md-button>
+                <div id="img-a">
+                  <md-image :md-src="imageA"/>
+                </div>
               </md-whiteframe>
+              <div style="width: 100%; padding-top: 1em; text-align: center;">
+                <md-button
+                  class="md-raised choice"
+                  @click="choose(comparison.itemA)">
+                  Choose - {{comparison.itemA.value}}
+                </md-button>
+              </div>
             </md-layout>
 
             <md-layout md-flex="50" md-align="start">
               <md-whiteframe md-elevation="5" style="margin-left: 0.7em">
                 <div style="height: 12px">
                   <md-progress
-                      v-if="loadingB"
-                      md-indeterminate></md-progress>
+                    v-if="loadingB"
+                    md-indeterminate/>
                 </div>
-                <md-button
-                    @click="choose(comparison.itemB)"
-                    class="choice">
-                  <div id="img-b">
-                    <md-image :md-src="imageB"></md-image>
-                  </div>
-                  <div style="width: 100%; text-align: center; color: #DDD">
-                    {{comparison.itemB.value}}
-                  </div>
-                </md-button>
+                <div id="img-b">
+                  <md-image :md-src="imageB"/>
+                </div>
               </md-whiteframe>
+              <div style="width: 100%; padding-top: 1em; text-align: center;">
+                <md-button
+                  class="md-raised choice"
+                  @click="choose(comparison.itemB)">
+                  Choose - {{comparison.itemB.value}}
+                </md-button>
+              </div>
             </md-layout>
 
           </md-layout>
 
-          <md-layout
-              v-if="comparison.isRepeat"
-              md-align="center"
-              style="padding-top: 1em; color: #DDD"
-              md-flex="100">
-            repeat
-            <br>
-          </md-layout>
-
-          <md-layout
-              md-align="center"
-              style="padding-top: 1em;"
-              md-flex="100">
-            Images ranked: {{ progress.nNodeTotal }} / {{ progress.nImageTotal }}
-            <br>
-          </md-layout>
 
         </div>
 
@@ -154,12 +145,9 @@
 </style>
 
 <script>
-  import axios from 'axios'
-
-  import auth from '../modules/auth'
   import config from '../config'
-  import util from '../modules/util'
   import rpc from '../modules/rpc'
+  import util from '../modules/util'
 
   function delay (timeMs) {
     return new Promise(resolve => { setTimeout(resolve, timeMs) })
@@ -167,7 +155,7 @@
 
   let loadedImages = {}
 
-  function preloadImage(url) {
+  function preloadImage (url) {
     if (!(url in loadedImages)) {
       let img = new Image
       img.src = config.apiUrl + url
@@ -178,7 +166,7 @@
 
   export default {
     name: 'invite',
-    data() {
+    data () {
       return {
         status: null,
         loadingA: false,
@@ -192,14 +180,22 @@
         heading: {},
       }
     },
-    mounted() {
+    mounted () {
       let participateId = this.$route.params.participateId
       rpc
         .rpcRun('publicGetParticipant', participateId)
         .then(this.handleRes)
     },
+    computed: {
+      progressPercent () {
+        let params = this.heading.params
+        let maxComparison = params.maxComparisons + params.nRepeat
+        return this.progress.nComparison / maxComparison * 100
+      }
+    },
     methods: {
-      async handleRes(res) {
+      async handleRes (res) {
+        console.log('> Invite.handleRes', util.jstr(res.data))
         this.$data.status = ''
 
         if (res.data.new) {
@@ -231,8 +227,8 @@
           let newComparison = res.data.comparison
           if (oldComparison) {
             // swap to match existing choices on screen
-            if ((newComparison.itemA.value == oldComparison.itemB.value)
-              | (newComparison.itemB.value == oldComparison.itemA.value)) {
+            if ((newComparison.itemA.value === oldComparison.itemB.value)
+              | (newComparison.itemB.value === oldComparison.itemA.value)) {
               let dummy = newComparison.itemA
               newComparison.itemA = newComparison.itemB
               newComparison.itemB = dummy
@@ -266,17 +262,17 @@
         } else {
           this.$data.comparison.choice = item.value
         }
-        rpc
+        return rpc
           .rpcRun('publicChooseItem', participateId, this.$data.comparison)
           .then(this.handleRes)
       },
       getImageUrl (item) {
         return config.apiUrl + item.url
       },
-      enterUser() {
+      enterUser () {
         let participateId = this.$route.params.participateId
         let user = {}
-        rpc
+        return rpc
           .rpcRun(
             'publicSaveParticipantUserDetails', participateId, user)
           .then(this.handleRes)

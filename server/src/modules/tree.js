@@ -139,7 +139,7 @@ function getOrderedNodeList (state) {
  */
 function balanceSubTree (sortedNodes) {
   const nNode = sortedNodes.length
-  if (nNode == 0) {
+  if (nNode === 0) {
     return null
   }
 
@@ -187,7 +187,7 @@ function getNextImage (state) {
     state.iImageTest = null
   }
 
-  // Rebalance the tree
+  // Re-balance the tree
   let sortedNodes = getOrderedNodeList(state)
   let newRootNode = balanceSubTree(sortedNodes)
   newRootNode.parent = null
@@ -347,7 +347,7 @@ function checkComparisons (state) {
     let iImageA = comparison.itemA.value
     let iImageB = comparison.itemB.value
     let iImageBetter = comparison.choice
-    let iImageWorse = iImageBetter == iImageA ? iImageB : iImageA
+    let iImageWorse = iImageBetter === iImageA ? iImageB : iImageA
     let consistent = getRank(iImageWorse) < getRank(iImageBetter)
     if (!consistent) {
       return false
