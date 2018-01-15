@@ -65,57 +65,54 @@
           <br>
         </md-layout>
 
-        <div v-if="imageA && imageB">
-          <md-layout>
-            <md-layout md-flex="50" md-align="end">
-              <md-whiteframe md-elevation="5" style="margin-right: 1em">
-                <div style="height: 12px;">
-                  <md-progress
-                    v-if="loadingA"
-                    md-indeterminate/>
-                </div>
-                <div id="img-a">
-                  <img :src="imageA"/>
-                </div>
-              </md-whiteframe>
-              <div style="width: 100%; padding-top: 1em; text-align: center;">
-                <md-button
-                  :disabled="loadingA || loadingB"
-                  class="md-raised choice"
-                  @click="choose(comparison.itemA)">
-                  Choose
-                </md-button>
+        <md-layout v-if="imageA && imageB">
+          <md-layout md-flex="50" md-align="end">
+            <md-whiteframe md-elevation="5" style="margin-right: 1em">
+              <div style="height: 12px;">
+                <md-progress
+                  v-if="loadingA"
+                  md-indeterminate/>
               </div>
-            </md-layout>
-
-            <md-layout md-flex="50" md-align="start">
-              <md-whiteframe md-elevation="5" style="margin-left: 0.7em">
-                <div style="height: 12px">
-                  <md-progress
-                    v-if="loadingB"
-                    md-indeterminate/>
-                </div>
-                <div id="img-b">
-                  <img :src="imageB"/>
-                </div>
-              </md-whiteframe>
-              <div style="width: 100%; padding-top: 1em; text-align: center;">
-                <md-button
-                  :disabled="loadingA || loadingB"
-                  class="md-raised choice"
-                  @click="choose(comparison.itemB)">
-                  Choose
-                </md-button>
+              <div id="img-a">
+                <img :src="imageA"/>
               </div>
-            </md-layout>
-
+            </md-whiteframe>
+            <div style="width: 100%; padding-top: 1em; text-align: center;">
+              <md-button
+                :disabled="loadingA || loadingB"
+                class="md-raised choice"
+                @click="choose(comparison.itemA)">
+                Choose
+              </md-button>
+            </div>
           </md-layout>
 
+          <md-layout md-flex="50" md-align="start">
+            <md-whiteframe md-elevation="5" style="margin-left: 0.7em">
+              <div style="height: 12px">
+                <md-progress
+                  v-if="loadingB"
+                  md-indeterminate/>
+              </div>
+              <div id="img-b">
+                <img :src="imageB"/>
+              </div>
+            </md-whiteframe>
+            <div style="width: 100%; padding-top: 1em; text-align: center;">
+              <md-button
+                :disabled="loadingA || loadingB"
+                class="md-raised choice"
+                @click="choose(comparison.itemB)">
+                Choose
+              </md-button>
+            </div>
+          </md-layout>
+        </md-layout>
 
-        </div>
-
-        <div v-else>
+        <div v-else style="width: 100%; margin-top: 2em; text-align: center">
           Loading images...
+          <br>
+          <md-spinner :md-size="80" md-indeterminate/>
         </div>
 
       </md-layout>
@@ -163,7 +160,7 @@
     }
   }
 
-  function isImgLoaded(url) {
+  function isImgLoaded (url) {
     if (url in loadedImages) {
       let image = loadedImages[url]
       return image.complete && image.naturalHeight !== 0
@@ -253,7 +250,7 @@
           let imageUrlB = this.getImageUrl(newComparison.itemB)
 
           while (!isImgLoaded(imageUrlA)
-              || !isImgLoaded(imageUrlB)) {
+          || !isImgLoaded(imageUrlB)) {
             console.log('> Participant.handleRes waiting', isImgLoaded(imageUrlA), isImgLoaded(imageUrlB))
             await delay(100)
           }
