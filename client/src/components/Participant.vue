@@ -1,7 +1,7 @@
 <template>
-  <div style="padding-left: 1em; text-align: left">
+  <div style="text-align: left">
 
-    <div v-if="status === 'start'">
+    <div style="padding: 1em" v-if="status === 'start'">
       <h2 class="md-display-2">
         Welcome to Versus!
       </h2>
@@ -20,7 +20,6 @@
         is view the two images and click on the one you believe is better.
       </p>
 
-
       <form v-on:submit.prevent="enterUser">
         <md-button
           @click="enterUser"
@@ -33,6 +32,7 @@
 
     <div v-else-if="status === 'done'" class="done">
       <md-layout
+        style="padding: 1em"
         class="md-display-2 done"
         md-align="center"
         md-column
@@ -53,12 +53,8 @@
     <div v-else-if="status === 'running'">
       <md-layout md-align="center" v-if="comparison">
 
-        <md-layout
-          md-align="center"
-          style="padding-top: 1em;"
-          md-flex="100">
-          <md-progress :md-progress="progressPercent"/>
-        </md-layout>
+        <md-progress :md-progress="progressPercent"/>
+
 
         <md-layout md-align="center" md-flex="100">
           <h2 class="md-display-2"> {{heading.title}} </h2>
