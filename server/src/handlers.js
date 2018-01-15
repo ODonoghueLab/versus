@@ -73,11 +73,6 @@ async function getNextComparison (participateId) {
 
   let states = participant.states
   let imageSizes = _.map(_.values(states), s => s.imageUrls.length)
-  let nComparison = 0
-  for (let state of _.values(states)) {
-    nComparison += state.comparisons.length
-  }
-  let progress = {nComparison}
 
   let experiment = await models.fetchExperiment(participant.ExperimentId)
   let heading = experiment.attr
@@ -92,6 +87,18 @@ async function getNextComparison (participateId) {
 
     const state = getRandomUnfinishedState(states)
     const comparison = tree.getComparison(state)
+
+    let nComparison = 0
+    for (let state of _.values(states)) {
+      for (let comparison of state.comparisons) {
+        nComparison += 1
+        if (comparison.repeat) {
+          nComparison += 1
+        }
+      }
+    }
+    let progress = {nComparison}
+
     payload = {comparison, urls, progress, heading}
 
   } else if (!isUserInitialized) {

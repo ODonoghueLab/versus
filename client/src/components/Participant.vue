@@ -79,14 +79,15 @@
                     md-indeterminate/>
                 </div>
                 <div id="img-a">
-                  <md-image :md-src="imageA"/>
+                  <img :src="imageA"/>
                 </div>
               </md-whiteframe>
               <div style="width: 100%; padding-top: 1em; text-align: center;">
                 <md-button
+                  :disabled="loadingA || loadingB"
                   class="md-raised choice"
                   @click="choose(comparison.itemA)">
-                  Choose - {{comparison.itemA.value}}
+                  Choose
                 </md-button>
               </div>
             </md-layout>
@@ -99,14 +100,15 @@
                     md-indeterminate/>
                 </div>
                 <div id="img-b">
-                  <md-image :md-src="imageB"/>
+                  <img :src="imageB"/>
                 </div>
               </md-whiteframe>
               <div style="width: 100%; padding-top: 1em; text-align: center;">
                 <md-button
+                  :disabled="loadingA || loadingB"
                   class="md-raised choice"
                   @click="choose(comparison.itemB)">
-                  Choose - {{comparison.itemB.value}}
+                  Choose
                 </md-button>
               </div>
             </md-layout>
@@ -169,8 +171,8 @@
     data () {
       return {
         status: null,
-        loadingA: false,
-        loadingB: false,
+        loadingA: true,
+        loadingB: true,
         imageA: null,
         imageB: null,
         experiment: null,
@@ -209,19 +211,22 @@
           this.$data.surveyCode = res.data.surveyCode
 
         } else if (res.data.comparison) {
+
+          _.map(res.data.urls, preloadImage)
+
           this.$data.status = 'running'
           this.$data.heading = res.data.heading
           this.$data.progress = res.data.progress
-
-          // turn off loading bars
-          this.$data.loadingA = false
-          this.$data.loadingB = false
 
           // clear screen
           this.$data.imageB = null
           this.$data.imageA = null
           // allow screen to clear
           await delay(200)
+
+          // turn off loading bars
+          this.$data.loadingA = false
+          this.$data.loadingB = false
 
           let oldComparison = this.$data.comparison
           let newComparison = res.data.comparison
@@ -242,8 +247,6 @@
 
           this.$data.imageA = this.getImageUrl(newComparison.itemA)
           this.$data.imageB = this.getImageUrl(newComparison.itemB)
-
-          _.map(res.data.urls, preloadImage)
 
         }
       },
