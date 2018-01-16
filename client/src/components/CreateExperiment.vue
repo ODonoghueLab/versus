@@ -9,6 +9,7 @@
     </h2>
 
     <form v-on:submit.prevent="submit">
+
       <md-input-container>
         <label>Name</label>
         <md-input
@@ -17,6 +18,7 @@
           v-model="attr.name">
         </md-input>
       </md-input-container>
+
       <md-input-container>
         <md-file
           id="file-input"
@@ -38,13 +40,15 @@
         <br>
         <br>
       </div>
+
       <md-input-container>
-        <label>Title</label>
+        <label>Question</label>
         <md-input
           type="text"
           v-model="attr.title">
         </md-input>
       </md-input-container>
+
       <md-input-container>
         <label>Blurb</label>
         <md-textarea
@@ -111,7 +115,7 @@
         this.$data.files = files
         this.$data.fileStr = `${files.length} files`
       },
-      async submit ($event) {
+      async submit () {
         this.$data.isUploading = true
 
         let res = await rpc.rpcUpload(

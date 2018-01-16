@@ -75,6 +75,7 @@
             <md-table-head>Invite</md-table-head>
             <md-table-head>SurveyCode</md-table-head>
             <md-table-head>Comparisons</md-table-head>
+            <md-table-head>Time</md-table-head>
             <md-table-head>Consistency</md-table-head>
             <md-table-head>Created</md-table-head>
             <md-table-head>Updated</md-table-head>
@@ -101,6 +102,9 @@
             </md-table-cell>
             <md-table-cell>
               {{ participant.nComparisonDone }}
+            </md-table-cell>
+            <md-table-cell>
+              {{ participant.time }}
             </md-table-cell>
             <md-table-cell>
               <span v-if="participant.consistency">
@@ -171,6 +175,8 @@
 
   import path from 'path'
 
+  import prettyMs from 'pretty-ms'
+
   import config from '../config'
 
   import util from '../modules/util'
@@ -199,7 +205,7 @@
     let isFoundHeader = false
     let imageSet = {}
 
-    let headerRow = ['participantId', 'surveyCode']
+    let headerRow = ['participantId', 'surveyCode', 'time']
     let rows = []
 
     for (let participant of experiment.participants) {
@@ -219,7 +225,11 @@
         console.log('> makeResultCsv header', headerRow)
       }
 
-      let row = [participant.participateId, participant.attr.surveyCode]
+      let row = [
+        participant.participateId,
+        participant.attr.surveyCode,
+        participant.time
+      ]
 
       for (let [imageSetId, state] of _.toPairs(participant.states)) {
         let thisRow = util.makeArray(state.rankedImageUrls.length, '')
@@ -334,17 +344,28 @@
       console.log('> Experiment.mounted images', images)
       this.$data.images = images
 
+      function getTimeInterval(comparison) {
+        let startMs = new Date(comparison.startTime).getTime()
+        let endMs = new Date(comparison.endTime).getTime()
+        return endMs - startMs
+      }
+
       // calculate consistencies
       let participants = experiment.participants
       for (let participant of participants) {
         participant.consistency = 0
         participant.nComparisonDone = 0
         participant.nRepeatTotal = 0
+        let time = 0
         for (let state of _.values(participant.states)) {
           participant.nRepeatTotal += state.consistencies.length
           participant.consistency += _.sum(state.consistencies)
           participant.nComparisonDone += state.comparisons.length
+          for (let comparison of state.comparisons) {
+            time += getTimeInterval(comparison)
+          }
         }
+        participant.time = prettyMs(time)
       }
       console.log('> Experiment.mounted participants', participants)
     },

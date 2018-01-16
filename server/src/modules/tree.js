@@ -77,6 +77,7 @@ function newState (imageUrls) {
     consistencies: [], // list of (0, 1) for consistency of repeated comparisons
     fractions: [], // list of number of winning votes for each image-url
     rankedImageUrls: [], // ranked list of the image-url for user preference
+    time: null, // time taken to complete survey
   }
 }
 
@@ -408,12 +409,12 @@ function isDone (state) {
     return endMs - startMs
   }
 
-  for (let comparison of state.comparisons) {
-    console.log('> tree.isDone comparison',
-      comparison.itemA.value,
-      comparison.itemB.value,
-      comparison.choice,
-      getTimeInterval(comparison.startTime, comparison.endTime)/1000 + 's')
+  if (!state.time) {
+    let time = 0
+    for (let comparison of state.comparisons) {
+      time += getTimeInterval(comparison.startTime, comparison.endTime)
+    }
+    state.time = time / 1000
   }
 
   return true

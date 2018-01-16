@@ -334,7 +334,8 @@ module.exports = {
 
       for (let imageSetId of _.keys(nImages)) {
         if (nImages[imageSetId] < 2) {
-          throw new Error(`image set "${imageSetId}" must include more than 1 image`)
+          throw new Error(
+            `image set "${imageSetId}" must include more than 1 image`)
         }
       }
 
