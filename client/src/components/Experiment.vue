@@ -1,6 +1,6 @@
 <template>
   <div
-      style="
+    style="
       padding-left: 1em;
       padding-right: 1em;">
 
@@ -16,8 +16,8 @@
 
 
     <md-whiteframe
-        v-if="experiment.attr"
-        style="
+      v-if="experiment.attr"
+      style="
         padding: 1em;
         margin-bottom: 1em">
 
@@ -34,14 +34,14 @@
       <md-input-container>
         <label>Blurb</label>
         <md-textarea
-            v-model="experiment.attr.blurb">
+          v-model="experiment.attr.blurb">
 
         </md-textarea>
       </md-input-container>
 
       <md-button
-          class="md-raised"
-          @click="saveExperimentAttr">
+        class="md-raised"
+        @click="saveExperimentAttr">
         Update Question
       </md-button>
 
@@ -49,7 +49,7 @@
 
 
     <md-whiteframe
-        style="
+      style="
         padding: 1em;
         margin-bottom: 1em">
 
@@ -83,14 +83,18 @@
 
         <md-table-body>
           <md-table-row
-              v-for="(participant, index) in experiment.participants"
-              :key="index">
+            v-for="(participant, index) in experiment.participants"
+            :key="index">
             <md-table-cell>
               <router-link
-                  class="button"
-                  v-bind:to="getInviteRoute(participant)">
+                class="button"
+                v-bind:to="getInviteRoute(participant)">
                 link
               </router-link>
+              &nbsp;(<a
+              @click="copyInviteRoute(participant)">
+              copy
+            </a>)
             </md-table-cell>
             <md-table-cell>
               {{ participant.attr.surveyCode }}
@@ -111,8 +115,8 @@
             </md-table-cell>
             <md-table-cell>
               <md-button
-                  class="md-icon-button md-raised"
-                  @click="deleteInvite(participant)">
+                class="md-icon-button md-raised"
+                @click="deleteInvite(participant)">
                 <md-icon>delete</md-icon>
               </md-button>
             </md-table-cell>
@@ -125,25 +129,25 @@
 
 
     <md-whiteframe
-        style="
+      style="
         padding: 1em;
         margin-bottom: 1em">
 
       <h2 class="md-title">Images</h2>
 
       <md-whiteframe
-          v-for="(imageSetId, index) in imageSetIds"
-          :key="index"
-          style="
+        v-for="(imageSetId, index) in imageSetIds"
+        :key="index"
+        style="
             padding: 0.5em;
             margin-top: 0.5em;">
         <h2 class="md-subheading">{{imageSetId}}</h2>
         <md-layout
-            style="padding-top: 0.5em">
+          style="padding-top: 0.5em">
           <md-card
-              v-for="(url, index2) in images[imageSetId]"
-              :key="index2"
-              style="
+            v-for="(url, index2) in images[imageSetId]"
+            :key="index2"
+            style="
                 margin-right: 0.5em;
                 margin-bottom: 0.5em;">
             <md-card-media>
@@ -241,6 +245,66 @@
     return result
   }
 
+  /**
+   * https://stackoverflow.com/a/30810322
+   * @param text
+   */
+  function copyTextToClipboard (text) {
+    let textArea = document.createElement('textarea')
+
+    //
+    // *** This styling is an extra step which is likely not required. ***
+    //
+    // Why is it here? To ensure:
+    // 1. the element is able to have focus and selection.
+    // 2. if element was to flash render it has minimal visual impact.
+    // 3. less flakyness with selection and copying which **might** occur if
+    //    the textarea element is not visible.
+    //
+    // The likelihood is the element won't even render, not even a flash,
+    // so some of these are just precautions. However in IE the element
+    // is visible whilst the popup box asking the user for permission for
+    // the web page to copy to the clipboard.
+    //
+
+    // Place in top-left corner of screen regardless of scroll position.
+    textArea.style.position = 'fixed'
+    textArea.style.top = 0
+    textArea.style.left = 0
+
+    // Ensure it has a small width and height. Setting to 1px / 1em
+    // doesn't work as this gives a negative w/h on some browsers.
+    textArea.style.width = '2em'
+    textArea.style.height = '2em'
+
+    // We don't need padding, reducing the size if it does flash render.
+    textArea.style.padding = 0
+
+    // Clean up any borders.
+    textArea.style.border = 'none'
+    textArea.style.outline = 'none'
+    textArea.style.boxShadow = 'none'
+
+    // Avoid flash of white box if rendered for any reason.
+    textArea.style.background = 'transparent'
+
+    textArea.value = text
+
+    document.body.appendChild(textArea)
+
+    textArea.select()
+
+    try {
+      let successful = document.execCommand('copy')
+      let msg = successful ? 'successful' : 'unsuccessful'
+      console.log('> copyTextToClipboard', msg)
+    } catch (err) {
+      console.log('> copyTextToClipboard failed')
+    }
+
+    document.body.removeChild(textArea)
+  }
+
   export default {
     name: 'experiment',
     data () {
@@ -305,6 +369,12 @@
       },
       getInviteRoute (participant) {
         return `/participant/${participant.participateId}`
+      },
+      copyInviteRoute (participant) {
+        let href = window.location.href
+        let iLast = href.indexOf('#')
+        let host = href.substring(0, iLast + 1)
+        copyTextToClipboard(`${host}/participant/${participant.participateId}`)
       },
       deleteInvite (participant) {
         rpc
