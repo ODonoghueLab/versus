@@ -145,7 +145,6 @@ async function storeFiles (uploadedFiles, checkFilesForError) {
 
   } catch (error) {
 
-    console.log('>> router.storeFiles error:', error)
     await rollback(uploadedFiles)
     throw error
 

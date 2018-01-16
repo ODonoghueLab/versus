@@ -138,12 +138,12 @@ function checkImageFilesForError (files) {
     // handle formats
     const extName = path.extname(file.originalname).toLowerCase()
     if (!_.includes(['.png', '.jpg', '.gif'], extName)) {
-      return `only .png, .jpg, .gif`
+      return 'only .png, .jpg, .gif allowed'
     }
 
     // size checking
     if (file.size / 1000000 > 2) {
-      return 'Please Keep Images Under 2MB'
+      return 'only images under 2MB allowed'
     }
 
   }
@@ -322,16 +322,23 @@ module.exports = {
       let paths = await models.storeFiles(files, checkImageFilesForError)
 
       let imageSetIds = []
-      let nImage = {}
+      let nImages = {}
       for (let path of paths) {
         let imageSetId = models.getImageSetIdFromPath(path)
         if (!_.includes(imageSetIds, imageSetId)) {
           imageSetIds.push(imageSetId)
-          nImage[imageSetId] = 0
+          nImages[imageSetId] = 0
         }
-        nImage[imageSetId] += 1
+        nImages[imageSetId] += 1
       }
-      attr.params = getParams(_.values(nImage), tree.probRepeat)
+
+      for (let imageSetId of _.keys(nImages)) {
+        if (nImages[imageSetId] < 2) {
+          throw new Error(`image set "${imageSetId}" must include more than 1 image`)
+        }
+      }
+
+      attr.params = getParams(_.values(nImages), tree.probRepeat)
       attr.imageSetIds = imageSetIds
       console.log('>> routes.uploadImagesAndCreateExperiment attr', attr)
 

@@ -28,8 +28,16 @@
           class="button">
           Upload files
         </label>
-        {{fileStr}}
       </md-input-container>
+      <div style="font-size: 1em; color: #999; margin-top: -1.5em; line-height: 1.2em">
+        Images are .png, .jpg, or .gif.
+        <br>
+        Image set are defined by an underscore, eg `imageset_*.png`.
+        <br>
+        Each image set must have at least 2 images.
+        <br>
+        <br>
+      </div>
       <md-input-container>
         <label>Title</label>
         <md-input
@@ -105,6 +113,7 @@
       },
       async submit ($event) {
         this.$data.isUploading = true
+
         let res = await rpc.rpcUpload(
           'uploadImagesAndCreateExperiment',
           this.$data.files, auth.user.id, this.$data.attr)
