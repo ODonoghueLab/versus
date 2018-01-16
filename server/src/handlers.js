@@ -339,6 +339,10 @@ module.exports = {
         }
       }
 
+      if (!attr.name) {
+        throw new Error('must have experiment name')
+      }
+
       attr.params = getParams(_.values(nImages), tree.probRepeat)
       attr.imageSetIds = imageSetIds
       console.log('>> routes.uploadImagesAndCreateExperiment attr', attr)
