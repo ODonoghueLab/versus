@@ -80,6 +80,12 @@ export default {
     return res
   },
 
+  async forceUpdate (editUser) {
+    let payload = hashUserPassword(editUser)
+    console.log('> auth.update', util.jstr(payload))
+    return await rpc.rpcRun('publicForceUpdatePassword', payload)
+  },
+
   async restoreLastUser () {
     let lastUser = JSON.parse(localStorage.getItem('user'))
     console.log('> auth.restoreLastUser from localStorage', lastUser)

@@ -19,6 +19,7 @@ import Login from './components/Login'
 import Register from './components/Register'
 import EditUser from './components/EditUser'
 import MturkParticipant from './components/MturkParticipant'
+import ChangePassword from './components/ChangePassword'
 
 let router = new Router({
   routes: [
@@ -41,6 +42,11 @@ let router = new Router({
       path: '/edit-user',
       name: 'editUser',
       component: EditUser
+    },
+    {
+      path: '/change-password',
+      name: 'changePassword',
+      component: ChangePassword
     },
     {
       path: '/experiments',

@@ -217,13 +217,60 @@ module.exports = {
         }
       }
 
+      if (!values.id) {
+        return {
+          success: false,
+          errors: ['No user.id to identify to user']
+        }
+      }
+
       console.log('>> handlers.updateUser', values)
       await models.updateUser(values)
       return {success: true}
 
     } catch(err) {
 
-      console.log(`>> router.updateUser error`, err)
+      console.log(`>> handlers.updateUser error`, err)
+      return {
+        success: false,
+        errors: ['Couldn\'t update' + err]
+      }
+
+    }
+  },
+
+  async publicForceUpdatePassword (user) {
+    try {
+
+      const keys = ['id', 'password']
+      let values = {}
+      for (let key of keys) {
+        if (user[key]) {
+          values[key] = user[key]
+        }
+      }
+
+      if (!values.id) {
+        return {
+          success: false,
+          errors: ['No user.id to identify to user']
+        }
+      }
+
+      if (!values) {
+        return {
+          success: false,
+          errors: ['No values to update']
+        }
+      }
+
+      console.log('>> handlers.publicForceUpdatePassword', values)
+      await models.updateUser(values)
+      return {success: true}
+
+    } catch(err) {
+
+      console.log(`>> handlers.publicForceUpdatePassword error`, err)
       return {
         success: false,
         errors: ['Couldn\'t update' + err]
