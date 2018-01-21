@@ -68,7 +68,7 @@ export default {
     }
   },
   methods: {
-    submit(e) {
+    submit() {
       let payload = {
         name: this.$data.name,
         email: this.$data.email,

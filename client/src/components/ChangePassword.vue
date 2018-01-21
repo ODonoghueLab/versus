@@ -47,7 +47,7 @@
       return payload
     },
     methods: {
-      async submit (e) {
+      async submit () {
 
         let payload = {}
         const keys = ['id', 'rawPassword']

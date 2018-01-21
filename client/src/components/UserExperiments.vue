@@ -49,8 +49,6 @@
   import auth from '../modules/auth'
   import util from '../modules/util'
   import rpc from '../modules/rpc'
-  import _ from 'lodash'
-
   import router from '../router.js'
 
   export default {
