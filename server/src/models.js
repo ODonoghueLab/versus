@@ -38,7 +38,12 @@ let db = conn.db
 const User = db.define('User', {
   name: Sequelize.STRING,
   email: {type: Sequelize.STRING, unique: true},
-  password: Sequelize.STRING
+  password: {
+    type: Sequelize.STRING,
+    set: function(val) {
+      this.setDataValue('password', bcrypt.hashSync(val, bcrypt.genSaltSync(10)))
+    }
+  }
 })
 
 const Image = db.define('Image', {
@@ -53,11 +58,11 @@ const Participant = db.define('Participant', {
     defaultValue: Sequelize.UUIDV4
   },
   attr: sequelizeJson(db, 'Participant', 'attr'),
-  states: sequelizeJson(db, 'Participant', 'states'),
+  states: sequelizeJson(db, 'Participant', 'states')
 })
 
 const Experiment = db.define('Experiment', {
-  attr: sequelizeJson(db, 'Experiment', 'attr'),
+  attr: sequelizeJson(db, 'Experiment', 'attr')
 })
 
 const UserExperiment = db.define('UserExperiment', {
@@ -199,21 +204,13 @@ function getImageSetIdFromPath (p) {
 
 // User functions
 
-function saltPassword (user) {
-  let result = _.cloneDeep(user)
-  if (result.password) {
-    result.password = bcrypt.hashSync(result.password, bcrypt.genSaltSync(10))
-  }
-  return result
-}
-
 function createUser (values) {
   return User
     .findOne({where: {id: values.id}})
     .then(user => {
       if (user === null) {
         return User
-          .create(saltPassword(values))
+          .create(values)
           .then(unwrapInstance)
       }
     })
@@ -225,7 +222,7 @@ function updateUser (values) {
     .then(user => {
       if (user) {
         return user
-          .updateAttributes(saltPassword(values))
+          .updateAttributes(values)
           .then(unwrapInstance)
       } else {
         return null
