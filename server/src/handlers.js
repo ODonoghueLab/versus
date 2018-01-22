@@ -2,6 +2,7 @@ const path = require('path')
 
 const _ = require('lodash')
 const shortid = require('shortid')
+const prettyMs = require('pretty-ms')
 
 const models = require('./models')
 const tree = require('./modules/tree')
@@ -13,9 +14,9 @@ const tree = require('./modules/tree')
  binary-tree search functions
 
  Any functions defined in the module exports can be accessed by the
- correspoding `rpc` module in the client. These are accessed by their
- names, where a name starting with public are publically accessible
- api's. All other functions need the user to have already logged-in.
+ corresponding `rpc` module in the client. These are accessed by their
+ names, where a name starting with public are publicly accessible
+ API. All other functions need the user to have already logged-in.
 
  The functions must return a promise that returns a JSON-literal.
  For security, all returned functions must be wrapped in a dictionary.
@@ -35,7 +36,6 @@ function isStatesDone (states) {
   return true
 }
 
-
 function getRandomUnfinishedState (states) {
   let choices = []
   for (let [id, state] of _.toPairs(states)) {
@@ -49,8 +49,7 @@ function getRandomUnfinishedState (states) {
   return states[id]
 }
 
-
-function getParams (imageSizes, probRepeat) {
+function calcExperimentParams (imageSizes, probRepeat) {
   let params = {
     nImage: 0,
     maxComparisons: 0,
@@ -66,6 +65,56 @@ function getParams (imageSizes, probRepeat) {
   return params
 }
 
+function calcParticipantAttrOfExperiment (experiment) {
+
+  let participants = experiment.participants
+  for (let participant of participants) {
+    let attr = participant.attr
+    attr.nRepeatTotal = 0
+    attr.consistency = 0
+    attr.nComparisonDone = 0
+    let nComparison = 0
+    let time = 0
+    for (let state of _.values(participant.states)) {
+      attr.nRepeatTotal += state.consistencies.length
+      attr.consistency += _.sum(state.consistencies)
+      attr.nComparisonDone += state.comparisons.length
+      for (let comparison of state.comparisons) {
+        nComparison += 1
+        if (comparison.repeat) {
+          nComparison += 1
+        }
+        let startMs = new Date(comparison.startTime).getTime()
+        let endMs = new Date(comparison.endTime).getTime()
+        time += endMs - startMs
+      }
+    }
+    attr.time = prettyMs(time)
+
+    let params = experiment.attr.params
+    let maxComparison = params.maxComparisons + params.nRepeat
+    attr.progress = nComparison / maxComparison * 100
+  }
+
+  return experiment
+}
+
+function calcParticipantProgress (participant, experimentAttr) {
+
+  let nComparison = 0
+  for (let state of _.values(participant.states)) {
+    for (let comparison of state.comparisons) {
+      nComparison += 1
+      if (comparison.repeat) {
+        nComparison += 1
+      }
+    }
+  }
+  let params = experimentAttr.params
+  let maxComparison = params.maxComparisons + params.nRepeat
+  return nComparison / maxComparison * 100
+
+}
 
 async function getNextComparison (participateId) {
 
@@ -87,24 +136,16 @@ async function getNextComparison (participateId) {
 
     const state = getRandomUnfinishedState(states)
     const comparison = tree.getComparison(state)
-
-    let nComparison = 0
-    for (let state of _.values(states)) {
-      for (let comparison of state.comparisons) {
-        nComparison += 1
-        if (comparison.repeat) {
-          nComparison += 1
-        }
-      }
-    }
-    let progress = {nComparison}
-
+    let progress = calcParticipantProgress(participant, heading)
     payload = {comparison, urls, progress, heading}
 
   } else if (!isUserInitialized) {
 
-    let params = getParams(imageSizes, tree.probRepeat)
-    payload = {params, new: true, urls}
+    payload = {
+      params: calcExperimentParams(imageSizes, tree.probRepeat),
+      new: true,
+      urls
+    }
 
   } else { // isDone!
 
@@ -150,7 +191,6 @@ function checkImageFilesForError (files) {
   return ''
 }
 
-
 module.exports = {
 
   async publicRegisterUser (user) {
@@ -182,7 +222,7 @@ module.exports = {
         return {success: true}
       }
 
-    } catch(error) {
+    } catch (error) {
 
       return {
         success: false,
@@ -220,7 +260,7 @@ module.exports = {
       if (!values.id) {
         return {
           success: false,
-          errors: ['No user.id to identify to user']
+          errors: ['No user.id to identify user']
         }
       }
 
@@ -228,7 +268,7 @@ module.exports = {
       await models.updateUser(values)
       return {success: true}
 
-    } catch(err) {
+    } catch (err) {
 
       console.log(`>> handlers.updateUser error`, err)
       return {
@@ -268,7 +308,7 @@ module.exports = {
       await models.updateUser(values)
       return {success: true}
 
-    } catch(err) {
+    } catch (err) {
 
       console.log(`>> handlers.publicForceUpdatePassword error`, err)
       return {
@@ -279,7 +319,7 @@ module.exports = {
     }
   },
 
-  getExperiments (userId) {
+  getExperimentSummaries (userId) {
     return models
       .fetchExperiments(userId)
       .then(experiments => {
@@ -287,17 +327,13 @@ module.exports = {
       })
   },
 
-  getExperiment (experimentId) {
-    return models
-      .fetchExperiment(experimentId)
-      .then(experiment => {
-        return {experiment}
-      })
+  async getExperiment (experimentId) {
+    let experiment = await models.fetchExperiment(experimentId)
+    return {experiment: calcParticipantAttrOfExperiment(experiment)}
   },
 
   saveExperimentAttr (experimentId, attr) {
-    return models
-      .saveExperimentAttr(experimentId, attr)
+    return models.saveExperimentAttr(experimentId, attr)
   },
 
   deleteExperiment (experimentId) {
@@ -332,8 +368,7 @@ module.exports = {
   },
 
   async publicChooseItem (participateId, comparison) {
-    let participant = await models.fetchParticipant(
-      participateId)
+    let participant = await models.fetchParticipant(participateId)
 
     let urlA = comparison.itemA.url
     let imageSetId = models.getImageSetIdFromPath(urlA)
@@ -359,6 +394,7 @@ module.exports = {
    * Upload functions - first parameter is always a filelist object
    * This is meant to be called by
    *   `rpc.upload('uploadImagesAndCreateExperiment', userId, attr)`
+   * in the client.
    * @param {Array<File>} files - a browser filelist object
    * @param {String} userId
    * @param {Object} attr
@@ -390,7 +426,7 @@ module.exports = {
         throw new Error('must have experiment name')
       }
 
-      attr.params = getParams(_.values(nImages), tree.probRepeat)
+      attr.params = calcExperimentParams(_.values(nImages), tree.probRepeat)
       attr.imageSetIds = imageSetIds
       console.log('>> routes.uploadImagesAndCreateExperiment attr', attr)
 
@@ -406,7 +442,7 @@ module.exports = {
         experimentId: experiment.id
       }
 
-    } catch(error) {
+    } catch (error) {
 
       return {success: false, error: error.toString()}
 

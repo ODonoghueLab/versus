@@ -101,14 +101,14 @@
               {{ participant.attr.surveyCode }}
             </md-table-cell>
             <md-table-cell>
-              {{ participant.nComparisonDone }}
+              {{ participant.attr.nComparisonDone }}
             </md-table-cell>
             <md-table-cell>
-              {{ participant.time }}
+              {{ participant.attr.time }}
             </md-table-cell>
             <md-table-cell>
-              <span v-if="participant.consistency">
-                {{ participant.consistency }}/{{ participant.nRepeatTotal}}
+              <span v-if="participant.attr.consistency">
+                {{ participant.attr.consistency }}/{{ participant.attr.nRepeatTotal}}
               </span>
             </md-table-cell>
             <md-table-cell>
@@ -172,33 +172,11 @@
 
 
 <script>
-
   import path from 'path'
-
-  import prettyMs from 'pretty-ms'
-
   import config from '../config'
-
   import util from '../modules/util'
   import rpc from '../modules/rpc'
 
-  // https://appendto.com/2017/04/use-javascript-to-export-your-data-as-csv/
-  function downloadCSV (csv, filename) {
-    filename = filename || 'export.csv'
-
-    if (csv === null) {
-      return
-    }
-    if (!csv.match(/^data:text\/csv/i)) {
-      csv = 'data:text/csv;charset=utf-8,' + csv
-    }
-    let data = encodeURI(csv)
-
-    let link = document.createElement('a')
-    link.setAttribute('href', data)
-    link.setAttribute('download', filename)
-    link.click()
-  }
 
   function makeResultCsv (experiment) {
 
@@ -255,65 +233,6 @@
     return result
   }
 
-  /**
-   * https://stackoverflow.com/a/30810322
-   * @param text
-   */
-  function copyTextToClipboard (text) {
-    let textArea = document.createElement('textarea')
-
-    //
-    // *** This styling is an extra step which is likely not required. ***
-    //
-    // Why is it here? To ensure:
-    // 1. the element is able to have focus and selection.
-    // 2. if element was to flash render it has minimal visual impact.
-    // 3. less flakyness with selection and copying which **might** occur if
-    //    the textarea element is not visible.
-    //
-    // The likelihood is the element won't even render, not even a flash,
-    // so some of these are just precautions. However in IE the element
-    // is visible whilst the popup box asking the user for permission for
-    // the web page to copy to the clipboard.
-    //
-
-    // Place in top-left corner of screen regardless of scroll position.
-    textArea.style.position = 'fixed'
-    textArea.style.top = 0
-    textArea.style.left = 0
-
-    // Ensure it has a small width and height. Setting to 1px / 1em
-    // doesn't work as this gives a negative w/h on some browsers.
-    textArea.style.width = '2em'
-    textArea.style.height = '2em'
-
-    // We don't need padding, reducing the size if it does flash render.
-    textArea.style.padding = 0
-
-    // Clean up any borders.
-    textArea.style.border = 'none'
-    textArea.style.outline = 'none'
-    textArea.style.boxShadow = 'none'
-
-    // Avoid flash of white box if rendered for any reason.
-    textArea.style.background = 'transparent'
-
-    textArea.value = text
-
-    document.body.appendChild(textArea)
-
-    textArea.select()
-
-    try {
-      let successful = document.execCommand('copy')
-      let msg = successful ? 'successful' : 'unsuccessful'
-      console.log('> copyTextToClipboard', msg)
-    } catch (err) {
-      console.log('> copyTextToClipboard failed')
-    }
-
-    document.body.removeChild(textArea)
-  }
 
   export default {
     name: 'experiment',
@@ -329,7 +248,6 @@
       let res = await rpc.rpcRun('getExperiment', experimentId)
 
       let experiment = res.data.experiment
-      let urls = _.map(experiment.images, i => i.url)
       this.$data.experiment = experiment
 
       let imageSetIds = experiment.attr.imageSetIds
@@ -337,37 +255,13 @@
       console.log('> Experiment.mounted imageSetIds', imageSetIds)
 
       let images = {}
+      let urls = _.map(experiment.images, i => i.url)
       for (let imageSetId of experiment.attr.imageSetIds) {
-        let containsSetId = u => _.includes(u, imageSetId)
+        let containsSetId = _ => _.includes(_, imageSetId)
         images[imageSetId] = _.filter(urls, containsSetId)
       }
       console.log('> Experiment.mounted images', images)
       this.$data.images = images
-
-      function getTimeInterval(comparison) {
-        let startMs = new Date(comparison.startTime).getTime()
-        let endMs = new Date(comparison.endTime).getTime()
-        return endMs - startMs
-      }
-
-      // calculate consistencies
-      let participants = experiment.participants
-      for (let participant of participants) {
-        participant.consistency = 0
-        participant.nComparisonDone = 0
-        participant.nRepeatTotal = 0
-        let time = 0
-        for (let state of _.values(participant.states)) {
-          participant.nRepeatTotal += state.consistencies.length
-          participant.consistency += _.sum(state.consistencies)
-          participant.nComparisonDone += state.comparisons.length
-          for (let comparison of state.comparisons) {
-            time += getTimeInterval(comparison)
-          }
-        }
-        participant.time = prettyMs(time)
-      }
-      console.log('> Experiment.mounted participants', participants)
     },
 
     methods: {
@@ -379,7 +273,7 @@
       },
       downloadResults () {
         let csv = makeResultCsv(this.$data.experiment)
-        downloadCSV(csv, 'results.csv')
+        util.downloadCSV(csv, 'results.csv')
       },
       reformatDate (participant, key) {
         if (key in participant) {
@@ -395,7 +289,7 @@
         let href = window.location.href
         let iLast = href.indexOf('#')
         let host = href.substring(0, iLast + 1)
-        copyTextToClipboard(`${host}/participant/${participant.participateId}`)
+        util.copyTextToClipboard(`${host}/participant/${participant.participateId}`)
       },
       deleteInvite (participant) {
         rpc

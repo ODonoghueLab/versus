@@ -33,8 +33,8 @@
         login
       </md-button>
 
-      <div v-if="msg" style="color: red">
-        {{ msg }}
+      <div v-if="error" style="color: red">
+        {{ error }}
       </div>
 
       <br>
@@ -58,11 +58,11 @@
         title: 'Login to Versus',
         email: '',
         rawPassword: '',
-        msg: ''
+        error: ''
       }
     },
     methods: {
-      submit(e) {
+      submit() {
         let payload = {
           email: this.$data.email,
           rawPassword: this.$data.rawPassword
@@ -74,7 +74,7 @@
             if (res.data.success) {
               this.$router.push('/experiments')
             } else {
-              this.$data.msg = res.data.msg
+              this.$data.error = res.data.msg
             }
           })
       }

@@ -53,8 +53,7 @@
     <div v-else-if="status === 'running'">
       <md-layout md-align="center" v-if="comparison">
 
-        <md-progress :md-progress="progressPercent"/>
-
+        <md-progress style="height: 8px" :md-progress="progress"/>
 
         <md-layout md-align="center" md-flex="100">
           <h2 class="md-display-2"> {{heading.title}} </h2>
@@ -187,7 +186,7 @@
         experiment: null,
         comparison: null,
         surveyCode: null,
-        progress: {},
+        progress: 0,
         heading: {},
       }
     },
@@ -196,13 +195,6 @@
       rpc
         .rpcRun('publicGetParticipant', participateId)
         .then(this.handleRes)
-    },
-    computed: {
-      progressPercent () {
-        let params = this.heading.params
-        let maxComparison = params.maxComparisons + params.nRepeat
-        return this.progress.nComparison / maxComparison * 100
-      }
     },
     methods: {
       async handleRes (res) {
@@ -225,48 +217,31 @@
           this.$data.heading = res.data.heading
           this.$data.progress = res.data.progress
 
-          // clear screen
+          // clear screen, delay required for page to redraw
           this.$data.imageB = null
           this.$data.imageA = null
-          // allow screen to clear
           await delay(200)
 
-          let oldComparison = this.$data.comparison
-          let newComparison = res.data.comparison
+          let comparison = res.data.comparison
 
-          if (oldComparison) {
-            // swap to match existing choices on screen
-            if ((newComparison.itemA.value === oldComparison.itemB.value)
-              | (newComparison.itemB.value === oldComparison.itemA.value)) {
-              let dummy = newComparison.itemA
-              newComparison.itemA = newComparison.itemB
-              newComparison.itemB = dummy
-            }
-          }
-          this.$data.comparison = newComparison
-          console.log('> Invite.handleRes comparison', newComparison)
-
-          preloadImage(newComparison.itemA.url)
-          preloadImage(newComparison.itemB.url)
-
+          preloadImage(comparison.itemA.url)
+          preloadImage(comparison.itemB.url)
           _.map(res.data.urls, preloadImage)
 
-          let imageUrlA = this.getImageUrl(newComparison.itemA)
-          let imageUrlB = this.getImageUrl(newComparison.itemB)
-
-          while (!isImgLoaded(imageUrlA)
-          || !isImgLoaded(imageUrlB)) {
-            console.log('> Participant.handleRes waiting', isImgLoaded(imageUrlA), isImgLoaded(imageUrlB))
+          let imageUrlA = this.getImageUrl(comparison.itemA)
+          let imageUrlB = this.getImageUrl(comparison.itemB)
+          while (!isImgLoaded(imageUrlA) || !isImgLoaded(imageUrlB)) {
             await delay(100)
           }
 
-          // turn off loading bars
           this.$data.loadingA = false
           this.$data.loadingB = false
-
           this.$data.imageA = imageUrlA
           this.$data.imageB = imageUrlB
+          this.$data.comparison = comparison
+          console.log('> Invite.handleRes comparison', comparison)
         }
+
       },
       choose (item) {
         if (this.$data.loadingA || this.$data.loadingB) {

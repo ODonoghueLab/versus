@@ -5,8 +5,8 @@ const del = require('del')
 const denodeify = require('denodeify')
 const rimraf = denodeify(require('rimraf'))
 const _ = require('lodash')
-const bcrypt = require('bcryptjs')
 
+const bcrypt = require('bcryptjs')
 const Sequelize = require('sequelize')
 const sequelizeJson = require('sequelize-json')
 
@@ -37,10 +37,13 @@ let db = conn.db
 
 const User = db.define('User', {
   name: Sequelize.STRING,
-  email: {type: Sequelize.STRING, unique: true},
+  email: {
+    type: Sequelize.STRING,
+    unique: true
+  },
   password: {
     type: Sequelize.STRING,
-    set: function(val) {
+    set (val) {
       this.setDataValue('password', bcrypt.hashSync(val, bcrypt.genSaltSync(10)))
     }
   }
@@ -79,7 +82,6 @@ User.belongsToMany(Experiment, {through: UserExperiment})
 
 /**
  * Converts a Sequelize record into a JSON-literal
- *
  * @param {SequelizeRecord} instance - a Sequelize Record
  * @returns {Object|null} JSON-literal object or null if unsuccessfull
  */
