@@ -68,6 +68,7 @@
     },
     async mounted() {
       let res = await rpc.rpcRun('getExperimentSummaries', auth.user.id)
+      console.log('> UserExperiments.mounted', util.jstr(res.data))
       this.$data.experiments = res.data.experiments
     },
     methods: {

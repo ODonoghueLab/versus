@@ -9,9 +9,9 @@
         You have been invited to participate in an experiment on Versus. Experiments on Versus are easy.
       </p>
       <p>
-        You will be ranking {{experiment.nImage}} images,
-        with at most {{experiment.maxComparisons}} image comparisons, of which
-        {{experiment.nRepeat}} will be repeated in a
+        You will be ranking {{experimentAttr.nImage}} images,
+        with at most {{experimentAttr.maxTreeComparison}} image comparisons, of which
+        {{experimentAttr.nRepeat}} will be repeated in a
         random order.
       </p>
 
@@ -56,11 +56,11 @@
         <md-progress style="height: 8px" :md-progress="progress"/>
 
         <md-layout md-align="center" md-flex="100">
-          <h2 class="md-display-2"> {{heading.title}} </h2>
+          <h2 class="md-display-2"> {{experimentAttr.title}} </h2>
         </md-layout>
 
         <md-layout md-align="center" md-flex="100">
-          <p> {{heading.blurb}}</p>
+          <p> {{experimentAttr.blurb}}</p>
           <br>
         </md-layout>
 
@@ -183,11 +183,10 @@
         loadingB: true,
         imageA: null,
         imageB: null,
-        experiment: null,
         comparison: null,
         surveyCode: null,
         progress: 0,
-        heading: {},
+        experimentAttr: {},
       }
     },
     mounted () {
@@ -199,22 +198,19 @@
     methods: {
       async handleRes (res) {
         console.log('> Invite.handleRes', util.jstr(res.data))
-        this.$data.status = ''
+        this.$data.status = res.data.status
 
-        if (res.data.new) {
+        if (res.data.status === 'start') {
           console.log('> Invite.handleRes new')
-          this.$data.status = 'start'
-          this.$data.experiment = res.data.params
+          this.$data.experimentAttr = res.data.experimentAttr
 
-        } else if (res.data.done) {
+        } else if (res.data.status === 'done') {
           console.log('> Invite.handleRes done')
-          this.$data.status = 'done'
           this.$data.surveyCode = res.data.surveyCode
 
-        } else if (res.data.comparison) {
+        } else if (res.data.status === 'running') {
 
-          this.$data.status = 'running'
-          this.$data.heading = res.data.heading
+          this.$data.experimentAttr = res.data.experimentAttr
           this.$data.progress = res.data.progress
 
           // clear screen, delay required for page to redraw

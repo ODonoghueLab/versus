@@ -453,6 +453,22 @@ function getComparison (state) {
   }
 }
 
+function calcTreeAttr (imageSizes, probRepeat) {
+  let attr = {
+    nImage: 0,
+    maxTreeComparison: 0,
+    nRepeat: 0
+  }
+  for (let n of imageSizes) {
+    let maxTreeComparison = Math.ceil(n * Math.log2(n))
+    let nRepeat = Math.ceil(probRepeat * maxTreeComparison)
+    attr.nImage += n
+    attr.maxTreeComparison += maxTreeComparison
+    attr.nRepeat += nRepeat
+  }
+  return attr
+}
+
 
 module.exports = {
   isDone,
@@ -460,6 +476,7 @@ module.exports = {
   probRepeat,
   makeChoice,
   getComparison,
+  calcTreeAttr
 }
 
 

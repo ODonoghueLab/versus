@@ -245,10 +245,14 @@
     },
     async mounted () {
       let experimentId = this.$route.params.experimentId
+      console.log('> Experiment.mounted whhaaat!')
       let res = await rpc.rpcRun('getExperiment', experimentId)
+
+      console.log('> Experiment.mounted', res.data)
 
       let experiment = res.data.experiment
       this.$data.experiment = experiment
+
 
       let imageSetIds = experiment.attr.imageSetIds
       this.$data.imageSetIds = imageSetIds

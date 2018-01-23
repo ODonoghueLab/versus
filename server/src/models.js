@@ -49,6 +49,8 @@ const User = db.define('User', {
   }
 })
 
+
+
 const Image = db.define('Image', {
   url: Sequelize.STRING,
   filename: Sequelize.STRING
@@ -93,8 +95,9 @@ function unwrapInstance (instance) {
   }
 }
 
-
-// File handling functions
+/**
+ * File handling functions
+ */
 
 async function rollback (uploadedFiles) {
   for (let f of uploadedFiles) {
@@ -202,9 +205,25 @@ function getImageSetIdFromPath (p) {
  * extracted from the database. These access functions
  * provides an abstraction that insulates the database
  * from the api
+ *
+ * find* functions returns a Sequelize instance
+ * fetch* functions returns a JSON-literal of the Sequelize instance
+ * unwrapInstance is used to convert Sequelize instance to JSON
  */
 
-// User functions
+/**
+ *
+ * User functions
+ *
+ * Unwrapped instance JSON structure:
+ * {
+ *   id: Number,
+ *   name: string,
+ *   password: salted password string,
+ *   email: string
+ * }
+ */
+
 
 function createUser (values) {
   return User
@@ -245,8 +264,7 @@ function fetchUser (values) {
 }
 
 /**
- * Returns a promise that returns a user literal if successful
- * or null if unsuccessful
+ * @returns {Promise} - user if successful, otherwise null
  */
 function checkUserWithPassword (user, password) {
   return new Promise((resolve) => {
@@ -262,7 +280,22 @@ function checkUserWithPassword (user, password) {
   })
 }
 
-// Experiment functions
+/**
+ * Experiment access functions
+ *
+ * Unwrapped instance JSON structure:
+ * {
+ *   id: Number,
+ *   images: Image instances,
+ *   participants: Participant instances,
+ *   attr: {
+ *     params: {},
+ *     imageSetIds: array of strings
+ *     name: string,
+ *     title: string
+ *   }
+ * }
+ */
 
 async function createExperiment (userId, attr, imageUrls) {
   console.log('> models.createExperiment')
@@ -316,30 +349,37 @@ async function fetchExperiments (userId) {
   return _.map(experiments, unwrapInstance)
 }
 
-// Participant functions
+/**
+ * Participant access functions
+ *
+ * Unwrapped instance JSON structure:
+ * {
+ *   participateID: UUID string,
+ *   attr: {
+ *     email: email string,
+ *     user: string,
+ *   }
+ *   states: Array of states,
+ * }
+ */
 
 async function createParticipant (experimentId, email) {
   let experiment = await findExperiment(experimentId)
 
-  const images = experiment.images
-  const urls = _.map(images, 'url')
+  const urls = _.map(experiment.images, 'url')
+
   let states = {}
   for (let imageSetId of experiment.attr.imageSetIds) {
     let theseUrls = _.filter(urls, u => _.includes(u, imageSetId))
     states[imageSetId] = tree.newState(theseUrls)
   }
-  const state = tree.newState(urls)
 
   let participant = await Participant.create(
-      {attr: {email: email, user: null}, state, states})
+      {attr: {email: email, user: null}, states})
 
   await experiment.addParticipant(participant)
 
-  let result = unwrapInstance(participant)
-  for (let [imageSetId, state] of _.toPairs(result.states)) {
-    console.log('> models.createParticipant', imageSetId, state.imageUrls)
-  }
-  return result
+  return unwrapInstance(participant)
 }
 
 function findParticipant (participateId) {

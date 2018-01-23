@@ -8,24 +8,25 @@ const models = require('./models')
 const tree = require('./modules/tree')
 
 /**
-
- handlers.js - this module holds all the functions that are accessible
- to the web-client in the JSON-RPC api. It binds the database to the
- binary-tree search functions
-
- Any functions defined in the module exports can be accessed by the
- corresponding `rpc` module in the client. These are accessed by their
- names, where a name starting with public are publicly accessible
- API. All other functions need the user to have already logged-in.
-
- The functions must return a promise that returns a JSON-literal.
- For security, all returned functions must be wrapped in a dictionary.
-
- Functions that handle file-uploads from the client start with
- upload, and the first parameter will be a filelist object that
- determines the names and locations of the uploaded files on the
- server.
+ *
+ * handlers.js - this module holds all the functions that are accessible
+ * to the web-client in the JSON-RPC api. It binds the database to the
+ * binary-tree search functions
+ *
+ * Any functions defined in the module exports can be accessed by the
+ * corresponding `rpc` module in the client. These are accessed by their
+ * names, where a name starting with public are publicly accessible
+ * API. All other functions need the user to have already logged-in.
+ *
+ * The functions must return a promise that returns a JSON-literal.
+ * For security, all returned functions must be wrapped in a dictionary.
+ *
+ * Functions that handle file-uploads from the client start with
+ * upload, and the first parameter will be a filelist object that
+ * determines the names and locations of the uploaded files on the
+ * server.
  */
+
 
 function isStatesDone (states) {
   for (let state of _.values(states)) {
@@ -49,58 +50,60 @@ function getRandomUnfinishedState (states) {
   return states[id]
 }
 
-function calcExperimentParams (imageSizes, probRepeat) {
-  let params = {
-    nImage: 0,
-    maxComparisons: 0,
-    nRepeat: 0
-  }
-  for (let n of imageSizes) {
-    let maxComparisons = Math.ceil(n * Math.log2(n))
-    let nRepeat = Math.ceil(probRepeat * maxComparisons)
-    params.nImage += n
-    params.maxComparisons += maxComparisons
-    params.nRepeat += nRepeat
-  }
-  return params
-}
 
-function calcParticipantAttrOfExperiment (experiment) {
+/**
+ * Checks experiment.attr and participant.attr
+ * @param experiment
+ * @returns {Object} experiment
+ */
+function checkExperiment (experiment) {
 
-  let participants = experiment.participants
-  for (let participant of participants) {
-    let attr = participant.attr
-    attr.nRepeatTotal = 0
-    attr.consistency = 0
-    attr.nComparisonDone = 0
-    let nComparison = 0
-    let time = 0
-    for (let state of _.values(participant.states)) {
-      attr.nRepeatTotal += state.consistencies.length
-      attr.consistency += _.sum(state.consistencies)
-      attr.nComparisonDone += state.comparisons.length
-      for (let comparison of state.comparisons) {
-        nComparison += 1
-        if (comparison.repeat) {
+  if (experiment.attr.params) {
+    _.assign(experiment.attr, experiment.attr.params)
+    delete experiment.attr.params
+  }
+
+  if (experiment.attr.maxComparisons) {
+    experiment.attr.maxTreeComparison = experiment.attr.maxComparisons
+    delete experiment.attr.maxComparisons
+  }
+
+  experiment.attr.maxComparison =
+    experiment.attr.maxTreeComparison
+     + experiment.attr.nRepeat
+
+  // Calculate statistics of finished experiment
+  if (experiment.participants) {
+    for (let participant of experiment.participants) {
+      let attr = participant.attr
+      attr.nRepeatTotal = 0
+      attr.consistency = 0
+      attr.nComparisonDone = 0
+      let nComparison = 0
+      let time = 0
+      for (let state of _.values(participant.states)) {
+        attr.nRepeatTotal += state.consistencies.length
+        attr.consistency += _.sum(state.consistencies)
+        attr.nComparisonDone += state.comparisons.length
+        for (let comparison of state.comparisons) {
           nComparison += 1
+          if (comparison.repeat) {
+            nComparison += 1
+          }
+          let startMs = new Date(comparison.startTime).getTime()
+          let endMs = new Date(comparison.endTime).getTime()
+          time += endMs - startMs
         }
-        let startMs = new Date(comparison.startTime).getTime()
-        let endMs = new Date(comparison.endTime).getTime()
-        time += endMs - startMs
       }
+      attr.time = prettyMs(time)
     }
-    attr.time = prettyMs(time)
-
-    let params = experiment.attr.params
-    let maxComparison = params.maxComparisons + params.nRepeat
-    attr.progress = nComparison / maxComparison * 100
   }
 
   return experiment
+
 }
 
 function calcParticipantProgress (participant, experimentAttr) {
-
   let nComparison = 0
   for (let state of _.values(participant.states)) {
     for (let comparison of state.comparisons) {
@@ -110,42 +113,37 @@ function calcParticipantProgress (participant, experimentAttr) {
       }
     }
   }
-  let params = experimentAttr.params
-  let maxComparison = params.maxComparisons + params.nRepeat
-  return nComparison / maxComparison * 100
-
+  return nComparison / experimentAttr.maxComparison * 100
 }
 
-async function getNextComparison (participateId) {
+async function getNextChoice (participateId) {
 
   let participant = await models.fetchParticipant(participateId)
 
-  let states = participant.states
-  let imageSizes = _.map(_.values(states), s => s.imageUrls.length)
-
   let experiment = await models.fetchExperiment(participant.ExperimentId)
-  let heading = experiment.attr
+  checkExperiment(experiment)
+  let experimentAttr = experiment.attr
   let urls = _.map(experiment.images, 'url')
 
-  let isRunning = !isStatesDone(states)
-  let isUserInitialized = participant.attr.user !== null
+  let states = participant.states
 
   let payload
 
+  let isRunning = !isStatesDone(states)
+  let isUserInitialized = participant.attr.user !== null
   if (isUserInitialized && isRunning) {
 
-    const state = getRandomUnfinishedState(states)
-    const comparison = tree.getComparison(state)
-    let progress = calcParticipantProgress(participant, heading)
-    payload = {comparison, urls, progress, heading}
+    payload = {
+      status: 'running',
+      urls,
+      experimentAttr,
+      comparison: tree.getComparison(getRandomUnfinishedState(states)),
+      progress: calcParticipantProgress(participant, experimentAttr)
+    }
 
   } else if (!isUserInitialized) {
 
-    payload = {
-      params: calcExperimentParams(imageSizes, tree.probRepeat),
-      new: true,
-      urls
-    }
+    payload = {status: 'start', experimentAttr, urls}
 
   } else { // isDone!
 
@@ -155,7 +153,8 @@ async function getNextComparison (participateId) {
       attr.surveyCode = shortid.generate()
       await models.saveParticipant(participateId, {states, attr})
     }
-    payload = {done: true, surveyCode: attr.surveyCode}
+
+    payload = {status: 'done', surveyCode: attr.surveyCode}
 
   }
 
@@ -319,17 +318,21 @@ module.exports = {
     }
   },
 
-  getExperimentSummaries (userId) {
-    return models
-      .fetchExperiments(userId)
-      .then(experiments => {
-        return {experiments}
-      })
+  async getExperimentSummaries (userId) {
+    let experiments = await models.fetchExperiments(userId)
+    let payload = {experiments: []}
+    for (let experiment of experiments) {
+      console.log('> handlers.getExperimentSummaries', experiment)
+      checkExperiment(experiment)
+      payload.experiments.push({id: experiment.id, attr: experiment.attr})
+    }
+    return payload
   },
 
   async getExperiment (experimentId) {
     let experiment = await models.fetchExperiment(experimentId)
-    return {experiment: calcParticipantAttrOfExperiment(experiment)}
+    checkExperiment(experiment)
+    return {experiment}
   },
 
   saveExperimentAttr (experimentId, attr) {
@@ -364,7 +367,7 @@ module.exports = {
   },
 
   publicGetParticipant (participateId) {
-    return getNextComparison(participateId)
+    return getNextChoice(participateId)
   },
 
   async publicChooseItem (participateId, comparison) {
@@ -378,16 +381,14 @@ module.exports = {
 
     await models.saveParticipant(participateId, {states})
 
-    return getNextComparison(participateId)
+    return getNextChoice(participateId)
   },
 
   publicSaveParticipantUserDetails (participateId, user) {
     console.log('> handlers.publicSaveParticipantUserDetails user', user)
     return models
       .saveParticipantAttr(participateId, {user: user})
-      .then(participant => {
-        return getNextComparison(participateId)
-      })
+      .then(() => getNextChoice(participateId))
   },
 
   /**
@@ -426,7 +427,7 @@ module.exports = {
         throw new Error('must have experiment name')
       }
 
-      attr.params = calcExperimentParams(_.values(nImages), tree.probRepeat)
+      _.assign(attr, tree.calcTreeAttr(_.values(nImages), tree.probRepeat))
       attr.imageSetIds = imageSetIds
       console.log('>> routes.uploadImagesAndCreateExperiment attr', attr)
 
