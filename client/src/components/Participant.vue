@@ -2,16 +2,20 @@
   <div style="text-align: left">
 
     <div style="padding: 1em" v-if="status === 'start'">
+
       <h2 class="md-display-2">
         Welcome to Versus!
       </h2>
+
       <p>
-        You have been invited to participate in an experiment on Versus. Experiments on Versus are easy.
+        You have been invited to participate in an experiment on Versus.
+        Experiments on Versus are easy.
       </p>
+
       <p>
         You will be ranking {{experimentAttr.nImage}} images,
-        with at most {{experimentAttr.maxTreeComparison}} image comparisons, of which
-        {{experimentAttr.nRepeat}} will be repeated in a
+        with at most {{experimentAttr.maxTreeComparison}} image comparisons,
+        of which {{experimentAttr.nRepeat}} will be repeated in a
         random order.
       </p>
 
@@ -28,29 +32,35 @@
           Look at images
         </md-button>
       </form>
+
     </div>
 
     <div v-else-if="status === 'done'" class="done">
+
       <md-layout
         style="padding: 1em"
         class="md-display-2 done"
         md-align="center"
         md-column
         md-vertical-align="center">
+
         Your tests are done
         <br>
         Thank you
         <br>
         Your survey code is
         <br>
+
         <md-whiteframe
           style="padding: 0.5em">
           {{surveyCode}}
         </md-whiteframe>
+
       </md-layout>
+
     </div>
 
-    <div v-else-if="status === 'running'">
+    <div v-else-if="status === 'running2afc'">
       <md-layout md-align="center" v-if="comparison">
 
         <md-progress style="height: 8px" :md-progress="progress"/>
@@ -66,6 +76,7 @@
 
         <md-layout v-if="imageA && imageB">
           <md-layout md-flex="50" md-align="end">
+
             <md-whiteframe md-elevation="5" style="margin-right: 1em">
               <div style="height: 12px;">
                 <md-progress
@@ -76,6 +87,7 @@
                 <img :src="imageA"/>
               </div>
             </md-whiteframe>
+
             <div style="width: 100%; padding-top: 1em; text-align: center;">
               <md-button
                 :disabled="loadingA || loadingB"
@@ -84,6 +96,7 @@
                 Choose
               </md-button>
             </div>
+
           </md-layout>
 
           <md-layout md-flex="50" md-align="start">
@@ -121,6 +134,81 @@
 
       </md-layout>
     </div>
+
+    <div v-else-if="status === 'runningMultiple'">
+
+      <md-layout md-align="center">
+
+        <md-progress
+          style="height: 8px"
+          :md-progress="progress"/>
+
+        <md-layout
+          md-align="center"
+          md-column
+          md-flex="100"
+          style="text-align: center">
+
+          <h2 class="md-display-2">
+            {{experimentAttr.title}}
+          </h2>
+
+          <p>
+            {{experimentAttr.blurb}}
+          </p>
+        </md-layout>
+
+        <md-layout md-flex="100" md-align="center">
+            <img
+              style="height: 250px; width: auto"
+              :src="questionUrl"/>
+        </md-layout>
+
+        <br>
+
+        <md-layout
+          md-row
+          v-for="(answerUrl, iAnswer) in answerUrls"
+          :key="iAnswer">
+
+          <md-layout md-align="end">
+
+            <md-whiteframe
+              md-elevation="5"
+              style="margin-right: 1em">
+
+              <div style="height: 12px;">
+                <md-progress
+                  v-if="loadingStates[iAnswer]"
+                  md-indeterminate/>
+              </div>
+
+              <img :src="answerUrl"/>
+
+            </md-whiteframe>
+
+            <div
+              style="
+                width: 100%;
+                padding-top: 1em;
+                text-align: center;">
+
+              <md-button
+                :disabled="anyLoading"
+                class="md-raised choice"
+                @click="chooseMultiple(answerUrl)">
+                Choose
+              </md-button>
+
+            </div>
+
+          </md-layout>
+
+        </md-layout>
+
+      </md-layout>
+    </div>
+
   </div>
 
 </template>
@@ -186,13 +274,18 @@
         comparison: null,
         surveyCode: null,
         progress: 0,
+        questionUrl: null,
+        answerUrls: [],
+        imageSize: 0,
+        loadingStates: [],
+        anyLoading: false,
         experimentAttr: {},
       }
     },
     mounted () {
       let participateId = this.$route.params.participateId
       rpc
-        .rpcRun('publicGetParticipant', participateId)
+        .rpcRun('publicGetNextChoice', participateId)
         .then(this.handleRes)
     },
     methods: {
@@ -208,7 +301,7 @@
           console.log('> Invite.handleRes done')
           this.$data.surveyCode = res.data.surveyCode
 
-        } else if (res.data.status === 'running') {
+        } else if (res.data.status === 'running2afc') {
 
           this.$data.experimentAttr = res.data.experimentAttr
           this.$data.progress = res.data.progress
@@ -236,8 +329,47 @@
           this.$data.imageB = imageUrlB
           this.$data.comparison = comparison
           console.log('> Invite.handleRes comparison', comparison)
+
+        } else if (res.data.status === 'runningMultiple') {
+
+          this.$data.experimentAttr = res.data.experimentAttr
+
+          // clear screen, delay required for page to redraw
+          this.$data.questionUrl = null
+          this.$data.answerUrls.length = 0
+          this.$data.loadingStates.length = 0
+          this.$data.anyLoading = false
+          await delay(200)
+
+          preloadImage(res.data.questionUrl)
+          _.map(res.data.answerUrls, preloadImage)
+
+          // let imageUrlA = this.getImageUrl(comparison.itemA)
+          // let imageUrlB = this.getImageUrl(comparison.itemB)
+          // while (!isImgLoaded(imageUrlA) || !isImgLoaded(imageUrlB)) {
+          //   await delay(100)
+          // }
+
+          this.$data.questionUrl = config.apiUrl + res.data.questionUrl
+          for (let url of res.data.answerUrls) {
+            let fullUrl = config.apiUrl + url
+            this.$data.answerUrls.push(fullUrl)
+            this.$data.loadingStates.push(false)
+          }
+          this.$data.imageSize = 100 / this.$data.answerUrls.length - 5
+          console.log(this.$data.questionUrl)
         }
 
+      },
+      async chooseMultiple(url) {
+        let participateId = this.$route.params.participateId
+        let i = this.$data.answerUrls.indexOf(url)
+        this.$data.loadingStates[i] = true
+        this.$data.anyLoading = true
+        this.$forceUpdate()
+        console.log('> Participant.chooseMultiple', url, i, this.$data.loadingStates)
+        let res = await rpc.rpcRun('publicChooseMultiple', participateId, url)
+        this.handleRes(res)
       },
       choose (item) {
         if (this.$data.loadingA || this.$data.loadingB) {

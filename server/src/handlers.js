@@ -50,7 +50,6 @@ function getRandomUnfinishedState (states) {
   return states[id]
 }
 
-
 /**
  * Checks experiment.attr and participant.attr
  * @param experiment
@@ -70,7 +69,7 @@ function checkExperiment (experiment) {
 
   experiment.attr.maxComparison =
     experiment.attr.maxTreeComparison
-     + experiment.attr.nRepeat
+    + experiment.attr.nRepeat
 
   // Calculate statistics of finished experiment
   if (experiment.participants) {
@@ -119,47 +118,63 @@ function calcParticipantProgress (participant, experimentAttr) {
 async function getNextChoice (participateId) {
 
   let participant = await models.fetchParticipant(participateId)
-
   let experiment = await models.fetchExperiment(participant.ExperimentId)
   checkExperiment(experiment)
   let experimentAttr = experiment.attr
   let urls = _.map(experiment.images, 'url')
 
-  let states = participant.states
-
-  let payload
-
-  let isRunning = !isStatesDone(states)
-  let isUserInitialized = participant.attr.user !== null
-  if (isUserInitialized && isRunning) {
-
-    payload = {
-      status: 'running',
-      urls,
-      experimentAttr,
-      comparison: tree.getComparison(getRandomUnfinishedState(states)),
-      progress: calcParticipantProgress(participant, experimentAttr)
-    }
-
-  } else if (!isUserInitialized) {
-
-    payload = {status: 'start', experimentAttr, urls}
-
-  } else { // isDone!
-
-    // Generate surveyCode if it doesn't exist
-    let attr = participant.attr
-    if (!attr.surveyCode) {
-      attr.surveyCode = shortid.generate()
-      await models.saveParticipant(participateId, {states, attr})
-    }
-
-    payload = {status: 'done', surveyCode: attr.surveyCode}
-
+  if (participant.attr.user === null) {
+    return {status: 'start', experimentAttr, urls}
   }
 
-  console.log('>> handlers.getComparison', payload)
-  return payload
+  if (experiment.attr.questionType === '2afc') {
+
+    let states = participant.states
+
+    if (!isStatesDone(states)) {
+
+      return {
+        status: 'running2afc',
+        urls,
+        experimentAttr,
+        comparison: tree.getComparison(getRandomUnfinishedState(states)),
+        progress: calcParticipantProgress(participant, experimentAttr)
+      }
+
+    } else { // isDone!
+
+      // Generate surveyCode if it doesn't exist
+      let attr = participant.attr
+      if (!attr.surveyCode) {
+        attr.surveyCode = shortid.generate()
+        await models.saveParticipant(participateId, {attr})
+      }
+
+      return {
+        status: 'done',
+        surveyCode: attr.surveyCode
+      }
+
+    }
+  }
+
+  if (experiment.attr.questionType === 'multiple') {
+
+    let imageSetId = experiment.attr.imageSetIds[0]
+    let inSet = url => _.includes(url, imageSetId)
+    let urls = _.filter(_.map(experiment.images, 'url'), inSet)
+    let questionUrls = _.remove(urls, url => _.includes(url, 'question'))
+    let questionUrl = questionUrls[0]
+    let answerUrls = urls
+    return {
+      status: 'runningMultiple',
+      answerUrls,
+      questionUrl,
+      experimentAttr,
+      imageSetId
+    }
+
+  }
 }
 
 /**
@@ -181,10 +196,10 @@ function checkImageFilesForError (files) {
       return 'only .png, .jpg, .gif allowed'
     }
 
-    // size checking
-    if (file.size / 1000000 > 2) {
-      return 'only images under 2MB allowed'
-    }
+    // // size checking
+    // if (file.size / 1000000 > 2) {
+    //   return 'only images under 2MB allowed'
+    // }
 
   }
   return ''
@@ -366,7 +381,7 @@ module.exports = {
       })
   },
 
-  publicGetParticipant (participateId) {
+  publicGetNextChoice (participateId) {
     return getNextChoice(participateId)
   },
 
@@ -378,17 +393,19 @@ module.exports = {
     let states = participant.states
     let state = states[imageSetId]
     tree.makeChoice(state, comparison)
-
     await models.saveParticipant(participateId, {states})
 
     return getNextChoice(participateId)
   },
 
-  publicSaveParticipantUserDetails (participateId, user) {
+  publicChooseMultiple (participateId, url) {
+    return getNextChoice(participateId)
+  },
+
+  async publicSaveParticipantUserDetails (participateId, user) {
     console.log('> handlers.publicSaveParticipantUserDetails user', user)
-    return models
-      .saveParticipantAttr(participateId, {user: user})
-      .then(() => getNextChoice(participateId))
+    await models.saveParticipantAttr(participateId, {user: user})
+    return getNextChoice(participateId)
   },
 
   /**
@@ -403,21 +420,21 @@ module.exports = {
   async uploadImagesAndCreateExperiment (files, userId, attr) {
     try {
 
-      let paths = await models.storeFiles(files, checkImageFilesForError)
+      let paths = await models.storeFilesInConfigDir(files, checkImageFilesForError)
 
       let imageSetIds = []
-      let nImages = {}
+      let nImageById = {}
       for (let path of paths) {
         let imageSetId = models.getImageSetIdFromPath(path)
         if (!_.includes(imageSetIds, imageSetId)) {
           imageSetIds.push(imageSetId)
-          nImages[imageSetId] = 0
+          nImageById[imageSetId] = 0
         }
-        nImages[imageSetId] += 1
+        nImageById[imageSetId] += 1
       }
 
-      for (let imageSetId of _.keys(nImages)) {
-        if (nImages[imageSetId] < 2) {
+      for (let imageSetId of _.keys(nImageById)) {
+        if (nImageById[imageSetId] < 2) {
           throw new Error(
             `image set "${imageSetId}" must include more than 1 image`)
         }
@@ -427,7 +444,7 @@ module.exports = {
         throw new Error('must have experiment name')
       }
 
-      _.assign(attr, tree.calcTreeAttr(_.values(nImages), tree.probRepeat))
+      _.assign(attr, tree.calcTreeAttr(_.values(nImageById), tree.probRepeat))
       attr.imageSetIds = imageSetIds
       console.log('>> routes.uploadImagesAndCreateExperiment attr', attr)
 

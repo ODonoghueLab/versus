@@ -59,6 +59,13 @@
       </md-input-container>
       <br>
 
+      <div>
+        <md-radio v-model="attr.questionType" id="my-test1" name="my-test-group1" md-value="2afc">2 alternative forced choice</md-radio>
+        <md-radio v-model="attr.questionType" id="my-test2" name="my-test-group1" md-value="multiple">multiple choice</md-radio>
+      </div>
+
+      </md-switch>
+
       <md-layout
           md-row
           md-vertical-align="center">
@@ -104,7 +111,8 @@
         attr: {
           title: 'Which image looks better?',
           blurb: 'Click on the image that looks better. Take your time',
-          name: ''
+          name: '',
+          questionType: '2afc'
         },
         isUploading: false,
         error: ''

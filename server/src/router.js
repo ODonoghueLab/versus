@@ -44,10 +44,10 @@ const remoteRunFns = require('./handlers')
  */
 router.post('/api/rpc-run', (req, res, next) => {
   let args = req.body.args
-  let fnName = req.body.fnName
-  console.log(`>> router.rpc-run.${fnName}`)
+  let method = req.body.method
+  console.log(`>> router.rpc-run.${method}`)
 
-  if (fnName === 'login') {
+  if (method === 'login') {
 
     req.body.email = args[0].email
     req.body.password = args[0].password
@@ -79,21 +79,21 @@ router.post('/api/rpc-run', (req, res, next) => {
       })
     })(req, res, next)
 
-  } else if (fnName === 'logout') {
+  } else if (method === 'logout') {
 
     req.session.destroy()
     req.logout()
     res.json({success: true})
 
-  } else if (fnName in remoteRunFns) {
+  } else if (method in remoteRunFns) {
 
-    if (!_.startsWith(fnName, 'public')) {
+    if (!_.startsWith(method, 'public')) {
       if (!req.isAuthenticated || !req.isAuthenticated()) {
         throw new Error(`Not logged in`)
       }
     }
 
-    const runFn = remoteRunFns[fnName]
+    const runFn = remoteRunFns[method]
 
     runFn(...args)
       .then(result => {
@@ -102,7 +102,7 @@ router.post('/api/rpc-run', (req, res, next) => {
 
   } else {
 
-    throw new Error(`Remote runFn ${fnName} not found`)
+    throw new Error(`Remote runFn ${method} not found`)
 
   }
 
@@ -129,21 +129,21 @@ router.get('/file/:timestampDir/:basename', (req, res) => {
  * implicit first argument, a filelist of the uploaded files.
  */
 router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
-  let fnName = req.body.fnName
+  let method = req.body.method
   let args = JSON.parse(req.body.args)
-  console.log('>> router.rpc-upload.' + fnName)
-  if (fnName in remoteRunFns) {
-    if (!_.startsWith(fnName, 'upload')) {
-      throw new Error(`Remote uploadFn ${fnName} should start with 'upload'`)
+  console.log('>> router.rpc-upload.' + method)
+  if (method in remoteRunFns) {
+    if (!_.startsWith(method, 'upload')) {
+      throw new Error(`Remote uploadFn ${method} should start with 'upload'`)
     }
-    const uploadFn = remoteRunFns[fnName]
+    const uploadFn = remoteRunFns[method]
     args = _.concat([req.files], args)
     uploadFn(...args)
       .then(result => {
         res.json(result)
       })
   } else {
-    throw new Error(`Remote uploadFn ${fnName} not found`)
+    throw new Error(`Remote uploadFn ${method} not found`)
   }
 })
 

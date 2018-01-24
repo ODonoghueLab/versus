@@ -14,20 +14,20 @@ axios.defaults.withCredentials = true
 
 export default {
 
-  rpcRun (fnName, ...args) {
-    let payload = {fnName, args}
+  rpcRun (method, ...args) {
+    let payload = {method, args}
     console.log('> rpc.rpcRun', util.jstr(payload))
     return axios.post(`${config.apiUrl}/api/rpc-run`, payload)
   },
 
-  rpcUpload (fnName, files, ...args) {
+  rpcUpload (method, files, ...args) {
     let formData = new FormData()
-    formData.append('fnName', fnName)
+    formData.append('method', method)
     formData.append('args', JSON.stringify(args))
     _.each(files, f => {
       formData.append('uploadFiles', f, f.name)
     })
-    console.log('> rpc.rpcUpoad', fnName, args, _.map(files, 'name'))
+    console.log('> rpc.rpcUpoad', method, args, _.map(files, 'name'))
     return axios.post(`${config.apiUrl}/api/rpc-upload`, formData)
   }
 

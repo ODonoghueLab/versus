@@ -17,22 +17,103 @@ const conn = require('./conn')
 let db = conn.db
 
 /**
+ *
+ * Definitions of the database for Versus
+ *
+ * Sequelize is used to interact with the database, as it is
+ * quite flexible in terms of the target database.
+ * Versus makes extensive use of JSON, and so, in terms of
+ * flexibility, sequelize-json is used to map JSON in
+ * sequelize as sequelize-json works with Sqlite, Postgres, and MySQL.
+ * For the sequelize-json JSON fields, be sure to use updateAttributes,
+ * and not update
+ *
+ * The database is not meant to be accessed directly by the web-handlers.
+ * These are meant to be accessed directly by the access functions
+ * defined below. These functions take JSON literals as parameters
+ * and returns the data in the database as JSON-literals wrapped in
+ * a promise.
+ *
+ * Accessor functions are prefaced with:
+ *  - fetch* returns a JSON-literal of the Sequelize instance
+ *  - create* creates a database entry from a JSON-literal
+ *  - update* updates values in the instance
+ *  - [optional] find* returns the actual Sequelize instance
+ */
 
- Definitions of the database for Versus
+/**
+ * @returns {Object|null} JSON-literal of a Sequelize instance
+ */
+function unwrapInstance (instance) {
+  if (instance === null) {
+    return null
+  } else {
+    return instance.get({plain: true})
+  }
+}
 
- Sequelize is used to interact with the database, as it is
- quite flexible in terms of the target database.
- Versus makes extensive use of JSON, and so, in terms of
- flexibility, sequelize-json is used to map JSON in
- sequelize as sequelize-json works with Sqlite, Postgres, and MySQL.
- For the sequelize-json JSON fields, be sure to use updateAttributes,
- and not update
+async function deleteFileList (fileList) {
+  for (let f of fileList) {
+    if (fs.existsSync(f.path)) {
+      console.log('>> router.deleteFileList', f.path)
+      await del(f.path)
+    }
+  }
+}
 
- The database is not meant to be accessed directly by the web-handlers.
- These are meant to be accessed directly by the access functions
- defined below. These functions take JSON literals as parameters
- and returns the data in the database as JSON-literals wrapped in
- a promise.
+/**
+ * Moves fileList to a time-stamped sub-directory in config.filesDir.
+ * Optional checking function can throw Exceptions for bad files.
+ * @param fileList
+ * @param checkFilesForError
+ * @promise - list of new paths
+ */
+async function storeFilesInConfigDir (fileList, checkFilesForError) {
+
+  try {
+    const timestampDir = String(new Date().getTime())
+    const fullDir = path.join(config.filesDir, timestampDir)
+    if (!fs.existsSync(fullDir)) {
+      fs.mkdirSync(fullDir, 0o744)
+    }
+
+    let error = checkFilesForError(fileList)
+    if (error) {
+      throw new Error(error)
+    }
+
+    let targetPaths = []
+    for (let file of fileList) {
+      let basename = path.basename(file.originalname)
+      let targetPath = path.join(timestampDir, basename)
+      targetPaths.push(targetPath)
+
+      let fullTargetPath = path.join(config.filesDir, targetPath)
+      fs.renameSync(file.path, fullTargetPath)
+
+      console.log(`>> router.storeFilesInConfigDir ${targetPath}`)
+    }
+
+    return targetPaths
+
+  } catch (error) {
+
+    await deleteFileList(fileList)
+    throw error
+
+  }
+}
+
+/**
+ * Default User model and accessor functions
+ *
+ * Unwrapped JSON structure:
+ * {
+ *   id: Number,
+ *   name: string,
+ *   password: salted password string,
+ *   email: string
+ * }
  */
 
 const User = db.define('User', {
@@ -44,186 +125,11 @@ const User = db.define('User', {
   password: {
     type: Sequelize.STRING,
     set (val) {
-      this.setDataValue('password', bcrypt.hashSync(val, bcrypt.genSaltSync(10)))
+      let saltedPassword = bcrypt.hashSync(val, bcrypt.genSaltSync(10))
+      this.setDataValue('password', saltedPassword)
     }
   }
 })
-
-
-
-const Image = db.define('Image', {
-  url: Sequelize.STRING,
-  filename: Sequelize.STRING
-})
-
-const Participant = db.define('Participant', {
-  participateId: {
-    primaryKey: true,
-    type: Sequelize.UUID,
-    defaultValue: Sequelize.UUIDV4
-  },
-  attr: sequelizeJson(db, 'Participant', 'attr'),
-  states: sequelizeJson(db, 'Participant', 'states')
-})
-
-const Experiment = db.define('Experiment', {
-  attr: sequelizeJson(db, 'Experiment', 'attr')
-})
-
-const UserExperiment = db.define('UserExperiment', {
-  permission: Sequelize.INTEGER
-})
-
-Experiment.hasMany(Image, {as: 'images'})
-Experiment.belongsToMany(User, {through: UserExperiment})
-Experiment.hasMany(Participant, {as: 'participants'})
-Image.belongsTo(Experiment, {onDelete: 'cascade'})
-Participant.belongsTo(Experiment)
-User.belongsToMany(Experiment, {through: UserExperiment})
-
-
-/**
- * Converts a Sequelize record into a JSON-literal
- * @param {SequelizeRecord} instance - a Sequelize Record
- * @returns {Object|null} JSON-literal object or null if unsuccessfull
- */
-function unwrapInstance (instance) {
-  if (instance === null) {
-    return null
-  } else {
-    return instance.get({plain: true})
-  }
-}
-
-/**
- * File handling functions
- */
-
-async function rollback (uploadedFiles) {
-  for (let f of uploadedFiles) {
-    if (fs.existsSync(f.path)) {
-      console.log('>> router.rollback delete', f.path)
-      await del(f.path)
-    }
-  }
-}
-
-
-/**
- * Stores the files in a unique sub-directory on the server in the
- * directory listed in the config.js file, where the
- * sub-directory is a string version of the time it was loaded in, and
- * the path basenames are based on the original basenames.
- *
- * As well a file checking function is run to ensure the uploaded
- * files are legitimate, this function returns a null string
- * if all is good, otherwise an error string is returned.
- *
- * The new stored path names are returned in a promise.
- *
- * @param uploadedFiles
- * @param checkFilesForError
- * @returns {Promise}
- */
-async function storeFiles (uploadedFiles, checkFilesForError) {
-
-  try {
-    const timestampDir = String(new Date().getTime())
-    const fullDir = path.join(config.filesDir, timestampDir)
-    if (!fs.existsSync(fullDir)) {
-      fs.mkdirSync(fullDir, 0o744)
-    }
-
-    let error = checkFilesForError(uploadedFiles)
-    if (error) {
-      throw new Error(error)
-    }
-
-    let targetPaths = []
-    for (let file of uploadedFiles) {
-      let basename = path.basename(file.originalname)
-      let targetPath = path.join(timestampDir, basename)
-      targetPaths.push(targetPath)
-
-      let fullTargetPath = path.join(config.filesDir, targetPath)
-      fs.renameSync(file.path, fullTargetPath)
-
-      console.log(`>> router.storeFiles ${targetPath}`)
-    }
-
-    return targetPaths
-
-  } catch (error) {
-
-    await rollback(uploadedFiles)
-    throw error
-
-  }
-}
-
-/**
- * Checks files stored on server against the database
- * and deletes any files that are not matched with database entries
- */
-async function cleanupImages () {
-  let experiments = await Experiment.findAll(
-    {include: [{model: Image, as: 'images'}]})
-
-  let filenames = []
-  for (let experiment of experiments) {
-    for (let image of experiment.images) {
-      let url = image.dataValues.url
-      filenames.push('files/' + url.slice(6, url.length))
-    }
-  }
-
-  for (let expDir of fs.readdirSync('files')) {
-    if (!util.isStringInStringList(expDir, filenames)) {
-      await rimraf('files/' + expDir)
-      console.log('> Models.cleanupOrphanedImageFiles deleted dir', expDir)
-    }
-  }
-}
-
-/**
- * Key function to return imageSetId from a path name, else empty string
- * These function should be used to allow unique imageSetIds to be
- * extracted across the app.
- */
-function getImageSetIdFromPath (p) {
-  let tokens = path.basename(p).split('_')
-  if (tokens.length > 0) {
-    return tokens[0]
-  } else {
-    return ''
-  }
-}
-
-
-/**
- * Access functions - returns promises for JSON literals
- * extracted from the database. These access functions
- * provides an abstraction that insulates the database
- * from the api
- *
- * find* functions returns a Sequelize instance
- * fetch* functions returns a JSON-literal of the Sequelize instance
- * unwrapInstance is used to convert Sequelize instance to JSON
- */
-
-/**
- *
- * User functions
- *
- * Unwrapped instance JSON structure:
- * {
- *   id: Number,
- *   name: string,
- *   password: salted password string,
- *   email: string
- * }
- */
-
 
 function createUser (values) {
   return User
@@ -263,21 +169,93 @@ function fetchUser (values) {
     })
 }
 
-/**
- * @returns {Promise} - user if successful, otherwise null
- */
 function checkUserWithPassword (user, password) {
   return new Promise((resolve) => {
-    bcrypt.compare(password, user.password, (err, isMatch) => {
-      if (err) {
-        resolve(null)
-      } else if (isMatch) {
-        resolve(user)
-      } else {
-        resolve(null)
-      }
-    })
+    bcrypt.compare(
+      password,
+      user.password,
+      (err, isMatch) => {
+        if (err) {
+          resolve(null)
+        } else if (isMatch) {
+          resolve(user)
+        } else {
+          resolve(null)
+        }
+      })
   })
+}
+
+/**
+ * Custom database models and relationships between models
+ */
+
+const Image = db.define('Image', {
+  url: Sequelize.STRING,
+  filename: Sequelize.STRING
+})
+
+const Participant = db.define('Participant', {
+  participateId: {
+    primaryKey: true,
+    type: Sequelize.UUID,
+    defaultValue: Sequelize.UUIDV4
+  },
+  attr: sequelizeJson(db, 'Participant', 'attr'),
+  states: sequelizeJson(db, 'Participant', 'states')
+})
+
+const Experiment = db.define('Experiment', {
+  attr: sequelizeJson(db, 'Experiment', 'attr')
+})
+
+const UserExperiment = db.define('UserExperiment', {
+  permission: Sequelize.INTEGER
+})
+
+Experiment.hasMany(Image, {as: 'images'})
+Experiment.belongsToMany(User, {through: UserExperiment})
+Experiment.hasMany(Participant, {as: 'participants'})
+Image.belongsTo(Experiment, {onDelete: 'cascade'})
+Participant.belongsTo(Experiment)
+User.belongsToMany(Experiment, {through: UserExperiment})
+
+/**
+ * Checks files stored on server against the database
+ * and deletes any files that are not matched with database entries
+ */
+async function cleanupImages () {
+  let experiments = await Experiment.findAll(
+    {include: [{model: Image, as: 'images'}]})
+
+  let filenames = []
+  for (let experiment of experiments) {
+    for (let image of experiment.images) {
+      let url = image.dataValues.url
+      filenames.push('files/' + url.slice(6, url.length))
+    }
+  }
+
+  for (let expDir of fs.readdirSync('files')) {
+    if (!util.isStringInStringList(expDir, filenames)) {
+      await rimraf('files/' + expDir)
+      console.log('> Models.cleanupOrphanedImageFiles deleted dir', expDir)
+    }
+  }
+}
+
+/**
+ * Key function to return imageSetId from a path name, else empty string
+ * These function should be used to allow unique imageSetIds to be
+ * extracted across the app.
+ */
+function getImageSetIdFromPath (p) {
+  let tokens = path.basename(p).split('_')
+  if (tokens.length > 0) {
+    return tokens[0]
+  } else {
+    return ''
+  }
 }
 
 /**
@@ -286,11 +264,11 @@ function checkUserWithPassword (user, password) {
  * Unwrapped instance JSON structure:
  * {
  *   id: Number,
- *   images: Image instances,
- *   participants: Participant instances,
+ *   images: [{ url, filename },..],
+ *   participants: [Participant,..],
  *   attr: {
  *     params: {},
- *     imageSetIds: array of strings
+ *     imageSetIds: [Strings,..]
  *     name: string,
  *     title: string
  *   }
@@ -375,7 +353,7 @@ async function createParticipant (experimentId, email) {
   }
 
   let participant = await Participant.create(
-      {attr: {email: email, user: null}, states})
+    {attr: {email: email, user: null}, states})
 
   await experiment.addParticipant(participant)
 
@@ -416,7 +394,9 @@ async function saveParticipantAttr (participateId, newAttr) {
 
   let attr = unwrapInstance(participant).attr
   for (let key of _.keys(attr)) {
-    attr[key] = newAttr[key]
+    if (key in newAttr) {
+      attr[key] = newAttr[key]
+    }
   }
 
   participant = await participant.updateAttributes({attr})
@@ -440,7 +420,7 @@ async function init () {
 init()
 
 module.exports = {
-  storeFiles,
+  storeFilesInConfigDir,
   getImageSetIdFromPath,
   createUser,
   fetchUser,

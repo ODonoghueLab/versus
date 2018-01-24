@@ -35,9 +35,13 @@
         <label>Blurb</label>
         <md-textarea
           v-model="experiment.attr.blurb">
-
         </md-textarea>
       </md-input-container>
+
+      <div>
+        <md-radio v-model="experiment.attr.questionType" id="my-test1" name="my-test-group1" md-value="2afc">2 alternative forced choice</md-radio>
+        <md-radio v-model="experiment.attr.questionType" id="my-test2" name="my-test-group1" md-value="multiple">multiple choice</md-radio>
+      </div>
 
       <md-button
         class="md-raised"
@@ -139,11 +143,10 @@
 
       <h2 class="md-title">Images</h2>
 
-      <md-whiteframe
+      <div
         v-for="(imageSetId, index) in imageSetIds"
         :key="index"
         style="
-            padding: 0.5em;
             margin-top: 0.5em;">
         <h2 class="md-subheading">{{imageSetId}}</h2>
         <md-layout
@@ -162,7 +165,7 @@
             </md-card-content>
           </md-card>
         </md-layout>
-      </md-whiteframe>
+      </div>
 
     </md-whiteframe>
 
@@ -248,23 +251,21 @@
       console.log('> Experiment.mounted whhaaat!')
       let res = await rpc.rpcRun('getExperiment', experimentId)
 
-      console.log('> Experiment.mounted', res.data)
-
       let experiment = res.data.experiment
       this.$data.experiment = experiment
 
+      console.log('> Experiment.mounted', util.jstr(experiment.attr))
 
       let imageSetIds = experiment.attr.imageSetIds
       this.$data.imageSetIds = imageSetIds
-      console.log('> Experiment.mounted imageSetIds', imageSetIds)
 
       let images = {}
       let urls = _.map(experiment.images, i => i.url)
       for (let imageSetId of experiment.attr.imageSetIds) {
-        let containsSetId = _ => _.includes(_, imageSetId)
+        let containsSetId = s => _.includes(s, imageSetId)
         images[imageSetId] = _.filter(urls, containsSetId)
       }
-      console.log('> Experiment.mounted images', images)
+      console.log('> Experiment.mounted images', util.jstr(images))
       this.$data.images = images
     },
 
