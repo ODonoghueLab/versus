@@ -8,7 +8,7 @@ module.exports = {
     host: 'localhost',
     dialect: 'sqlite',
     storage: 'database.sqlite'
-  },
+  }
   // development: {
   //   'username': 'postgres',
   //   'password': 'postgres',

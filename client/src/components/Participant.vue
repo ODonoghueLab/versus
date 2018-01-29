@@ -160,15 +160,16 @@
 
         <md-layout md-flex="100" md-align="center">
             <img
+              v-if="question"
               style="height: 250px; width: auto"
-              :src="questionUrl"/>
+              :src="question.url"/>
         </md-layout>
 
         <br>
 
         <md-layout
           md-row
-          v-for="(answerUrl, iAnswer) in answerUrls"
+          v-for="(answer, iAnswer) in answers"
           :key="iAnswer">
 
           <md-layout md-align="end">
@@ -183,7 +184,7 @@
                   md-indeterminate/>
               </div>
 
-              <img :src="answerUrl"/>
+              <img v-if="answer" :src="answer.url"/>
 
             </md-whiteframe>
 
@@ -196,7 +197,7 @@
               <md-button
                 :disabled="anyLoading"
                 class="md-raised choice"
-                @click="chooseMultiple(answerUrl)">
+                @click="chooseMultiple(answer)">
                 Choose
               </md-button>
 
@@ -263,7 +264,9 @@
   }
 
   export default {
+
     name: 'invite',
+
     data () {
       return {
         status: null,
@@ -274,21 +277,24 @@
         comparison: null,
         surveyCode: null,
         progress: 0,
-        questionUrl: null,
-        answerUrls: [],
+        question: null,
+        answers: [],
         imageSize: 0,
         loadingStates: [],
         anyLoading: false,
         experimentAttr: {},
       }
     },
+
     mounted () {
       let participateId = this.$route.params.participateId
       rpc
         .rpcRun('publicGetNextChoice', participateId)
         .then(this.handleRes)
     },
+
     methods: {
+
       async handleRes (res) {
         console.log('> Invite.handleRes', util.jstr(res.data))
         this.$data.status = res.data.status
@@ -335,14 +341,16 @@
           this.$data.experimentAttr = res.data.experimentAttr
 
           // clear screen, delay required for page to redraw
-          this.$data.questionUrl = null
-          this.$data.answerUrls.length = 0
+          this.$data.question = null
+          this.$data.answers.length = 0
           this.$data.loadingStates.length = 0
           this.$data.anyLoading = false
           await delay(200)
 
-          preloadImage(res.data.questionUrl)
-          _.map(res.data.answerUrls, preloadImage)
+          preloadImage(res.data.question.url)
+          for (let answer of res.data.answers) {
+            preloadImage(answer.url)
+          }
 
           // let imageUrlA = this.getImageUrl(comparison.itemA)
           // let imageUrlB = this.getImageUrl(comparison.itemB)
@@ -350,27 +358,33 @@
           //   await delay(100)
           // }
 
-          this.$data.questionUrl = config.apiUrl + res.data.questionUrl
-          for (let url of res.data.answerUrls) {
-            let fullUrl = config.apiUrl + url
-            this.$data.answerUrls.push(fullUrl)
+          this.$data.question = res.data.question
+          this.$data.question.url = config.apiUrl + res.data.question.url
+          for (let answer of res.data.answers) {
+            let fullUrl = config.apiUrl + answer.url
+            this.$data.answers.push({
+              url: fullUrl,
+              value: answer.value
+            })
             this.$data.loadingStates.push(false)
           }
-          this.$data.imageSize = 100 / this.$data.answerUrls.length - 5
-          console.log(this.$data.questionUrl)
+          this.$data.imageSize = 100 / this.$data.answers.length - 5
         }
 
       },
-      async chooseMultiple(url) {
+
+      async chooseMultiple(answer) {
         let participateId = this.$route.params.participateId
-        let i = this.$data.answerUrls.indexOf(url)
+        let i = _.findIndex(this.$data.answer, a => a.url = answer.url)
         this.$data.loadingStates[i] = true
         this.$data.anyLoading = true
         this.$forceUpdate()
-        console.log('> Participant.chooseMultiple', url, i, this.$data.loadingStates)
-        let res = await rpc.rpcRun('publicChooseMultiple', participateId, url)
+        console.log('> Participant.chooseMultiple', answer.url, i, this.$data.loadingStates)
+        let res = await rpc.rpcRun(
+          'publicChooseMultiple', participateId, this.question, answer)
         this.handleRes(res)
       },
+
       choose (item) {
         if (this.$data.loadingA || this.$data.loadingB) {
           return
@@ -390,9 +404,11 @@
           .rpcRun('publicChooseItem', participateId, this.$data.comparison)
           .then(this.handleRes)
       },
+
       getImageUrl (item) {
         return config.apiUrl + item.url
       },
+
       enterUser () {
         let participateId = this.$route.params.participateId
         let user = {}

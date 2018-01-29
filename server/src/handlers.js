@@ -27,7 +27,6 @@ const tree = require('./modules/tree')
  * server.
  */
 
-
 function isStatesDone (states) {
   for (let state of _.values(states)) {
     if (!tree.isDone(state)) {
@@ -41,9 +40,9 @@ function getRandomUnfinishedState (states) {
   let choices = []
   for (let [id, state] of _.toPairs(states)) {
     if (!tree.isDone(state)) {
-      for (let j of _.range(state.imageUrls.length)) {
-        choices.push(id)
-      }
+      _.times(
+        state.imageUrls.length,
+        () => { choices.push(id) })
     }
   }
   let id = choices[_.random(choices.length - 1)]
@@ -56,7 +55,6 @@ function getRandomUnfinishedState (states) {
  * @returns {Object} experiment
  */
 function checkExperiment (experiment) {
-
   if (experiment.attr.params) {
     _.assign(experiment.attr, experiment.attr.params)
     delete experiment.attr.params
@@ -68,38 +66,36 @@ function checkExperiment (experiment) {
   }
 
   experiment.attr.maxComparison =
-    experiment.attr.maxTreeComparison
-    + experiment.attr.nRepeat
+    experiment.attr.maxTreeComparison +
+    experiment.attr.nRepeat
 
   // Calculate statistics of finished experiment
   if (experiment.participants) {
     for (let participant of experiment.participants) {
-      let attr = participant.attr
-      attr.nRepeatTotal = 0
-      attr.consistency = 0
-      attr.nComparisonDone = 0
-      let nComparison = 0
-      let time = 0
-      for (let state of _.values(participant.states)) {
-        attr.nRepeatTotal += state.consistencies.length
-        attr.consistency += _.sum(state.consistencies)
-        attr.nComparisonDone += state.comparisons.length
-        for (let comparison of state.comparisons) {
-          nComparison += 1
-          if (comparison.repeat) {
-            nComparison += 1
-          }
-          let startMs = new Date(comparison.startTime).getTime()
-          let endMs = new Date(comparison.endTime).getTime()
-          time += endMs - startMs
+      if (experiment.attr.questionType === '2afc') {
+        let attr = participant.attr
+        attr.nRepeatTotal = 0
+        attr.consistency = 0
+        attr.nComparisonDone = 0
+        for (let state of _.values(participant.states)) {
+          attr.nRepeatTotal += state.consistencies.length
+          attr.consistency += _.sum(state.consistencies)
+          attr.nComparisonDone += state.comparisons.length
         }
+        let time = 0
+        for (let state of _.values(participant.states)) {
+          for (let comparison of state.comparisons) {
+            let startMs = new Date(comparison.startTime).getTime()
+            let endMs = new Date(comparison.endTime).getTime()
+            time += endMs - startMs
+          }
+        }
+        attr.time = prettyMs(time)
       }
-      attr.time = prettyMs(time)
     }
   }
 
   return experiment
-
 }
 
 function calcParticipantProgress (participant, experimentAttr) {
@@ -116,12 +112,12 @@ function calcParticipantProgress (participant, experimentAttr) {
 }
 
 async function getNextChoice (participateId) {
-
   let participant = await models.fetchParticipant(participateId)
   let experiment = await models.fetchExperiment(participant.ExperimentId)
   checkExperiment(experiment)
   let experimentAttr = experiment.attr
   let urls = _.map(experiment.images, 'url')
+  let states = participant.states
 
   if (participant.attr.user === null) {
     return {status: 'start', experimentAttr, urls}
@@ -129,10 +125,7 @@ async function getNextChoice (participateId) {
 
   if (experiment.attr.questionType === '2afc') {
 
-    let states = participant.states
-
     if (!isStatesDone(states)) {
-
       return {
         status: 'running2afc',
         urls,
@@ -140,9 +133,7 @@ async function getNextChoice (participateId) {
         comparison: tree.getComparison(getRandomUnfinishedState(states)),
         progress: calcParticipantProgress(participant, experimentAttr)
       }
-
     } else { // isDone!
-
       // Generate surveyCode if it doesn't exist
       let attr = participant.attr
       if (!attr.surveyCode) {
@@ -154,26 +145,58 @@ async function getNextChoice (participateId) {
         status: 'done',
         surveyCode: attr.surveyCode
       }
-
     }
   }
 
   if (experiment.attr.questionType === 'multiple') {
 
-    let imageSetId = experiment.attr.imageSetIds[0]
-    let inSet = url => _.includes(url, imageSetId)
-    let urls = _.filter(_.map(experiment.images, 'url'), inSet)
-    let questionUrls = _.remove(urls, url => _.includes(url, 'question'))
-    let questionUrl = questionUrls[0]
-    let answerUrls = urls
-    return {
-      status: 'runningMultiple',
-      answerUrls,
-      questionUrl,
-      experimentAttr,
-      imageSetId
+    let unAnsweredImageSetids = _.clone(experiment.attr.imageSetIds)
+    for (let answer of states) {
+      _.remove(unAnsweredImageSetids, id => id === answer.imageSetId)
     }
 
+    console.log('handlers.getNextChoice', unAnsweredImageSetids)
+
+    if (unAnsweredImageSetids.length > 0) {
+      let i = parseInt(Math.random() * unAnsweredImageSetids.length - 1)
+      let imageSetId = unAnsweredImageSetids[i]
+      let question = {}
+      let answers = []
+      for (let url of _.map(experiment.images, 'url')) {
+        if (!_.includes(url, imageSetId)) {
+          continue
+        }
+        if (_.includes(url, 'question')) {
+          question.url = url
+          question.imageSetId = imageSetId
+          question.value = url
+        } else {
+          answers.push({
+            url: url,
+            value: url
+          })
+        }
+      }
+      return {
+        status: 'runningMultiple',
+        question,
+        answers,
+        experimentAttr,
+        imageSetId
+      }
+    } else {
+      // Generate surveyCode if it doesn't exist
+      let attr = participant.attr
+      if (!attr.surveyCode) {
+        attr.surveyCode = shortid.generate()
+        await models.saveParticipant(participateId, {attr})
+      }
+
+      return {
+        status: 'done',
+        surveyCode: attr.surveyCode
+      }
+    }
   }
 }
 
@@ -189,7 +212,6 @@ function checkImageFilesForError (files) {
     return 'Minimum two images.'
   }
   for (let file of files) {
-
     // handle formats
     const extName = path.extname(file.originalname).toLowerCase()
     if (!_.includes(['.png', '.jpg', '.gif'], extName)) {
@@ -200,7 +222,6 @@ function checkImageFilesForError (files) {
     // if (file.size / 1000000 > 2) {
     //   return 'only images under 2MB allowed'
     // }
-
   }
   return ''
 }
@@ -235,14 +256,11 @@ module.exports = {
         await models.createUser(values)
         return {success: true}
       }
-
     } catch (error) {
-
       return {
         success: false,
         errors: ['Couldn\'t register, is your email already in use?']
       }
-
     }
   },
 
@@ -255,7 +273,6 @@ module.exports = {
    */
   async updateUser (user) {
     try {
-
       const keys = ['id', 'name', 'email', 'password']
       let values = {}
       for (let key of keys) {
@@ -281,21 +298,17 @@ module.exports = {
       console.log('>> handlers.updateUser', values)
       await models.updateUser(values)
       return {success: true}
-
     } catch (err) {
-
       console.log(`>> handlers.updateUser error`, err)
       return {
         success: false,
         errors: ['Couldn\'t update' + err]
       }
-
     }
   },
 
   async publicForceUpdatePassword (user) {
     try {
-
       const keys = ['id', 'password']
       let values = {}
       for (let key of keys) {
@@ -321,15 +334,12 @@ module.exports = {
       console.log('>> handlers.publicForceUpdatePassword', values)
       await models.updateUser(values)
       return {success: true}
-
     } catch (err) {
-
       console.log(`>> handlers.publicForceUpdatePassword error`, err)
       return {
         success: false,
         errors: ['Couldn\'t update' + err]
       }
-
     }
   },
 
@@ -398,7 +408,18 @@ module.exports = {
     return getNextChoice(participateId)
   },
 
-  publicChooseMultiple (participateId, url) {
+  async publicChooseMultiple (participateId, answer) {
+    let participant = await models.fetchParticipant(participateId)
+
+    let states = participant.states
+    if (!_.isArray(states)) {
+      states = []
+    }
+    states.push(answer)
+    console.log('> handlers.publicChooseMultiple', states)
+
+    await models.saveParticipant(participateId, {states})
+
     return getNextChoice(participateId)
   },
 
@@ -419,7 +440,6 @@ module.exports = {
    */
   async uploadImagesAndCreateExperiment (files, userId, attr) {
     try {
-
       let paths = await models.storeFilesInConfigDir(files, checkImageFilesForError)
 
       let imageSetIds = []
@@ -459,13 +479,8 @@ module.exports = {
         success: true,
         experimentId: experiment.id
       }
-
     } catch (error) {
-
       return {success: false, error: error.toString()}
-
     }
   }
 }
-
-

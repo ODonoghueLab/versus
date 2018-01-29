@@ -8,7 +8,6 @@ const config = require('./config')
 const mime = require('mime')
 const multer = require('multer')
 const upload = multer({dest: config.filesDir})
-const del = require('del')
 
 const passport = require('passport')
 const express = require('express')
@@ -18,24 +17,21 @@ Main router for the Versus server. This provides the main
 interface for the RPC-JSON api architecture.
 
 As well the server provides a generic file upload/download
-that will store files directly on the server, which will be 
+that will store files directly on the server, which will be
 available for the web-client via a get call
 */
-
 
 // the router is defined here, and exported for the main express app
 const router = express.Router()
 module.exports = router
 
-
 // the remote functions availabe for the RPC-JSON api
 const remoteRunFns = require('./handlers')
-
 
 /**
  * This is the main interface to the JSON-RPC api. It is a post
  * handler, where the function name and args are passed in
- * the body as JSON. 
+ * the body as JSON.
  *
  * Because of the special semantics in initiating/terminating
  * user sessions with login/logut, they are specially
@@ -48,7 +44,6 @@ router.post('/api/rpc-run', (req, res, next) => {
   console.log(`>> router.rpc-run.${method}`)
 
   if (method === 'login') {
-
     req.body.email = args[0].email
     req.body.password = args[0].password
 
@@ -78,15 +73,11 @@ router.post('/api/rpc-run', (req, res, next) => {
         })
       })
     })(req, res, next)
-
   } else if (method === 'logout') {
-
     req.session.destroy()
     req.logout()
     res.json({success: true})
-
   } else if (method in remoteRunFns) {
-
     if (!_.startsWith(method, 'public')) {
       if (!req.isAuthenticated || !req.isAuthenticated()) {
         throw new Error(`Not logged in`)
@@ -99,15 +90,10 @@ router.post('/api/rpc-run', (req, res, next) => {
       .then(result => {
         res.json(result)
       })
-
   } else {
-
     throw new Error(`Remote runFn ${method} not found`)
-
   }
-
 })
-
 
 /**
  * Returns a file stored on the server
@@ -122,7 +108,6 @@ router.get('/file/:timestampDir/:basename', (req, res) => {
   res.setHeader('Content-type', mimeType)
   fs.createReadStream(filename).pipe(res)
 })
-
 
 /**
  * Upload file handlers, sends to 'upload*' function with the
@@ -146,4 +131,3 @@ router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
     throw new Error(`Remote uploadFn ${method} not found`)
   }
 })
-

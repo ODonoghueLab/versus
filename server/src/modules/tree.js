@@ -19,14 +19,11 @@
  * a database, and to be transferred as JSON in a web-call.
  */
 
-
 const _ = require('lodash')
 const util = require('./util')
 
-
 // probability that a repeat comparison will be chosen
 let probRepeat = 0.2
-
 
 /**
  * Creates a new node, defined by its index i
@@ -35,7 +32,6 @@ function newNode (i, iImage, left, right, parent) {
   return {i, iImage, left, right, parent}
 }
 
-
 /**
  * Initialize the binary choice tree with all associated parameters
  * required to keep track of the tree, repeats and user statistics
@@ -43,7 +39,6 @@ function newNode (i, iImage, left, right, parent) {
  * @returns {Object} State of the binary-choice-tree
  */
 function newState (imageUrls) {
-
   let nImage = imageUrls.length
   let maxNComparison = Math.floor(nImage * Math.log2(nImage))
   let totalRepeat = Math.ceil(maxNComparison * probRepeat)
@@ -77,10 +72,9 @@ function newState (imageUrls) {
     consistencies: [], // list of (0, 1) for consistency of repeated comparisons
     fractions: [], // list of number of winning votes for each image-url
     rankedImageUrls: [], // ranked list of the image-url for user preference
-    time: null, // time taken to complete survey
+    time: null // time taken to complete survey
   }
 }
-
 
 /**
  * Creates a comparison data structure that will be sent to
@@ -100,10 +94,9 @@ function makeComparison (state, iImageA, iImageB) {
     startTime: getCurrentTimeStr(),
     endTime: null,
     repeatStartTime: null,
-    repeatEndTime: null,
+    repeatEndTime: null
   }
 }
-
 
 /**
  * Sorts the nodes into an ordered list based on
@@ -126,7 +119,6 @@ function getOrderedNodeList (state) {
   storeRank(state.iNodeRoot)
   return sortedNodes
 }
-
 
 /**
  * Balances the binary tree represented by the order of
@@ -167,7 +159,6 @@ function balanceSubTree (sortedNodes) {
   return midNode
 }
 
-
 /**
  * Creates a new node based on the current image being tested
  * @param {Object} state
@@ -180,7 +171,6 @@ function insertNewNode (state) {
   state.nodes.push(node)
   return iNewNode
 }
-
 
 function getNextImage (state) {
   state.iImageTest = state.testImageIndices.shift()
@@ -204,7 +194,6 @@ function getNextImage (state) {
   console.log('> tree.getNextImage consistency', checkNodes(state.nodes))
 }
 
-
 function setNextRepeatComparison (state) {
   state.iComparisonRepeat = null
   if (state.repeatComparisonIndices.length < state.totalRepeat) {
@@ -215,7 +204,6 @@ function setNextRepeatComparison (state) {
     }
   }
 }
-
 
 /**
  * Checks the consistency of the binary tree in terms of
@@ -230,7 +218,6 @@ function checkNodes (nodes) {
   let nNullParent = 0
   let pass = true
   for (let node of nodes) {
-
     if (node.parent === null) {
       nNullParent += 1
     } else {
@@ -247,14 +234,13 @@ function checkNodes (nodes) {
         if (iChildNode >= nodes.length) {
           pass = false
         } else {
-          child = nodes[iChildNode]
+          let child = nodes[iChildNode]
           if (child.parent !== node.i) {
             pass = false
           }
         }
       }
     }
-
   }
 
   // Check tree has one unique root
@@ -265,24 +251,18 @@ function checkNodes (nodes) {
   return pass
 }
 
-
 function getCurrentTimeStr () {
   let date = new Date()
   return date.toJSON()
 }
 
-
 function makeChoice (state, comparison) {
-
   if (comparison.isRepeat) {
-
     let i = state.iComparisonRepeat
     state.comparisons[i].repeat = comparison.repeat
     state.comparisons[i].repeatEndTime = getCurrentTimeStr()
     setNextRepeatComparison(state)
-
   } else {
-
     let compareNode = state.nodes[state.iNodeCompare]
     let chosenImageIndex = comparison.choice
 
@@ -318,22 +298,18 @@ function makeChoice (state, comparison) {
     if (state.iComparisonRepeat === null) {
       setNextRepeatComparison(state)
     }
-
   }
 }
 
-
 function isAllImagesTested (state) {
-  return (state.testImageIndices.length === 0)
-    && (state.iImageTest === null)
+  return (state.testImageIndices.length === 0) &&
+    (state.iImageTest === null)
 }
-
 
 function isAllRepeatComparisonsMade (state) {
-  return (state.repeatComparisonIndices.length === state.totalRepeat)
-    && (state.iComparisonRepeat === null)
+  return (state.repeatComparisonIndices.length === state.totalRepeat) &&
+    (state.iComparisonRepeat === null)
 }
-
 
 /**
  * Checks that the choices in each individual comparison are
@@ -357,9 +333,7 @@ function checkComparisons (state) {
   return true
 }
 
-
 function isDone (state) {
-
   if (!isAllImagesTested(state)) {
     return false
   }
@@ -403,7 +377,7 @@ function isDone (state) {
   let result = checkComparisons(state)
   console.log('> tree.isDone checkComparisons', result)
 
-  function getTimeInterval(start, end) {
+  function getTimeInterval (start, end) {
     let startMs = new Date(start).getTime()
     let endMs = new Date(end).getTime()
     return endMs - startMs
@@ -418,12 +392,9 @@ function isDone (state) {
   }
 
   return true
-
 }
 
-
 function getComparison (state) {
-
   let doRepeatComparison = false
 
   if (isAllImagesTested(state)) {
@@ -438,18 +409,14 @@ function getComparison (state) {
   }
 
   if (doRepeatComparison) {
-
     let comparison = state.comparisons[state.iComparisonRepeat]
     comparison.isRepeat = true
     comparison.repeatStartTime = getCurrentTimeStr()
     return comparison
-
   } else {
-
     // get comparison from tree
     let node = state.nodes[state.iNodeCompare]
     return makeComparison(state, state.iImageTest, node.iImage)
-
   }
 }
 
@@ -469,7 +436,6 @@ function calcTreeAttr (imageSizes, probRepeat) {
   return attr
 }
 
-
 module.exports = {
   isDone,
   newState,
@@ -478,5 +444,3 @@ module.exports = {
   getComparison,
   calcTreeAttr
 }
-
-

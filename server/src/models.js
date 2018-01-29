@@ -69,7 +69,6 @@ async function deleteFileList (fileList) {
  * @promise - list of new paths
  */
 async function storeFilesInConfigDir (fileList, checkFilesForError) {
-
   try {
     const timestampDir = String(new Date().getTime())
     const fullDir = path.join(config.filesDir, timestampDir)
@@ -95,12 +94,9 @@ async function storeFilesInConfigDir (fileList, checkFilesForError) {
     }
 
     return targetPaths
-
   } catch (error) {
-
     await deleteFileList(fileList)
     throw error
-
   }
 }
 
@@ -337,7 +333,7 @@ async function fetchExperiments (userId) {
  *     email: email string,
  *     user: string,
  *   }
- *   states: Array of states,
+ *   states: JSON object to hold states
  * }
  */
 
@@ -346,17 +342,20 @@ async function createParticipant (experimentId, email) {
 
   const urls = _.map(experiment.images, 'url')
 
+  let attr = {email, user: null}
+
   let states = {}
-  for (let imageSetId of experiment.attr.imageSetIds) {
-    let theseUrls = _.filter(urls, u => _.includes(u, imageSetId))
-    states[imageSetId] = tree.newState(theseUrls)
+  if (experiment.attr.questionType === '2afc') {
+    for (let imageSetId of experiment.attr.imageSetIds) {
+      let theseUrls = _.filter(urls, u => _.includes(u, imageSetId))
+      states[imageSetId] = tree.newState(theseUrls)
+    }
+  } else if (experiment.attr.questionType === 'multiple') {
+    states = []
   }
 
-  let participant = await Participant.create(
-    {attr: {email: email, user: null}, states})
-
+  let participant = await Participant.create({attr, states})
   await experiment.addParticipant(participant)
-
   return unwrapInstance(participant)
 }
 

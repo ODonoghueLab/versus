@@ -1,7 +1,6 @@
 import axios from 'axios'
 import _ from 'lodash'
 import config from '../config'
-import util from './util'
 
 /**
  * @fileOverview rpc module provides a clean rpc interface for JSON-based
@@ -15,19 +14,21 @@ axios.defaults.withCredentials = true
 export default {
 
   rpcRun (method, ...args) {
-    let payload = {method, args}
-    console.log('> rpc.rpcRun', util.jstr(payload))
+    let params = _.cloneDeep(args)
+    let payload = {method, args: params}
+    console.log('> rpc.rpcRun', method, ...params)
     return axios.post(`${config.apiUrl}/api/rpc-run`, payload)
   },
 
   rpcUpload (method, files, ...args) {
+    let params = _.cloneDeep(args)
     let formData = new FormData()
     formData.append('method', method)
-    formData.append('args', JSON.stringify(args))
-    _.each(files, f => {
+    formData.append('args', JSON.stringify(params))
+    for (let f of files) {
       formData.append('uploadFiles', f, f.name)
-    })
-    console.log('> rpc.rpcUpoad', method, args, _.map(files, 'name'))
+    }
+    console.log('> rpc.rpcUpoad', method, ...params, _.map(files, 'name'))
     return axios.post(`${config.apiUrl}/api/rpc-upload`, formData)
   }
 

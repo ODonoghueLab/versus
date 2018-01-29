@@ -11,9 +11,10 @@
  * the web-client.
  */
 
-
 const path = require('path')
 const express = require('express')
+
+const config = require('./config')
 
 // Defines express app and sqlalchemy db here to avoid circular dependencies
 const conn = require('./conn')
@@ -23,7 +24,7 @@ module.exports = app
 // Middleware Configuration
 
 // Cross-origin-resource-sharing for hot-reloading client
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Credentials', true)
   res.header('Access-Control-Allow-Origin', req.headers.origin)
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
@@ -47,7 +48,7 @@ app.use(bodyParser.urlencoded({extended: false}))
 // Session management for validated users
 const session = require('express-session')
 app.use(session({
-  secret: 'csiro-versus',
+  secret: config.secretKey,
   saveUninitialized: true,
   resave: true
 }))
@@ -77,7 +78,7 @@ passport.use(new LocalStrategy(
     usernameField: 'email',
     passwordField: 'password'
   },
-  function(email, password, done) {
+  function (email, password, done) {
     models
       .fetchUser({email: email})
       .then(user => {
