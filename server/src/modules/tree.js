@@ -411,12 +411,18 @@ function getComparison (state) {
   if (doRepeatComparison) {
     let comparison = state.comparisons[state.iComparisonRepeat]
     comparison.isRepeat = true
-    comparison.repeatStartTime = getCurrentTimeStr()
+    if (comparison.repeatStartTime === null) {
+      comparison.repeatStartTime = getCurrentTimeStr()
+    }
     return comparison
   } else {
     // get comparison from tree
     let node = state.nodes[state.iNodeCompare]
-    return makeComparison(state, state.iImageTest, node.iImage)
+    let comparison = makeComparison(state, state.iImageTest, node.iImage)
+    if (comparison.startTime === null) {
+      comparison.startTime = getCurrentTimeStr()
+    }
+    return comparison
   }
 }
 

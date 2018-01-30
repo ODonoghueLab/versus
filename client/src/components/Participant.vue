@@ -1,7 +1,9 @@
 <template>
-  <div style="text-align: left">
+  <div>
 
-    <div style="padding: 1em" v-if="status === 'start'">
+    <div
+      style="padding: 1em"
+      v-if="status === 'start'">
 
       <h2 class="md-display-2">
         Welcome to Versus!
@@ -24,25 +26,28 @@
         is view the two images and click on the one you believe is better.
       </p>
 
-      <form v-on:submit.prevent="enterUser">
+      <form
+          v-on:submit.prevent="startSurvey">
         <md-button
-          @click="enterUser"
-          class="md-raised md-primary"
-          style="margin-left: 1em">
+            @click="startSurvey"
+            class="md-raised md-primary"
+            style="margin-left: 1em">
           Look at images
         </md-button>
       </form>
 
     </div>
 
-    <div v-else-if="status === 'done'" class="done">
+    <div
+        v-else-if="status === 'done'"
+        class="done">
 
       <md-layout
-        style="padding: 1em"
-        class="md-display-2 done"
-        md-align="center"
-        md-column
-        md-vertical-align="center">
+          style="padding: 1em"
+          class="md-display-2 done"
+          md-align="center"
+          md-column
+          md-vertical-align="center">
 
         Your tests are done
         <br>
@@ -60,154 +65,78 @@
 
     </div>
 
-    <div v-else-if="status === 'running2afc'">
-      <md-layout md-align="center" v-if="comparison">
-
-        <md-progress style="height: 8px" :md-progress="progress"/>
-
-        <md-layout md-align="center" md-flex="100">
-          <h2 class="md-display-2"> {{experimentAttr.title}} </h2>
-        </md-layout>
-
-        <md-layout md-align="center" md-flex="100">
-          <p> {{experimentAttr.blurb}}</p>
-          <br>
-        </md-layout>
-
-        <md-layout v-if="imageA && imageB">
-          <md-layout md-flex="50" md-align="end">
-
-            <md-whiteframe md-elevation="5" style="margin-right: 1em">
-              <div style="height: 12px;">
-                <md-progress
-                  v-if="loadingA"
-                  md-indeterminate/>
-              </div>
-              <div id="img-a">
-                <img :src="imageA"/>
-              </div>
-            </md-whiteframe>
-
-            <div style="width: 100%; padding-top: 1em; text-align: center;">
-              <md-button
-                :disabled="loadingA || loadingB"
-                class="md-raised choice"
-                @click="choose2afc(comparison.itemA)">
-                Choose
-              </md-button>
-            </div>
-
-          </md-layout>
-
-          <md-layout md-flex="50" md-align="start">
-            <md-whiteframe md-elevation="5" style="margin-left: 0.7em">
-              <div style="height: 12px">
-                <md-progress
-                  v-if="loadingB"
-                  md-indeterminate/>
-              </div>
-              <div id="img-b">
-                <img :src="imageB"/>
-              </div>
-            </md-whiteframe>
-            <div style="width: 100%; padding-top: 1em; text-align: center;">
-              <md-button
-                :disabled="loadingA || loadingB"
-                class="md-raised choice"
-                @click="choose2afc(comparison.itemB)">
-                Choose
-              </md-button>
-            </div>
-          </md-layout>
-        </md-layout>
-
-        <div
-          v-else
-          style="
-              width: 100%;
-              margin-top: 2em;
-              text-align: center">
-          Loading images...
-          <br>
-          <md-spinner :md-size="80" md-indeterminate/>
-        </div>
-
-      </md-layout>
-    </div>
-
-    <div v-else-if="status === 'runningMultiple'">
+    <div
+        v-else-if="
+          status === 'running2afc' ||
+          status === 'runningMultiple'">
 
       <md-layout md-align="center">
 
         <md-progress
-          style="height: 8px"
-          :md-progress="progress"/>
+            style="height: 8px"
+            :md-progress="progress"/>
 
         <md-layout
-          md-align="center"
-          md-column
-          md-flex="100"
-          style="text-align: center">
-
+            md-align="center"
+            md-flex="100">
           <h2 class="md-display-2">
             {{experimentAttr.title}}
           </h2>
-
-          <p>
-            {{experimentAttr.blurb}}
-          </p>
         </md-layout>
-
-        <md-layout md-flex="100" md-align="center">
-            <img
-              v-if="question"
-              style="height: 250px; width: auto"
-              :src="question.url"/>
-        </md-layout>
-
-        <br>
 
         <md-layout
-          md-row
-          v-for="(choice, i) in choices"
-          :key="i">
+            md-align="center"
+            md-flex="100">
+          <p> {{experimentAttr.blurb}}</p>
+          <br>
+        </md-layout>
 
-          <md-layout md-align="end">
+        <md-layout
+            v-if="question"
+            md-align="center"
+            md-flex="100">
+          <img
+              style="height: 300px"
+              :src="question.fullUrl"/>
+        </md-layout>
 
-            <md-whiteframe
-              md-elevation="5"
-              style="margin-right: 1em">
+        <md-layout
+            v-for="(choice, i) of choices"
+            :key="i"
+            md-align="center">
 
-              <div style="height: 12px;">
-                <md-progress
-                  v-if="choice.isClick"
-                  md-indeterminate/>
-              </div>
+          <md-whiteframe
+            md-elevation="5"
+            style="margin-right: 1em">
 
-              <img v-if="choice" :src="choice.url"/>
-
-            </md-whiteframe>
-
-            <div
-              style="
-                width: 100%;
-                padding-top: 1em;
-                text-align: center;">
-
-              <md-button
-                :disabled="isChosen"
-                class="md-raised choice"
-                @click="chooseMultiple(choice)">
-                Choose
-              </md-button>
-
+            <div style="height: 12px;">
+              <md-progress
+                v-if="choice.isClick"
+                md-indeterminate/>
             </div>
 
-          </md-layout>
+            <div id="img-a">
+              <img :src="choice.fullUrl"/>
+            </div>
+
+          </md-whiteframe>
+
+          <div style="
+              width: 100%;
+              padding-top: 1em;
+              text-align: center;">
+            <md-button
+              :disabled="isChosen"
+              class="md-raised choice"
+              @click="choose(choice)">
+              Choose
+            </md-button>
+          </div>
 
         </md-layout>
 
       </md-layout>
+
     </div>
 
   </div>
@@ -278,17 +207,12 @@
     data () {
       return {
         status: null,
-        loadingA: true,
-        loadingB: true,
-        imageA: null,
-        imageB: null,
-        comparison: null,
         surveyCode: null,
         progress: 0,
         question: null,
         choices: [],
-        imageSize: 0,
         isChosen: false,
+        isLoading: true,
         experimentAttr: {},
       }
     },
@@ -303,121 +227,119 @@
     methods: {
 
       async handleRes (res) {
-        console.log('> Invite.handleRes', util.jstr(res.data))
-        this.$data.status = res.data.status
 
-        if (res.data.status === 'start') {
-          console.log('> Invite.handleRes new')
-          this.$data.experimentAttr = res.data.experimentAttr
+        this.status = res.data.status
+        console.log('> Invite.handleRes status:', this.status)
 
-        } else if (res.data.status === 'done') {
-          console.log('> Invite.handleRes done')
-          this.$data.surveyCode = res.data.surveyCode
+        if (this.status === 'start') {
+          this.experimentAttr = res.data.experimentAttr
 
-        } else if (res.data.status === 'running2afc') {
+        } else if (this.status === 'done') {
+          this.surveyCode = res.data.surveyCode
 
-          this.$data.experimentAttr = res.data.experimentAttr
-          this.$data.progress = res.data.progress
+        } else if (this.status === 'running2afc') {
+
+          this.experimentAttr = res.data.experimentAttr
+          this.progress = res.data.progress
 
           // clear screen, delay required for page to redraw
-          this.$data.imageB = null
-          this.$data.imageA = null
+          this.question = null
+          this.choices.length = 0
+          this.isChosen = false
           await delay(200)
 
+          this.isLoading = true
           let comparison = res.data.comparison
-
+          this.comparison = comparison
           let comparisonUrls = []
-          comparisonUrls.push(config.apiUrl + comparison.itemA.url)
-          comparisonUrls.push(config.apiUrl + comparison.itemB.url)
-          preloadImages(comparisonUrls)
+          let choices = []
+          for (let item of [comparison.itemA, comparison.itemB]) {
+            let fullUrl = config.apiUrl + item.url
+            choices.push({
+              fullUrl,
+              isClick: false,
+              item
+            })
+            comparisonUrls.push(fullUrl)
+          }
 
+          preloadImages(comparisonUrls)
           preloadImages(_.map(res.data.urls, u => config.apiUrl + u))
 
-          let imageUrlA = this.getImageUrl(comparison.itemA)
-          let imageUrlB = this.getImageUrl(comparison.itemB)
           while (!areImagesLoaded(comparisonUrls)) {
             await delay(100)
           }
 
-          this.$data.loadingA = false
-          this.$data.loadingB = false
-          this.$data.imageA = imageUrlA
-          this.$data.imageB = imageUrlB
-          this.$data.comparison = comparison
-          console.log('> Invite.handleRes comparison', comparison)
+          this.isLoading = false
+          this.choices = choices
 
-        } else if (res.data.status === 'runningMultiple') {
+        } else if (this.status === 'runningMultiple') {
 
-          this.$data.experimentAttr = res.data.experimentAttr
+          this.experimentAttr = res.data.experimentAttr
 
           // clear screen, delay required for page to redraw
-          this.$data.question = null
-          this.$data.choices.length = 0
-          this.$data.isChosen = false
+          this.question = null
+          this.choices.length = 0
+          this.isChosen = false
           await delay(200)
 
-          let urls = [config.apiUrl + res.data.question.url]
-          for (let choice of res.data.choices) {
-            urls.push(config.apiUrl + choice.url)
-          }
-          preloadImages(urls)
+          this.isLoading = true
 
-          this.$data.question = res.data.question
-          this.$data.question.url = config.apiUrl + res.data.question.url
           for (let choice of res.data.choices) {
-            let fullUrl = config.apiUrl + choice.url
-            this.$data.choices.push({
-              url: fullUrl,
-              value: choice.value,
-              isClick: false,
-            })
+            choice.fullUrl = config.apiUrl + choice.url
+            choice.isClick = false
           }
 
-          this.$data.imageSize = 100 / this.$data.choices.length - 5
+          res.data.question.fullUrl = config.apiUrl + res.data.question.url
+
+          let fullUrls = [config.apiUrl + res.data.question.url]
+          for (let choice of res.data.choices) {
+            choice.fullUrl = config.apiUrl + choice.url
+            fullUrls.push(choice.fullUrl)
+          }
+          preloadImages(fullUrls)
+
+          while (!areImagesLoaded(fullUrls)) {
+            await delay(100)
+          }
+
+          this.isLoading = false
+          this.question = res.data.question
+          this.choices = res.data.choices
         }
 
       },
 
-      async chooseMultiple(choice) {
+      async choose (choice) {
+
         choice.isClick = true
-        this.$data.isChosen = true
+        this.isChosen = true
         this.$forceUpdate()
+
         let participateId = this.$route.params.participateId
-        let params = [participateId, this.question, choice]
-        let res = await rpc.rpcRun('publicChooseMultiple', ...params)
+
+        let res
+        let questionType = this.experimentAttr.questionType
+        if (questionType === '2afc') {
+          if (this.comparison.isRepeat) {
+            this.comparison.repeat = choice.item.value
+          } else {
+            this.comparison.choice = choice.item.value
+          }
+          res = await rpc.rpcRun(
+            'publicChoose2afc', participateId, this.comparison)
+        } else if (questionType === 'multiple') {
+          res = await rpc.rpcRun(
+            'publicChooseMultiple', participateId, this.question, choice)
+        }
+
         return await this.handleRes(res)
       },
 
-      async choose2afc (item) {
-        if (this.$data.loadingA || this.$data.loadingB) {
-          return
-        }
+      startSurvey () {
         let participateId = this.$route.params.participateId
-        if (item.value === this.$data.comparison.itemA.value) {
-          this.$data.loadingA = true
-        } else {
-          this.$data.loadingB = true
-        }
-        if (this.$data.comparison.isRepeat) {
-          this.$data.comparison.repeat = item.value
-        } else {
-          this.$data.comparison.choice = item.value
-        }
-        let params = [participateId, this.$data.comparison]
-        let res = await rpc.rpcRun('publicChooseItem', ...params)
-        return await this.handleRes(res)
-      },
-
-      getImageUrl (item) {
-        return config.apiUrl + item.url
-      },
-
-      enterUser () {
-        let participateId = this.$route.params.participateId
-        let user = {}
         return rpc
-          .rpcRun(
-            'publicSaveParticipantUserDetails', participateId, user)
+          .rpcRun('publicSaveParticipantUserDetails', participateId, {})
           .then(this.handleRes)
       },
     }

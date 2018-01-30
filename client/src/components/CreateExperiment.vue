@@ -178,31 +178,27 @@
 
         let error = checkFilelistError(
           this.$data.files, this.$data.attr.questionType)
-
         if (!this.$data.attr.name) {
           error = 'must have experiment name'
         }
-
         if (error) {
           this.$data.error = 'Error: ' + error
           return
         }
 
-        // this.$data.isUploading = true
+        this.$data.isUploading = true
 
-        // let res = await rpc.rpcUpload(
-        //   'uploadImagesAndCreateExperiment',
-        //   this.$data.files, auth.user.id, this.$data.attr)
-        //
-        // this.$data.isUploading = false
-        //
-        // if (res.data.success) {
-        //   console.log('> CreateExperiment.submit', res.data)
-        //   let experimentId = res.data.experimentId
-        //   this.$router.push('/experiment/' + experimentId)
-        // } else {
-        //   this.error = res.data.error
-        // }
+        let res = await rpc.rpcUpload(
+          'uploadImagesAndCreateExperiment',
+          this.$data.files, auth.user.id, this.$data.attr)
+
+        if (res.data.success) {
+          console.log('> CreateExperiment.submit', res.data)
+          let experimentId = res.data.experimentId
+          this.$router.push('/experiment/' + experimentId)
+        } else {
+          this.error = res.data.error
+        }
       }
     }
   }

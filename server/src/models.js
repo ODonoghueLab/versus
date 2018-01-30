@@ -76,9 +76,11 @@ async function storeFilesInConfigDir (fileList, checkFilesForError) {
       fs.mkdirSync(fullDir, 0o744)
     }
 
-    let error = checkFilesForError(fileList)
-    if (error) {
-      throw new Error(error)
+    if (checkFilesForError) {
+      let error = checkFilesForError(fileList)
+      if (error) {
+        throw new Error(error)
+      }
     }
 
     let targetPaths = []
@@ -295,18 +297,27 @@ function findExperiment (experimentId) {
   })
 }
 
+function fetchAllExperiments () {
+  return Experiment.findAll({
+    include: [
+      {model: Image, as: 'images'},
+      {model: User, as: 'Users'},
+      {model: Participant, as: 'participants'}
+    ]
+  }).then(experiments => {
+    return _.map(experiments, unwrapInstance)
+  })
+}
+
 function fetchExperiment (experimentId) {
   return findExperiment(experimentId)
     .then(unwrapInstance)
 }
 
-function saveExperimentAttr (experimentId, attr) {
-  return findExperiment(experimentId)
-    .then(experiment => {
-      return experiment
-        .updateAttributes({attr})
-        .then(unwrapInstance)
-    })
+async function saveExperimentAttr (experimentId, attr) {
+  let experiment = await findExperiment(experimentId)
+  let result = await experiment.updateAttributes({attr})
+  return unwrapInstance(result)
 }
 
 function deleteExperiment (experimentId) {
@@ -380,31 +391,10 @@ function saveParticipant (participateId, values) {
     })
 }
 
-/**
- * Saves attributes into the attr JSON field, being careful not to
- * overwrite other fields in the attr JSON structure
- *
- * @param {String} participateId
- * @param {Object} newAttr
- * @returns {Promise.<Object>}
- */
-async function saveParticipantAttr (participateId, newAttr) {
+async function saveParticipantAttr (participateId, attr) {
   let participant = await findParticipant(participateId)
-
-  let attr = unwrapInstance(participant).attr
-  for (let key of _.keys(attr)) {
-    if (key in newAttr) {
-      attr[key] = newAttr[key]
-    }
-  }
-
-  participant = await participant.updateAttributes({attr})
-
-  let payload = unwrapInstance(participant)
-  for (let key of _.keys(payload.attr)) {
-    console.log('> saveParticipant payload key', key, payload.attr[key])
-  }
-  return payload
+  let result = await participant.updateAttributes({attr})
+  return unwrapInstance(result)
 }
 
 /**
@@ -428,6 +418,7 @@ module.exports = {
   createExperiment,
   fetchExperiment,
   fetchExperiments,
+  fetchAllExperiments,
   saveExperimentAttr,
   deleteExperiment,
   createParticipant,

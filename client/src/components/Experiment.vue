@@ -9,7 +9,7 @@
 
       Experiment:
       <span v-if="experiment.attr">
-        {{experiment.attr.name}}
+        {{experiment.attr.name}} - {{experiment.attr.version}}
       </span>
 
     </h2>
@@ -39,8 +39,12 @@
       </md-input-container>
 
       <div>
-        <md-radio v-model="experiment.attr.questionType" id="my-test1" name="my-test-group1" md-value="2afc">2 alternative forced choice</md-radio>
-        <md-radio v-model="experiment.attr.questionType" id="my-test2" name="my-test-group1" md-value="multiple">multiple choice</md-radio>
+        <md-radio v-model="experiment.attr.questionType" id="my-test1" name="my-test-group1" md-value="2afc">2
+          alternative forced choice
+        </md-radio>
+        <md-radio v-model="experiment.attr.questionType" id="my-test2" name="my-test-group1" md-value="multiple">
+          multiple choice
+        </md-radio>
       </div>
 
       <md-button
@@ -77,6 +81,7 @@
         <md-table-header>
           <md-table-row>
             <md-table-head>Invite</md-table-head>
+            <md-table-head>Version</md-table-head>
             <md-table-head>SurveyCode</md-table-head>
             <md-table-head>Comparisons</md-table-head>
             <md-table-head>Time</md-table-head>
@@ -97,9 +102,12 @@
                 link
               </router-link>
               &nbsp;(<a
-              @click="copyInviteRoute(participant)">
-              copy
-            </a>)
+                @click="copyInviteRoute(participant)">
+                copy
+              </a>)
+            </md-table-cell>
+            <md-table-cell>
+              {{ participant.attr.version}}
             </md-table-cell>
             <md-table-cell>
               {{ participant.attr.surveyCode }}
@@ -180,7 +188,6 @@
   import util from '../modules/util'
   import rpc from '../modules/rpc'
 
-
   function makeResultCsv (experiment) {
 
     let isFoundHeader = false
@@ -235,7 +242,6 @@
 
     return result
   }
-
 
   export default {
     name: 'experiment',

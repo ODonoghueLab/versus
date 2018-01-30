@@ -146,10 +146,6 @@ async function publicForceUpdatePassword (user) {
   }
 }
 
-/**
- * Specific handlers
- */
-
 function isStatesDone (states) {
   for (let state of _.values(states)) {
     if (!tree.isDone(state)) {
@@ -157,6 +153,11 @@ function isStatesDone (states) {
     }
   }
   return true
+}
+
+function getCurrentTimeStr () {
+  let date = new Date()
+  return date.toJSON()
 }
 
 function getRandomUnfinishedState (states) {
@@ -172,55 +173,6 @@ function getRandomUnfinishedState (states) {
   return states[id]
 }
 
-/**
- * Checks experiment.attr and participant.attr
- * @param experiment
- * @returns {Object} experiment
- */
-function checkExperiment (experiment) {
-  if (experiment.attr.params) {
-    _.assign(experiment.attr, experiment.attr.params)
-    delete experiment.attr.params
-  }
-
-  if (experiment.attr.maxComparisons) {
-    experiment.attr.maxTreeComparison = experiment.attr.maxComparisons
-    delete experiment.attr.maxComparisons
-  }
-
-  experiment.attr.maxComparison =
-    experiment.attr.maxTreeComparison +
-    experiment.attr.nRepeat
-
-  // Calculate statistics of finished experiment
-  if (experiment.participants) {
-    for (let participant of experiment.participants) {
-      if (experiment.attr.questionType === '2afc') {
-        let attr = participant.attr
-        attr.nRepeatTotal = 0
-        attr.consistency = 0
-        attr.nComparisonDone = 0
-        for (let state of _.values(participant.states)) {
-          attr.nRepeatTotal += state.consistencies.length
-          attr.consistency += _.sum(state.consistencies)
-          attr.nComparisonDone += state.comparisons.length
-        }
-        let time = 0
-        for (let state of _.values(participant.states)) {
-          for (let comparison of state.comparisons) {
-            let startMs = new Date(comparison.startTime).getTime()
-            let endMs = new Date(comparison.endTime).getTime()
-            time += endMs - startMs
-          }
-        }
-        attr.time = prettyMs(time)
-      }
-    }
-  }
-
-  return experiment
-}
-
 function calcParticipantProgress (participant, experimentAttr) {
   let nComparison = 0
   for (let state of _.values(participant.states)) {
@@ -234,12 +186,15 @@ function calcParticipantProgress (participant, experimentAttr) {
   return nComparison / experimentAttr.maxComparison * 100
 }
 
+/**
+ * Specific handlers - promises that return a JSON literal
+ */
+
 async function getExperimentSummaries (userId) {
   let experiments = await models.fetchExperiments(userId)
   let payload = {experiments: []}
   for (let experiment of experiments) {
     console.log('> handlers.getExperimentSummaries', experiment)
-    checkExperiment(experiment)
     payload.experiments.push({id: experiment.id, attr: experiment.attr})
   }
   return payload
@@ -247,7 +202,10 @@ async function getExperimentSummaries (userId) {
 
 async function getExperiment (experimentId) {
   let experiment = await models.fetchExperiment(experimentId)
-  checkExperiment(experiment)
+  for (let participant of experiment.participants) {
+    let attr = calcParticipant2afcAttr (participant)
+    await models.saveParticipantAttr(participant.participateId, attr)
+  }
   return {experiment}
 }
 
@@ -282,10 +240,20 @@ function deleteParticipant (participantId) {
     })
 }
 
+async function getSurveyCode (participateId) {
+  let participant = await models.fetchParticipant(participateId)
+  let attr = participant.attr
+  if (!attr.surveyCode) {
+    attr.surveyCode = shortid.generate()
+    await models.saveParticipant(participateId, {attr})
+  }
+  return attr.surveyCode
+}
+
 async function publicGetNextChoice (participateId) {
   let participant = await models.fetchParticipant(participateId)
   let experiment = await models.fetchExperiment(participant.ExperimentId)
-  checkExperiment(experiment)
+  updateExperimentStructure(experiment)
   let experimentAttr = experiment.attr
   let urls = _.map(experiment.images, 'url')
   let states = participant.states
@@ -295,7 +263,6 @@ async function publicGetNextChoice (participateId) {
   }
 
   if (experiment.attr.questionType === '2afc') {
-
     if (!isStatesDone(states)) {
       return {
         status: 'running2afc',
@@ -305,16 +272,9 @@ async function publicGetNextChoice (participateId) {
         progress: calcParticipantProgress(participant, experimentAttr)
       }
     } else { // isDone!
-      // Generate surveyCode if it doesn't exist
-      let attr = participant.attr
-      if (!attr.surveyCode) {
-        attr.surveyCode = shortid.generate()
-        await models.saveParticipant(participateId, {attr})
-      }
-
       return {
         status: 'done',
-        surveyCode: attr.surveyCode
+        surveyCode: await getSurveyCode(participateId)
       }
     }
   }
@@ -331,20 +291,25 @@ async function publicGetNextChoice (participateId) {
     if (unAnsweredImageSetids.length > 0) {
       let i = parseInt(Math.random() * unAnsweredImageSetids.length - 1)
       let imageSetId = unAnsweredImageSetids[i]
-      let question = {}
+      let question
       let choices = []
       for (let url of _.map(experiment.images, 'url')) {
         if (!_.includes(url, imageSetId)) {
           continue
         }
         if (_.includes(url, 'question')) {
-          question.url = url
-          question.imageSetId = imageSetId
-          question.value = url
+          question = {
+            url,
+            imageSetId,
+            value: _.last(path.parse(url).name.split('_'))
+          }
         } else {
           choices.push({
-            url: url,
-            value: url
+            startTime: getCurrentTimeStr(),
+            endTime: null,
+            url,
+            imageSetId,
+            value: _.last(path.parse(url).name.split('_'))
           })
         }
       }
@@ -356,22 +321,15 @@ async function publicGetNextChoice (participateId) {
         imageSetId
       }
     } else {
-      // Generate surveyCode if it doesn't exist
-      let attr = participant.attr
-      if (!attr.surveyCode) {
-        attr.surveyCode = shortid.generate()
-        await models.saveParticipant(participateId, {attr})
-      }
-
       return {
         status: 'done',
-        surveyCode: attr.surveyCode
+        surveyCode: await getSurveyCode(participateId)
       }
     }
   }
 }
 
-async function publicChooseItem (participateId, comparison) {
+async function publicChoose2afc (participateId, comparison) {
   let participant = await models.fetchParticipant(participateId)
   let urlA = comparison.itemA.url
   let imageSetId = models.getImageSetIdFromPath(urlA)
@@ -382,14 +340,12 @@ async function publicChooseItem (participateId, comparison) {
   return publicGetNextChoice(participateId)
 }
 
-async function publicChooseMultiple (participateId, answer) {
+async function publicChooseMultiple (participateId, question, answer) {
   let participant = await models.fetchParticipant(participateId)
+  answer.endTime = getCurrentTimeStr()
   let states = participant.states
-  if (!_.isArray(states)) {
-    states = []
-  }
   states.push(answer)
-  console.log('> handlers.publicChooseMultiple', states)
+  console.log('> handlers.publicChooseMultiple', participant.states)
   await models.saveParticipant(participateId, {states})
   return publicGetNextChoice(participateId)
 }
@@ -444,6 +400,74 @@ async function uploadImagesAndCreateExperiment (files, userId, attr) {
   }
 }
 
+async function calcParticipant2afcAttr (participant) {
+  let attr = participant.attr
+  attr.nRepeatTotal = 0
+  attr.consistency = 0
+  attr.nComparisonDone = 0
+  for (let state of _.values(participant.states)) {
+    attr.nRepeatTotal += state.consistencies.length
+    attr.consistency += _.sum(state.consistencies)
+    attr.nComparisonDone += state.comparisons.length
+  }
+  let time = 0
+  for (let state of _.values(participant.states)) {
+    for (let comparison of state.comparisons) {
+      let startMs = new Date(comparison.startTime).getTime()
+      let endMs = new Date(comparison.endTime).getTime()
+      time += endMs - startMs
+    }
+  }
+  attr.time = prettyMs(time)
+  attr.version = 2
+  return attr
+}
+
+/**
+ * Checks experiment.attr and participant.attr
+ * @param experiment
+ * @returns {Object} experiment
+ */
+async function updateExperimentStructure (experiment) {
+  console.log('> handlers.updateExperimentStructure experiment', experiment.attr.name)
+  if (experiment.attr.params) {
+    _.assign(experiment.attr, experiment.attr.params)
+    delete experiment.attr.params
+  }
+
+  if (experiment.attr.maxComparisons) {
+    experiment.attr.maxTreeComparison = experiment.attr.maxComparisons
+    delete experiment.attr.maxComparisons
+  }
+
+  experiment.attr.maxComparison =
+    experiment.attr.maxTreeComparison +
+    experiment.attr.nRepeat
+
+  experiment.attr.version = 9
+
+  await models.saveExperimentAttr(experiment.id, experiment.attr)
+
+  // Calculate statistics of finished experiment
+  if (experiment.participants) {
+    for (let participant of experiment.participants) {
+      if (experiment.attr.questionType === '2afc') {
+        let attr = calcParticipant2afcAttr(participant)
+        await models.saveParticipantAttr(participant.participateId, attr)
+      }
+    }
+  }
+}
+
+async function updateDb () {
+  let experiments = await models.fetchAllExperiments()
+  for (let experiment of experiments) {
+    await updateExperimentStructure(experiment)
+  }
+}
+
+updateDb()
+
 module.exports = {
   publicRegisterUser,
   updateUser,
@@ -455,7 +479,7 @@ module.exports = {
   publicInviteParticipant,
   deleteParticipant,
   publicGetNextChoice,
-  publicChooseItem,
+  publicChoose2afc,
   publicChooseMultiple,
   publicSaveParticipantUserDetails,
   uploadImagesAndCreateExperiment
