@@ -60,15 +60,16 @@
       <br>
 
       <div>
-        <md-radio v-model="attr.questionType" id="my-test1" name="my-test-group1" md-value="2afc">2 alternative forced choice</md-radio>
-        <md-radio v-model="attr.questionType" id="my-test2" name="my-test-group1" md-value="multiple">multiple choice</md-radio>
+        <md-radio v-model="attr.questionType" id="my-test1" name="my-test-group1" md-value="2afc">2 alternative forced
+          choice
+        </md-radio>
+        <md-radio v-model="attr.questionType" id="my-test2" name="my-test-group1" md-value="multiple">multiple choice
+        </md-radio>
       </div>
 
-      </md-switch>
-
       <md-layout
-          md-row
-          md-vertical-align="center">
+        md-row
+        md-vertical-align="center">
         <md-button
           type="submit"
           :disabled="isUploading"
@@ -83,24 +84,74 @@
       </md-layout>
 
       <span
-          v-if="error"
-          style="
+        v-if="error"
+        style="
             padding-top: 1em;
             padding-left: 1em;
-            color: red" >
+            color: red">
         {{error}}
       </span>
     </form>
   </div>
 </template>
 
-<!-- Add 'scoped' attribute to limit CSS to this component only -->
-<style scoped>
-</style>
-
 <script>
-  import auth from '../modules/auth'
+  import _ from 'lodash'
   import rpc from '../modules/rpc'
+  import auth from '../modules/auth'
+
+  /**
+   * Key function to return imageSetId from a path name, else empty string
+   * These function should be used to allow unique imageSetIds to be
+   * extracted across the app.
+   */
+  function getImageSetIdFromPath (p) {
+    let tokens = p.split('_')
+    if (tokens.length > 0) {
+      return tokens[0]
+    } else {
+      return ''
+    }
+  }
+
+  /**
+   * @returns error string on error, otherwise empty string
+   */
+  function checkFilelistError (filelist, questionType) {
+    for (let f of filelist) {
+      let path = f.name
+      let ext = _.last(path.split('.')).toLowerCase()
+      console.log(path, ext)
+      let isExt = _.includes(['png', 'gif', 'jpg', 'jpeg'], ext)
+      if (!isExt) {
+        return 'only .png, .jpg, .gif allowed'
+      }
+      // size checking
+      if (f.size / 1000000 > 2) {
+        return 'only images under 2MB allowed'
+      }
+    }
+    if (questionType === '2afc') {
+      let imageSetIds = []
+      let nImageById = {}
+      for (let f of filelist) {
+        let path = f.name
+        let imageSetId = getImageSetIdFromPath(path)
+        if (!_.includes(imageSetIds, imageSetId)) {
+          imageSetIds.push(imageSetId)
+          nImageById[imageSetId] = 0
+        }
+        nImageById[imageSetId] += 1
+      }
+      for (let [imageSetId, nImage] of _.toPairs(nImageById)) {
+        console.log(imageSetId, nImage)
+        if (nImage < 2) {
+          return `minimum two images for ${imageSetId}`
+        }
+      }
+    }
+    return ''
+  }
 
   export default {
     name: 'createExperiment',
@@ -124,21 +175,34 @@
         this.$data.fileStr = `${files.length} files`
       },
       async submit () {
-        this.$data.isUploading = true
 
-        let res = await rpc.rpcUpload(
-          'uploadImagesAndCreateExperiment',
-          this.$data.files, auth.user.id, this.$data.attr)
+        let error = checkFilelistError(
+          this.$data.files, this.$data.attr.questionType)
 
-        this.$data.isUploading = false
-
-        if (res.data.success) {
-          console.log('> CreateExperiment.submit', res.data)
-          let experimentId = res.data.experimentId
-          this.$router.push('/experiment/' + experimentId)
-        } else {
-          this.error = res.data.error
+        if (!this.$data.attr.name) {
+          error = 'must have experiment name'
         }
+
+        if (error) {
+          this.$data.error = 'Error: ' + error
+          return
+        }
+
+        // this.$data.isUploading = true
+
+        // let res = await rpc.rpcUpload(
+        //   'uploadImagesAndCreateExperiment',
+        //   this.$data.files, auth.user.id, this.$data.attr)
+        //
+        // this.$data.isUploading = false
+        //
+        // if (res.data.success) {
+        //   console.log('> CreateExperiment.submit', res.data)
+        //   let experimentId = res.data.experimentId
+        //   this.$router.push('/experiment/' + experimentId)
+        // } else {
+        //   this.error = res.data.error
+        // }
       }
     }
   }

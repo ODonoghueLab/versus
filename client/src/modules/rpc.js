@@ -22,13 +22,16 @@ export default {
 
   rpcUpload (method, files, ...args) {
     let params = _.cloneDeep(args)
+
     let formData = new FormData()
     formData.append('method', method)
     formData.append('args', JSON.stringify(params))
     for (let f of files) {
       formData.append('uploadFiles', f, f.name)
     }
-    console.log('> rpc.rpcUpoad', method, ...params, _.map(files, 'name'))
+
+    let filenames = _.map(files, 'name')
+    console.log('> rpc.rpcUpoad', method, ...params, filenames)
     return axios.post(`${config.apiUrl}/api/rpc-upload`, formData)
   }
 

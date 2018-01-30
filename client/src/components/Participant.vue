@@ -92,7 +92,7 @@
               <md-button
                 :disabled="loadingA || loadingB"
                 class="md-raised choice"
-                @click="choose(comparison.itemA)">
+                @click="choose2afc(comparison.itemA)">
                 Choose
               </md-button>
             </div>
@@ -114,7 +114,7 @@
               <md-button
                 :disabled="loadingA || loadingB"
                 class="md-raised choice"
-                @click="choose(comparison.itemB)">
+                @click="choose2afc(comparison.itemB)">
                 Choose
               </md-button>
             </div>
@@ -169,8 +169,8 @@
 
         <md-layout
           md-row
-          v-for="(answer, iAnswer) in answers"
-          :key="iAnswer">
+          v-for="(choice, i) in choices"
+          :key="i">
 
           <md-layout md-align="end">
 
@@ -180,11 +180,11 @@
 
               <div style="height: 12px;">
                 <md-progress
-                  v-if="loadingStates[iAnswer]"
+                  v-if="choice.isClick"
                   md-indeterminate/>
               </div>
 
-              <img v-if="answer" :src="answer.url"/>
+              <img v-if="choice" :src="choice.url"/>
 
             </md-whiteframe>
 
@@ -195,9 +195,9 @@
                 text-align: center;">
 
               <md-button
-                :disabled="anyLoading"
+                :disabled="isChosen"
                 class="md-raised choice"
-                @click="chooseMultiple(answer)">
+                @click="chooseMultiple(choice)">
                 Choose
               </md-button>
 
@@ -243,24 +243,32 @@
 
   let loadedImages = {}
 
-  function preloadImage (url) {
-    if (!(url in loadedImages)) {
-      let img = new Image
-      let src = config.apiUrl + url
-      img.src = src
-      loadedImages[src] = img
-      console.log('> Particpant.preloadImage', img.src)
+  function preloadImages (urls) {
+    for (let url of urls) {
+      if (!(url in loadedImages)) {
+        let img = new Image
+        let src = url
+        img.src = url
+        loadedImages[src] = img
+        console.log('> Particpant.preloadImage', img.src)
+      }
     }
   }
 
-  function isImgLoaded (url) {
-    if (url in loadedImages) {
-      let image = loadedImages[url]
-      return image.complete && image.naturalHeight !== 0
-    } else {
-      console.log('> isImgLoaded not found', url, _.keys(loadedImages))
-      return false
+  function areImagesLoaded (urls) {
+    for (let url of urls) {
+      if (url in loadedImages) {
+        let image = loadedImages[url]
+        let isLoaded = image.complete && image.naturalHeight !== 0
+        if (!isLoaded) {
+          return false
+        }
+      } else {
+        console.log(`> isImagesLoaded warning: ${url} not found in ${_.keys(loadedImages)}`)
+        return false
+      }
     }
+    return true
   }
 
   export default {
@@ -278,10 +286,9 @@
         surveyCode: null,
         progress: 0,
         question: null,
-        answers: [],
+        choices: [],
         imageSize: 0,
-        loadingStates: [],
-        anyLoading: false,
+        isChosen: false,
         experimentAttr: {},
       }
     },
@@ -319,13 +326,16 @@
 
           let comparison = res.data.comparison
 
-          preloadImage(comparison.itemA.url)
-          preloadImage(comparison.itemB.url)
-          _.map(res.data.urls, preloadImage)
+          let comparisonUrls = []
+          comparisonUrls.push(config.apiUrl + comparison.itemA.url)
+          comparisonUrls.push(config.apiUrl + comparison.itemB.url)
+          preloadImages(comparisonUrls)
+
+          preloadImages(_.map(res.data.urls, u => config.apiUrl + u))
 
           let imageUrlA = this.getImageUrl(comparison.itemA)
           let imageUrlB = this.getImageUrl(comparison.itemB)
-          while (!isImgLoaded(imageUrlA) || !isImgLoaded(imageUrlB)) {
+          while (!areImagesLoaded(comparisonUrls)) {
             await delay(100)
           }
 
@@ -342,50 +352,43 @@
 
           // clear screen, delay required for page to redraw
           this.$data.question = null
-          this.$data.answers.length = 0
-          this.$data.loadingStates.length = 0
-          this.$data.anyLoading = false
+          this.$data.choices.length = 0
+          this.$data.isChosen = false
           await delay(200)
 
-          preloadImage(res.data.question.url)
-          for (let answer of res.data.answers) {
-            preloadImage(answer.url)
+          let urls = [config.apiUrl + res.data.question.url]
+          for (let choice of res.data.choices) {
+            urls.push(config.apiUrl + choice.url)
           }
-
-          // let imageUrlA = this.getImageUrl(comparison.itemA)
-          // let imageUrlB = this.getImageUrl(comparison.itemB)
-          // while (!isImgLoaded(imageUrlA) || !isImgLoaded(imageUrlB)) {
-          //   await delay(100)
-          // }
+          preloadImages(urls)
 
           this.$data.question = res.data.question
           this.$data.question.url = config.apiUrl + res.data.question.url
-          for (let answer of res.data.answers) {
-            let fullUrl = config.apiUrl + answer.url
-            this.$data.answers.push({
+          for (let choice of res.data.choices) {
+            let fullUrl = config.apiUrl + choice.url
+            this.$data.choices.push({
               url: fullUrl,
-              value: answer.value
+              value: choice.value,
+              isClick: false,
             })
-            this.$data.loadingStates.push(false)
           }
-          this.$data.imageSize = 100 / this.$data.answers.length - 5
+
+          this.$data.imageSize = 100 / this.$data.choices.length - 5
         }
 
       },
 
-      async chooseMultiple(answer) {
-        let participateId = this.$route.params.participateId
-        let i = _.findIndex(this.$data.answer, a => a.url = answer.url)
-        this.$data.loadingStates[i] = true
-        this.$data.anyLoading = true
+      async chooseMultiple(choice) {
+        choice.isClick = true
+        this.$data.isChosen = true
         this.$forceUpdate()
-        console.log('> Participant.chooseMultiple', answer.url, i, this.$data.loadingStates)
-        let res = await rpc.rpcRun(
-          'publicChooseMultiple', participateId, this.question, answer)
-        this.handleRes(res)
+        let participateId = this.$route.params.participateId
+        let params = [participateId, this.question, choice]
+        let res = await rpc.rpcRun('publicChooseMultiple', ...params)
+        return await this.handleRes(res)
       },
 
-      choose (item) {
+      async choose2afc (item) {
         if (this.$data.loadingA || this.$data.loadingB) {
           return
         }
@@ -400,9 +403,9 @@
         } else {
           this.$data.comparison.choice = item.value
         }
-        return rpc
-          .rpcRun('publicChooseItem', participateId, this.$data.comparison)
-          .then(this.handleRes)
+        let params = [participateId, this.$data.comparison]
+        let res = await rpc.rpcRun('publicChooseItem', ...params)
+        return await this.handleRes(res)
       },
 
       getImageUrl (item) {

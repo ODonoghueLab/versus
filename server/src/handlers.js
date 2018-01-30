@@ -27,6 +27,129 @@ const tree = require('./modules/tree')
  * server.
  */
 
+/**
+ * User handlers
+ */
+
+async function publicRegisterUser (user) {
+  try {
+    let errors = []
+    if (!user.name) {
+      errors.push('Please Enter Your User Name')
+    }
+    if (!user.email) {
+      errors.push('Please Enter Your Email')
+    }
+    if (!user.password) {
+      errors.push('Please Enter Password')
+    }
+
+    let values = {
+      name: user.name,
+      email: user.email,
+      password: user.password
+    }
+
+    if (errors.length > 0) {
+      return {
+        success: false,
+        errors: errors
+      }
+    } else {
+      await models.createUser(values)
+      return {success: true}
+    }
+  } catch (error) {
+    return {
+      success: false,
+      errors: ['Couldn\'t register, is your email already in use?']
+    }
+  }
+}
+
+/**
+ * Updates user where the id field is used to identify the user.
+ * Without the id set, the user will not be able to be retrieved
+ * from the database
+ * @param {Object} user
+ * @returns {Promise.<Object>}
+ */
+async function updateUser (user) {
+  try {
+    const keys = ['id', 'name', 'email', 'password']
+    let values = {}
+    for (let key of keys) {
+      if (user[key]) {
+        values[key] = user[key]
+      }
+    }
+
+    if (!values) {
+      return {
+        success: false,
+        errors: ['No values to update']
+      }
+    }
+
+    if (!values.id) {
+      return {
+        success: false,
+        errors: ['No user.id to identify user']
+      }
+    }
+
+    console.log('>> handlers.updateUser', values)
+    await models.updateUser(values)
+    return {success: true}
+  } catch (err) {
+    console.log(`>> handlers.updateUser error`, err)
+    return {
+      success: false,
+      errors: ['Couldn\'t update' + err]
+    }
+  }
+}
+
+async function publicForceUpdatePassword (user) {
+  try {
+    const keys = ['id', 'password']
+    let values = {}
+    for (let key of keys) {
+      if (user[key]) {
+        values[key] = user[key]
+      }
+    }
+
+    if (!values.id) {
+      return {
+        success: false,
+        errors: ['No user.id to identify to user']
+      }
+    }
+
+    if (!values) {
+      return {
+        success: false,
+        errors: ['No values to update']
+      }
+    }
+
+    console.log('>> handlers.publicForceUpdatePassword', values)
+    await models.updateUser(values)
+    return {success: true}
+  } catch (err) {
+    console.log(`>> handlers.publicForceUpdatePassword error`, err)
+    return {
+      success: false,
+      errors: ['Couldn\'t update' + err]
+    }
+  }
+}
+
+/**
+ * Specific handlers
+ */
+
 function isStatesDone (states) {
   for (let state of _.values(states)) {
     if (!tree.isDone(state)) {
@@ -111,7 +234,55 @@ function calcParticipantProgress (participant, experimentAttr) {
   return nComparison / experimentAttr.maxComparison * 100
 }
 
-async function getNextChoice (participateId) {
+async function getExperimentSummaries (userId) {
+  let experiments = await models.fetchExperiments(userId)
+  let payload = {experiments: []}
+  for (let experiment of experiments) {
+    console.log('> handlers.getExperimentSummaries', experiment)
+    checkExperiment(experiment)
+    payload.experiments.push({id: experiment.id, attr: experiment.attr})
+  }
+  return payload
+}
+
+async function getExperiment (experimentId) {
+  let experiment = await models.fetchExperiment(experimentId)
+  checkExperiment(experiment)
+  return {experiment}
+}
+
+function saveExperimentAttr (experimentId, attr) {
+  return models.saveExperimentAttr(experimentId, attr)
+}
+
+function deleteExperiment (experimentId) {
+  return models
+    .deleteExperiment(experimentId)
+    .then(() => {
+      return {success: true}
+    })
+    .catch(err => {
+      return {success: false, error: err}
+    })
+}
+
+async function publicInviteParticipant (experimentId, email) {
+  let participant = await models.createParticipant(experimentId, email)
+  return {participant}
+}
+
+function deleteParticipant (participantId) {
+  return models
+    .deleteParticipant(participantId)
+    .then(() => {
+      return {success: true}
+    })
+    .catch(err => {
+      return {success: false, error: err}
+    })
+}
+
+async function publicGetNextChoice (participateId) {
   let participant = await models.fetchParticipant(participateId)
   let experiment = await models.fetchExperiment(participant.ExperimentId)
   checkExperiment(experiment)
@@ -155,13 +326,13 @@ async function getNextChoice (participateId) {
       _.remove(unAnsweredImageSetids, id => id === answer.imageSetId)
     }
 
-    console.log('handlers.getNextChoice', unAnsweredImageSetids)
+    console.log('handlers.publicGetNextChoice', unAnsweredImageSetids)
 
     if (unAnsweredImageSetids.length > 0) {
       let i = parseInt(Math.random() * unAnsweredImageSetids.length - 1)
       let imageSetId = unAnsweredImageSetids[i]
       let question = {}
-      let answers = []
+      let choices = []
       for (let url of _.map(experiment.images, 'url')) {
         if (!_.includes(url, imageSetId)) {
           continue
@@ -171,7 +342,7 @@ async function getNextChoice (participateId) {
           question.imageSetId = imageSetId
           question.value = url
         } else {
-          answers.push({
+          choices.push({
             url: url,
             value: url
           })
@@ -180,7 +351,7 @@ async function getNextChoice (participateId) {
       return {
         status: 'runningMultiple',
         question,
-        answers,
+        choices,
         experimentAttr,
         imageSetId
       }
@@ -200,287 +371,92 @@ async function getNextChoice (participateId) {
   }
 }
 
-/**
- * Returns error if a filelist contains an image file that cannot
- * be usefully displayed, used by uploadImagesAndCreateExperiment
- *
- * @param {FileList} files
- * @returns {String} - an error str if problem, else null string if correct
- */
-function checkImageFilesForError (files) {
-  if (files.length < 2) {
-    return 'Minimum two images.'
+async function publicChooseItem (participateId, comparison) {
+  let participant = await models.fetchParticipant(participateId)
+  let urlA = comparison.itemA.url
+  let imageSetId = models.getImageSetIdFromPath(urlA)
+  let states = participant.states
+  let state = states[imageSetId]
+  tree.makeChoice(state, comparison)
+  await models.saveParticipant(participateId, {states})
+  return publicGetNextChoice(participateId)
+}
+
+async function publicChooseMultiple (participateId, answer) {
+  let participant = await models.fetchParticipant(participateId)
+  let states = participant.states
+  if (!_.isArray(states)) {
+    states = []
   }
-  for (let file of files) {
-    // handle formats
-    const extName = path.extname(file.originalname).toLowerCase()
-    if (!_.includes(['.png', '.jpg', '.gif'], extName)) {
-      return 'only .png, .jpg, .gif allowed'
+  states.push(answer)
+  console.log('> handlers.publicChooseMultiple', states)
+  await models.saveParticipant(participateId, {states})
+  return publicGetNextChoice(participateId)
+}
+
+async function publicSaveParticipantUserDetails (participateId, user) {
+  console.log('> handlers.publicSaveParticipantUserDetails user', user)
+  await models.saveParticipantAttr(participateId, {user: user})
+  return publicGetNextChoice(participateId)
+}
+
+/**
+ * Upload functions - first parameter is always a filelist object
+ * This is meant to be called by
+ *   `rpc.upload('uploadImagesAndCreateExperiment', userId, attr)`
+ * in the client.
+ * @param {Array<File>} files - a browser filelist object
+ * @param {String} userId
+ * @param {Object} attr
+ */
+async function uploadImagesAndCreateExperiment (files, userId, attr) {
+  try {
+    let paths = await models.storeFilesInConfigDir(files)
+
+    let imageSetIds = []
+    let nImageById = {}
+    for (let path of paths) {
+      let imageSetId = models.getImageSetIdFromPath(path)
+      if (!_.includes(imageSetIds, imageSetId)) {
+        imageSetIds.push(imageSetId)
+        nImageById[imageSetId] = 0
+      }
+      nImageById[imageSetId] += 1
     }
 
-    // // size checking
-    // if (file.size / 1000000 > 2) {
-    //   return 'only images under 2MB allowed'
-    // }
+    _.assign(attr, tree.calcTreeAttr(_.values(nImageById), tree.probRepeat))
+    attr.imageSetIds = imageSetIds
+    console.log('>> routes.uploadImagesAndCreateExperiment attr', attr)
+
+    let urls = _.map(paths, f => '/file/' + f)
+
+    let experiment = await models.createExperiment(userId, attr, urls)
+
+    console.log(
+      '> routers.uploadImagesAndCreateExperiment output', experiment)
+
+    return {
+      success: true,
+      experimentId: experiment.id
+    }
+  } catch (error) {
+    return {success: false, error: error.toString()}
   }
-  return ''
 }
 
 module.exports = {
-
-  async publicRegisterUser (user) {
-    try {
-      let errors = []
-      if (!user.name) {
-        errors.push('Please Enter Your User Name')
-      }
-      if (!user.email) {
-        errors.push('Please Enter Your Email')
-      }
-      if (!user.password) {
-        errors.push('Please Enter Password')
-      }
-
-      let values = {
-        name: user.name,
-        email: user.email,
-        password: user.password
-      }
-
-      if (errors.length > 0) {
-        return {
-          success: false,
-          errors: errors
-        }
-      } else {
-        await models.createUser(values)
-        return {success: true}
-      }
-    } catch (error) {
-      return {
-        success: false,
-        errors: ['Couldn\'t register, is your email already in use?']
-      }
-    }
-  },
-
-  /**
-   * Updates user where the id field is used to identify the user.
-   * Without the id set, the user will not be able to be retrieved
-   * from the database
-   * @param {Object} user
-   * @returns {Promise.<Object>}
-   */
-  async updateUser (user) {
-    try {
-      const keys = ['id', 'name', 'email', 'password']
-      let values = {}
-      for (let key of keys) {
-        if (user[key]) {
-          values[key] = user[key]
-        }
-      }
-
-      if (!values) {
-        return {
-          success: false,
-          errors: ['No values to update']
-        }
-      }
-
-      if (!values.id) {
-        return {
-          success: false,
-          errors: ['No user.id to identify user']
-        }
-      }
-
-      console.log('>> handlers.updateUser', values)
-      await models.updateUser(values)
-      return {success: true}
-    } catch (err) {
-      console.log(`>> handlers.updateUser error`, err)
-      return {
-        success: false,
-        errors: ['Couldn\'t update' + err]
-      }
-    }
-  },
-
-  async publicForceUpdatePassword (user) {
-    try {
-      const keys = ['id', 'password']
-      let values = {}
-      for (let key of keys) {
-        if (user[key]) {
-          values[key] = user[key]
-        }
-      }
-
-      if (!values.id) {
-        return {
-          success: false,
-          errors: ['No user.id to identify to user']
-        }
-      }
-
-      if (!values) {
-        return {
-          success: false,
-          errors: ['No values to update']
-        }
-      }
-
-      console.log('>> handlers.publicForceUpdatePassword', values)
-      await models.updateUser(values)
-      return {success: true}
-    } catch (err) {
-      console.log(`>> handlers.publicForceUpdatePassword error`, err)
-      return {
-        success: false,
-        errors: ['Couldn\'t update' + err]
-      }
-    }
-  },
-
-  async getExperimentSummaries (userId) {
-    let experiments = await models.fetchExperiments(userId)
-    let payload = {experiments: []}
-    for (let experiment of experiments) {
-      console.log('> handlers.getExperimentSummaries', experiment)
-      checkExperiment(experiment)
-      payload.experiments.push({id: experiment.id, attr: experiment.attr})
-    }
-    return payload
-  },
-
-  async getExperiment (experimentId) {
-    let experiment = await models.fetchExperiment(experimentId)
-    checkExperiment(experiment)
-    return {experiment}
-  },
-
-  saveExperimentAttr (experimentId, attr) {
-    return models.saveExperimentAttr(experimentId, attr)
-  },
-
-  deleteExperiment (experimentId) {
-    return models
-      .deleteExperiment(experimentId)
-      .then(() => {
-        return {success: true}
-      })
-      .catch(err => {
-        return {success: false, error: err}
-      })
-  },
-
-  async publicInviteParticipant (experimentId, email) {
-    let participant = await models.createParticipant(experimentId, email)
-    return {participant}
-  },
-
-  deleteParticipant (participantId) {
-    return models
-      .deleteParticipant(participantId)
-      .then(() => {
-        return {success: true}
-      })
-      .catch(err => {
-        return {success: false, error: err}
-      })
-  },
-
-  publicGetNextChoice (participateId) {
-    return getNextChoice(participateId)
-  },
-
-  async publicChooseItem (participateId, comparison) {
-    let participant = await models.fetchParticipant(participateId)
-
-    let urlA = comparison.itemA.url
-    let imageSetId = models.getImageSetIdFromPath(urlA)
-    let states = participant.states
-    let state = states[imageSetId]
-    tree.makeChoice(state, comparison)
-    await models.saveParticipant(participateId, {states})
-
-    return getNextChoice(participateId)
-  },
-
-  async publicChooseMultiple (participateId, answer) {
-    let participant = await models.fetchParticipant(participateId)
-
-    let states = participant.states
-    if (!_.isArray(states)) {
-      states = []
-    }
-    states.push(answer)
-    console.log('> handlers.publicChooseMultiple', states)
-
-    await models.saveParticipant(participateId, {states})
-
-    return getNextChoice(participateId)
-  },
-
-  async publicSaveParticipantUserDetails (participateId, user) {
-    console.log('> handlers.publicSaveParticipantUserDetails user', user)
-    await models.saveParticipantAttr(participateId, {user: user})
-    return getNextChoice(participateId)
-  },
-
-  /**
-   * Upload functions - first parameter is always a filelist object
-   * This is meant to be called by
-   *   `rpc.upload('uploadImagesAndCreateExperiment', userId, attr)`
-   * in the client.
-   * @param {Array<File>} files - a browser filelist object
-   * @param {String} userId
-   * @param {Object} attr
-   */
-  async uploadImagesAndCreateExperiment (files, userId, attr) {
-    try {
-      let paths = await models.storeFilesInConfigDir(files, checkImageFilesForError)
-
-      let imageSetIds = []
-      let nImageById = {}
-      for (let path of paths) {
-        let imageSetId = models.getImageSetIdFromPath(path)
-        if (!_.includes(imageSetIds, imageSetId)) {
-          imageSetIds.push(imageSetId)
-          nImageById[imageSetId] = 0
-        }
-        nImageById[imageSetId] += 1
-      }
-
-      for (let imageSetId of _.keys(nImageById)) {
-        if (nImageById[imageSetId] < 2) {
-          throw new Error(
-            `image set "${imageSetId}" must include more than 1 image`)
-        }
-      }
-
-      if (!attr.name) {
-        throw new Error('must have experiment name')
-      }
-
-      _.assign(attr, tree.calcTreeAttr(_.values(nImageById), tree.probRepeat))
-      attr.imageSetIds = imageSetIds
-      console.log('>> routes.uploadImagesAndCreateExperiment attr', attr)
-
-      let urls = _.map(paths, f => '/file/' + f)
-
-      let experiment = await models.createExperiment(userId, attr, urls)
-
-      console.log(
-        '> routers.uploadImagesAndCreateExperiment output', experiment)
-
-      return {
-        success: true,
-        experimentId: experiment.id
-      }
-    } catch (error) {
-      return {success: false, error: error.toString()}
-    }
-  }
+  publicRegisterUser,
+  updateUser,
+  publicForceUpdatePassword,
+  getExperimentSummaries,
+  getExperiment,
+  saveExperimentAttr,
+  deleteExperiment,
+  publicInviteParticipant,
+  deleteParticipant,
+  publicGetNextChoice,
+  publicChooseItem,
+  publicChooseMultiple,
+  publicSaveParticipantUserDetails,
+  uploadImagesAndCreateExperiment
 }
