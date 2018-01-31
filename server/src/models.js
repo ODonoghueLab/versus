@@ -362,7 +362,11 @@ async function createParticipant (experimentId, email) {
       states[imageSetId] = tree.newState(theseUrls)
     }
   } else if (experiment.attr.questionType === 'multiple') {
-    states = []
+    states = {
+      answers: [],
+      repeatIndices: [],
+      version: 1
+    }
   }
 
   let participant = await Participant.create({attr, states})
@@ -389,12 +393,6 @@ function saveParticipant (participateId, values) {
         .updateAttributes(values)
         .then(unwrapInstance)
     })
-}
-
-async function saveParticipantAttr (participateId, attr) {
-  let participant = await findParticipant(participateId)
-  let result = await participant.updateAttributes({attr})
-  return unwrapInstance(result)
 }
 
 /**
@@ -425,5 +423,4 @@ module.exports = {
   fetchParticipant,
   saveParticipant,
   deleteParticipant,
-  saveParticipantAttr
 }

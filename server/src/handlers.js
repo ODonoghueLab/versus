@@ -175,16 +175,110 @@ function getRandomUnfinishedState (states) {
 
 function calcParticipantProgress (participant, experimentAttr) {
   let nComparison = 0
+  if (experimentAttr.questionType === '2afc') {
+    for (let state of _.values(participant.states)) {
+      for (let comparison of state.comparisons) {
+        nComparison += 1
+        if (comparison.repeat) {
+          nComparison += 1
+        }
+      }
+    }
+    return nComparison / experimentAttr.maxComparison * 100
+  } else {
+    nComparison = participant.states.answers.length
+    return nComparison / experimentAttr.imageSetIds.length * 100
+  }
+}
+
+async function updateParticipant2afcAttr (participant) {
+  let attr = participant.attr
+  attr.nRepeatTotal = 0
+  attr.consistency = 0
+  attr.nComparisonDone = 0
+  for (let state of _.values(participant.states)) {
+    attr.nRepeatTotal += state.consistencies.length
+    attr.consistency += _.sum(state.consistencies)
+    attr.nComparisonDone += state.comparisons.length
+  }
+  let time = 0
   for (let state of _.values(participant.states)) {
     for (let comparison of state.comparisons) {
-      nComparison += 1
-      if (comparison.repeat) {
-        nComparison += 1
+      let startMs = new Date(comparison.startTime).getTime()
+      let endMs = new Date(comparison.endTime).getTime()
+      time += endMs - startMs
+    }
+  }
+  attr.time = prettyMs(time)
+  attr.version = 2
+  await models.saveParticipant(participant.participateId, {attr})
+}
+
+async function updateParticipantMultipleAttr (participant) {
+  let attr = participant.attr
+  attr.nRepeatTotal = 0
+  attr.consistency = 0
+  attr.nComparisonDone = 0
+  let time = 0
+  if (!_.isUndefined(participant.states.answers)) {
+    for (let choice of participant.states.answers) {
+      if (choice.startTime) {
+        let startMs = new Date(choice.startTime).getTime()
+        let endMs = new Date(choice.endTime).getTime()
+        time += endMs - startMs
+      }
+      attr.nComparisonDone += 1
+    }
+  }
+  attr.time = prettyMs(time)
+  attr.version = 2
+  await models.saveParticipant(participant.participateId, {attr})
+}
+
+/**
+ * Checks experiment.attr and participant.attr
+ * @param experiment
+ * @returns {Object} experiment
+ */
+async function updateExperimentStructure (experiment) {
+  console.log('> handlers.updateExperimentStructure experiment', experiment.attr.name)
+  if (experiment.attr.params) {
+    _.assign(experiment.attr, experiment.attr.params)
+    delete experiment.attr.params
+  }
+
+  if (experiment.attr.maxComparisons) {
+    experiment.attr.maxTreeComparison = experiment.attr.maxComparisons
+    delete experiment.attr.maxComparisons
+  }
+
+  experiment.attr.maxComparison =
+    experiment.attr.maxTreeComparison +
+    experiment.attr.nRepeat
+
+  experiment.attr.version = 9
+
+  await models.saveExperimentAttr(experiment.id, experiment.attr)
+
+  if (experiment.participants) {
+    for (let participant of experiment.participants) {
+      if (experiment.attr.questionType === '2afc') {
+        await updateParticipant2afcAttr(participant)
+      } else {
+        await updateParticipantMultipleAttr(participant)
       }
     }
   }
-  return nComparison / experimentAttr.maxComparison * 100
 }
+
+async function updateDatabaseOnInit () {
+  let experiments = await models.fetchAllExperiments()
+  for (let experiment of experiments) {
+    await updateExperimentStructure(experiment)
+  }
+}
+
+updateDatabaseOnInit()
 
 /**
  * Specific handlers - promises that return a JSON literal
@@ -203,8 +297,11 @@ async function getExperimentSummaries (userId) {
 async function getExperiment (experimentId) {
   let experiment = await models.fetchExperiment(experimentId)
   for (let participant of experiment.participants) {
-    let attr = calcParticipant2afcAttr (participant)
-    await models.saveParticipantAttr(participant.participateId, attr)
+    if (experiment.attr.questionType === '2fac') {
+      await updateParticipant2afcAttr(participant)
+    } else {
+      await updateParticipantMultipleAttr(participant)
+    }
   }
   return {experiment}
 }
@@ -243,20 +340,23 @@ function deleteParticipant (participantId) {
 async function getSurveyCode (participateId) {
   let participant = await models.fetchParticipant(participateId)
   let attr = participant.attr
+  console.log('> handlers.getSurveyCode existing code', attr.surveyCode)
   if (!attr.surveyCode) {
     attr.surveyCode = shortid.generate()
-    await models.saveParticipant(participateId, {attr})
+    let result = await models.saveParticipant(participateId, {attr})
+    console.log('> handlers.getSurveyCode new code', result.attr)
   }
   return attr.surveyCode
 }
 
 async function publicGetNextChoice (participateId) {
+  console.log('> handlers.publicGetNextChoice')
   let participant = await models.fetchParticipant(participateId)
+  let states = participant.states
+
   let experiment = await models.fetchExperiment(participant.ExperimentId)
-  updateExperimentStructure(experiment)
   let experimentAttr = experiment.attr
   let urls = _.map(experiment.images, 'url')
-  let states = participant.states
 
   if (participant.attr.user === null) {
     return {status: 'start', experimentAttr, urls}
@@ -282,7 +382,7 @@ async function publicGetNextChoice (participateId) {
   if (experiment.attr.questionType === 'multiple') {
 
     let unAnsweredImageSetids = _.clone(experiment.attr.imageSetIds)
-    for (let answer of states) {
+    for (let answer of states.answers) {
       _.remove(unAnsweredImageSetids, id => id === answer.imageSetId)
     }
 
@@ -318,7 +418,8 @@ async function publicGetNextChoice (participateId) {
         question,
         choices,
         experimentAttr,
-        imageSetId
+        imageSetId,
+        progress: calcParticipantProgress(participant, experimentAttr)
       }
     } else {
       return {
@@ -343,31 +444,28 @@ async function publicChoose2afc (participateId, comparison) {
 async function publicChooseMultiple (participateId, question, answer) {
   let participant = await models.fetchParticipant(participateId)
   answer.endTime = getCurrentTimeStr()
-  let states = participant.states
-  states.push(answer)
+  participant.states.answers.push(answer)
   console.log('> handlers.publicChooseMultiple', participant.states)
-  await models.saveParticipant(participateId, {states})
+  await models.saveParticipant(participateId, {states: participant.states})
   return publicGetNextChoice(participateId)
 }
 
 async function publicSaveParticipantUserDetails (participateId, user) {
-  console.log('> handlers.publicSaveParticipantUserDetails user', user)
-  await models.saveParticipantAttr(participateId, {user: user})
+  let participant = await models.fetchParticipant(participateId)
+  participant.attr.user = user
+  await models.saveParticipant(participateId, {attr: participant.attr})
   return publicGetNextChoice(participateId)
 }
 
 /**
  * Upload functions - first parameter is always a filelist object
- * This is meant to be called by
- *   `rpc.upload('uploadImagesAndCreateExperiment', userId, attr)`
- * in the client.
- * @param {Array<File>} files - a browser filelist object
+ * @param {Array<File>} filelist - a browser filelist object
  * @param {String} userId
  * @param {Object} attr
  */
-async function uploadImagesAndCreateExperiment (files, userId, attr) {
+async function uploadImagesAndCreateExperiment (filelist, userId, attr) {
   try {
-    let paths = await models.storeFilesInConfigDir(files)
+    let paths = await models.storeFilesInConfigDir(filelist)
 
     let imageSetIds = []
     let nImageById = {}
@@ -380,11 +478,23 @@ async function uploadImagesAndCreateExperiment (files, userId, attr) {
       nImageById[imageSetId] += 1
     }
 
-    _.assign(attr, tree.calcTreeAttr(_.values(nImageById), tree.probRepeat))
     attr.imageSetIds = imageSetIds
     console.log('>> routes.uploadImagesAndCreateExperiment attr', attr)
 
     let urls = _.map(paths, f => '/file/' + f)
+
+    if (attr.questionType === '2afc') {
+      _.assign(attr, tree.calcTreeAttr(_.values(nImageById), tree.probRepeat))
+    } else if (attr.questionType === 'multiple') {
+      let nQuestion = imageSetIds.length
+      let probRepeat = 0.2
+      let nRepeat = Math.ceil(probRepeat * nQuestion)
+      _.assign(attr, {
+        nQuestion,
+        nRepeat,
+        maxComparisons: nQuestion + nRepeat,
+      })
+    }
 
     let experiment = await models.createExperiment(userId, attr, urls)
 
@@ -400,73 +510,7 @@ async function uploadImagesAndCreateExperiment (files, userId, attr) {
   }
 }
 
-async function calcParticipant2afcAttr (participant) {
-  let attr = participant.attr
-  attr.nRepeatTotal = 0
-  attr.consistency = 0
-  attr.nComparisonDone = 0
-  for (let state of _.values(participant.states)) {
-    attr.nRepeatTotal += state.consistencies.length
-    attr.consistency += _.sum(state.consistencies)
-    attr.nComparisonDone += state.comparisons.length
-  }
-  let time = 0
-  for (let state of _.values(participant.states)) {
-    for (let comparison of state.comparisons) {
-      let startMs = new Date(comparison.startTime).getTime()
-      let endMs = new Date(comparison.endTime).getTime()
-      time += endMs - startMs
-    }
-  }
-  attr.time = prettyMs(time)
-  attr.version = 2
-  return attr
-}
 
-/**
- * Checks experiment.attr and participant.attr
- * @param experiment
- * @returns {Object} experiment
- */
-async function updateExperimentStructure (experiment) {
-  console.log('> handlers.updateExperimentStructure experiment', experiment.attr.name)
-  if (experiment.attr.params) {
-    _.assign(experiment.attr, experiment.attr.params)
-    delete experiment.attr.params
-  }
-
-  if (experiment.attr.maxComparisons) {
-    experiment.attr.maxTreeComparison = experiment.attr.maxComparisons
-    delete experiment.attr.maxComparisons
-  }
-
-  experiment.attr.maxComparison =
-    experiment.attr.maxTreeComparison +
-    experiment.attr.nRepeat
-
-  experiment.attr.version = 9
-
-  await models.saveExperimentAttr(experiment.id, experiment.attr)
-
-  // Calculate statistics of finished experiment
-  if (experiment.participants) {
-    for (let participant of experiment.participants) {
-      if (experiment.attr.questionType === '2afc') {
-        let attr = calcParticipant2afcAttr(participant)
-        await models.saveParticipantAttr(participant.participateId, attr)
-      }
-    }
-  }
-}
-
-async function updateDb () {
-  let experiments = await models.fetchAllExperiments()
-  for (let experiment of experiments) {
-    await updateExperimentStructure(experiment)
-  }
-}
-
-updateDb()
 
 module.exports = {
   publicRegisterUser,

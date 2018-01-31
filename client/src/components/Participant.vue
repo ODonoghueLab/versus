@@ -164,7 +164,6 @@
 <script>
   import config from '../config'
   import rpc from '../modules/rpc'
-  import util from '../modules/util'
 
   function delay (timeMs) {
     return new Promise(resolve => { setTimeout(resolve, timeMs) })
@@ -176,9 +175,8 @@
     for (let url of urls) {
       if (!(url in loadedImages)) {
         let img = new Image
-        let src = url
         img.src = url
-        loadedImages[src] = img
+        loadedImages[url] = img
         console.log('> Particpant.preloadImage', img.src)
       }
     }
@@ -276,6 +274,7 @@
         } else if (this.status === 'runningMultiple') {
 
           this.experimentAttr = res.data.experimentAttr
+          this.progress = res.data.progress
 
           // clear screen, delay required for page to redraw
           this.question = null

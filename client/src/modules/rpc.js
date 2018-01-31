@@ -15,7 +15,7 @@ export default {
 
   rpcRun (method, ...args) {
     let params = _.cloneDeep(args)
-    let payload = {method, args: params}
+    let payload = {method, args: params, jsonrpc: "2.0"}
     console.log('> rpc.rpcRun', method, ...params)
     return axios.post(`${config.apiUrl}/api/rpc-run`, payload)
   },
@@ -26,6 +26,7 @@ export default {
     let formData = new FormData()
     formData.append('method', method)
     formData.append('args', JSON.stringify(params))
+    formData.append('jsonrpc',  "2.0")
     for (let f of files) {
       formData.append('uploadFiles', f, f.name)
     }
