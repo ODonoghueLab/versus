@@ -1,11 +1,12 @@
-const path = require('path')
 
 const _ = require('lodash')
 const shortid = require('shortid')
 const prettyMs = require('pretty-ms')
 
 const models = require('./models')
-const tree = require('./modules/tree')
+const twochoice = require('./modules/twochoice')
+const util = require('./modules/util')
+const multiple = require('./modules/multiple')
 
 /**
  *
@@ -32,206 +33,145 @@ const tree = require('./modules/tree')
  */
 
 async function publicRegisterUser (user) {
+  let errors = []
+  if (!user.name) {
+    errors.push('no user name')
+  }
+  if (!user.email) {
+    errors.push('no email')
+  }
+  if (!user.password) {
+    errors.push('no Password')
+  }
+
+  if (errors.length > 0) {
+    throw errors.join(', ').join(errors)
+  }
+
+  let values = {
+    name: user.name,
+    email: user.email,
+    password: user.password
+  }
+
   try {
-    let errors = []
-    if (!user.name) {
-      errors.push('Please Enter Your User Name')
-    }
-    if (!user.email) {
-      errors.push('Please Enter Your Email')
-    }
-    if (!user.password) {
-      errors.push('Please Enter Password')
-    }
-
-    let values = {
-      name: user.name,
-      email: user.email,
-      password: user.password
-    }
-
-    if (errors.length > 0) {
-      return {
-        success: false,
-        errors: errors
-      }
-    } else {
-      await models.createUser(values)
-      return {success: true}
-    }
-  } catch (error) {
-    return {
-      success: false,
-      errors: ['Couldn\'t register, is your email already in use?']
-    }
+    await models.createUser(values)
+    return {success: true}
+  } catch (e) {
+    throw 'Couldn\'t register, is your email already in use?'
   }
 }
 
 /**
  * Updates user where the id field is used to identify the user.
- * Without the id set, the user will not be able to be retrieved
- * from the database
  * @param {Object} user
- * @returns {Promise.<Object>}
+ * @promise {User}
  */
 async function updateUser (user) {
+  const keys = ['id', 'name', 'email', 'password']
+  let values = {}
+  for (let key of keys) {
+    if (user[key]) {
+      values[key] = user[key]
+    }
+  }
+
+  if (!values) {
+    throw 'No values to update'
+  }
+
+  if (!values.id) {
+    throw 'No user.id to identify user'
+  }
+
   try {
-    const keys = ['id', 'name', 'email', 'password']
-    let values = {}
-    for (let key of keys) {
-      if (user[key]) {
-        values[key] = user[key]
-      }
-    }
-
-    if (!values) {
-      return {
-        success: false,
-        errors: ['No values to update']
-      }
-    }
-
-    if (!values.id) {
-      return {
-        success: false,
-        errors: ['No user.id to identify user']
-      }
-    }
-
     console.log('>> handlers.updateUser', values)
     await models.updateUser(values)
     return {success: true}
   } catch (err) {
-    console.log(`>> handlers.updateUser error`, err)
-    return {
-      success: false,
-      errors: ['Couldn\'t update' + err]
-    }
+    throw 'Couldn\'t update user - ' + err.toString()
   }
 }
 
 async function publicForceUpdatePassword (user) {
+  const keys = ['id', 'password']
+  let values = {}
+  for (let key of keys) {
+    if (user[key]) {
+      values[key] = user[key]
+    }
+  }
+
+  if (!values) {
+    throw 'No values to update'
+  }
+
+  if (!values.id) {
+    throw 'No user.id to identify user'
+  }
+
   try {
-    const keys = ['id', 'password']
-    let values = {}
-    for (let key of keys) {
-      if (user[key]) {
-        values[key] = user[key]
-      }
-    }
-
-    if (!values.id) {
-      return {
-        success: false,
-        errors: ['No user.id to identify to user']
-      }
-    }
-
-    if (!values) {
-      return {
-        success: false,
-        errors: ['No values to update']
-      }
-    }
-
     console.log('>> handlers.publicForceUpdatePassword', values)
     await models.updateUser(values)
     return {success: true}
   } catch (err) {
-    console.log(`>> handlers.publicForceUpdatePassword error`, err)
-    return {
-      success: false,
-      errors: ['Couldn\'t update' + err]
-    }
+    throw 'Couldn\'t update' + err
   }
 }
 
-function isStatesDone (states) {
-  for (let state of _.values(states)) {
-    if (!tree.isDone(state)) {
-      return false
-    }
-  }
-  return true
-}
+async function updateParticipant (participant, experimentAttr) {
+  let attr = participant.attr
 
-function getCurrentTimeStr () {
-  let date = new Date()
-  return date.toJSON()
-}
-
-function getRandomUnfinishedState (states) {
-  let choices = []
-  for (let [id, state] of _.toPairs(states)) {
-    if (!tree.isDone(state)) {
-      _.times(
-        state.imageUrls.length,
-        () => { choices.push(id) })
-    }
-  }
-  let id = choices[_.random(choices.length - 1)]
-  return states[id]
-}
-
-function calcParticipantProgress (participant, experimentAttr) {
-  let nComparison = 0
   if (experimentAttr.questionType === '2afc') {
+    attr.nRepeatTotal = 0
+    attr.consistency = 0
+    attr.nComparisonDone = 0
+    for (let state of _.values(participant.states)) {
+      attr.nRepeatTotal += state.consistencies.length
+      attr.consistency += _.sum(state.consistencies)
+      attr.nComparisonDone += state.comparisons.length
+    }
+    let time = 0
     for (let state of _.values(participant.states)) {
       for (let comparison of state.comparisons) {
-        nComparison += 1
+        let startMs = new Date(comparison.startTime).getTime()
+        let endMs = new Date(comparison.endTime).getTime()
+        time += endMs - startMs
         if (comparison.repeat) {
-          nComparison += 1
+          attr.nnComparisonDone += 1
         }
       }
     }
-    return nComparison / experimentAttr.maxComparison * 100
+    attr.progress = attr.nComparisonDone / experimentAttr.maxComparison * 100
+    attr.time = prettyMs(time)
+    attr.version = 2
   } else {
-    nComparison = participant.states.answers.length
-    return nComparison / experimentAttr.imageSetIds.length * 100
-  }
-}
-
-async function updateParticipant2afcAttr (participant) {
-  let attr = participant.attr
-  attr.nRepeatTotal = 0
-  attr.consistency = 0
-  attr.nComparisonDone = 0
-  for (let state of _.values(participant.states)) {
-    attr.nRepeatTotal += state.consistencies.length
-    attr.consistency += _.sum(state.consistencies)
-    attr.nComparisonDone += state.comparisons.length
-  }
-  let time = 0
-  for (let state of _.values(participant.states)) {
-    for (let comparison of state.comparisons) {
-      let startMs = new Date(comparison.startTime).getTime()
-      let endMs = new Date(comparison.endTime).getTime()
-      time += endMs - startMs
-    }
-  }
-  attr.time = prettyMs(time)
-  attr.version = 2
-  await models.saveParticipant(participant.participateId, {attr})
-}
-
-async function updateParticipantMultipleAttr (participant) {
-  let attr = participant.attr
-  attr.nRepeatTotal = 0
-  attr.consistency = 0
-  attr.nComparisonDone = 0
-  let time = 0
-  if (!_.isUndefined(participant.states.answers)) {
-    for (let choice of participant.states.answers) {
-      if (choice.startTime) {
-        let startMs = new Date(choice.startTime).getTime()
-        let endMs = new Date(choice.endTime).getTime()
-        time += endMs - startMs
+    attr.nRepeatTotal = 0
+    attr.consistency = 0
+    attr.nComparisonDone = 0
+    let time = 0
+    if (!_.isUndefined(participant.states.answers)) {
+      for (let answer of participant.states.answers) {
+        if (answer.startTime) {
+          if (answer.repeatValue === answer.value) {
+            attr.consistency += 1
+          }
+          let startMs = new Date(answer.startTime).getTime()
+          let endMs = new Date(answer.endTime).getTime()
+          time += endMs - startMs
+        }
+        attr.nComparisonDone += 1
+        if (answer.repeatValue) {
+          attr.nComparisonDone += 1
+          attr.nRepeatTotal += 1
+        }
       }
-      attr.nComparisonDone += 1
     }
+    attr.progress = attr.nComparisonDone / experimentAttr.maxComparison * 100
+    attr.time = prettyMs(time)
+    attr.version = 2
   }
-  attr.time = prettyMs(time)
-  attr.version = 2
+
   await models.saveParticipant(participant.participateId, {attr})
 }
 
@@ -252,21 +192,25 @@ async function updateExperimentStructure (experiment) {
     delete experiment.attr.maxComparisons
   }
 
-  experiment.attr.maxComparison =
-    experiment.attr.maxTreeComparison +
-    experiment.attr.nRepeat
-
-  experiment.attr.version = 9
+  if (experiment.attr.questionType === '2fac') {
+    experiment.attr.maxComparison = experiment.attr.maxTreeComparison + experiment.attr.nRepeat
+  } else if (experiment.attr.questionType === 'multiple') {
+    let probRepeat = 0.2
+    let maxTreeComparison = experiment.attr.imageSetIds.length
+    let nRepeat = Math.ceil((probRepeat) * maxTreeComparison)
+    let maxComparison = maxTreeComparison + nRepeat
+    experiment.attr = _.assign(experiment.attr, {
+      nRepeat,
+      maxTreeComparison,
+      maxComparison
+    })
+  }
 
   await models.saveExperimentAttr(experiment.id, experiment.attr)
 
   if (experiment.participants) {
     for (let participant of experiment.participants) {
-      if (experiment.attr.questionType === '2afc') {
-        await updateParticipant2afcAttr(participant)
-      } else {
-        await updateParticipantMultipleAttr(participant)
-      }
+      await updateParticipant(participant, experiment.attr)
     }
   }
 }
@@ -297,11 +241,7 @@ async function getExperimentSummaries (userId) {
 async function getExperiment (experimentId) {
   let experiment = await models.fetchExperiment(experimentId)
   for (let participant of experiment.participants) {
-    if (experiment.attr.questionType === '2fac') {
-      await updateParticipant2afcAttr(participant)
-    } else {
-      await updateParticipantMultipleAttr(participant)
-    }
+    await updateParticipant(participant, experiment.attr)
   }
   return {experiment}
 }
@@ -340,14 +280,17 @@ function deleteParticipant (participantId) {
 async function getSurveyCode (participateId) {
   let participant = await models.fetchParticipant(participateId)
   let attr = participant.attr
-  console.log('> handlers.getSurveyCode existing code', attr.surveyCode)
   if (!attr.surveyCode) {
     attr.surveyCode = shortid.generate()
-    let result = await models.saveParticipant(participateId, {attr})
-    console.log('> handlers.getSurveyCode new code', result.attr)
+    await models.saveParticipant(participateId, {attr})
   }
   return attr.surveyCode
 }
+
+/**
+ * @param participateId
+ * @returns {Promise<*>}
+ */
 
 async function publicGetNextChoice (participateId) {
   console.log('> handlers.publicGetNextChoice')
@@ -359,72 +302,47 @@ async function publicGetNextChoice (participateId) {
   let urls = _.map(experiment.images, 'url')
 
   if (participant.attr.user === null) {
-    return {status: 'start', experimentAttr, urls}
+    return {
+      status: 'start',
+      experimentAttr,
+      urls
+    }
   }
 
+  await updateParticipant(participant, experiment.attr)
+
   if (experiment.attr.questionType === '2afc') {
-    if (!isStatesDone(states)) {
+    if (twochoice.isStatesDone(states)) {
+      return {
+        status: 'done',
+        surveyCode: await getSurveyCode(participateId)
+      }
+    } else {
       return {
         status: 'running2afc',
         urls,
         experimentAttr,
-        comparison: tree.getComparison(getRandomUnfinishedState(states)),
-        progress: calcParticipantProgress(participant, experimentAttr)
+        progress: participant.attr.progress,
+        comparison: twochoice.getComparison(twochoice.getRandomUnfinishedState(states))
       }
-    } else { // isDone!
+    }
+  } else if (experiment.attr.questionType === 'multiple') {
+    let isDone = (participant.attr.nComparisonDone >= experiment.attr.maxTreeComparison) &&
+      (participant.attr.nRepeatTotal >= experimentAttr.nRepeat)
+    if (isDone) {
       return {
         status: 'done',
         surveyCode: await getSurveyCode(participateId)
-      }
-    }
-  }
-
-  if (experiment.attr.questionType === 'multiple') {
-
-    let unAnsweredImageSetids = _.clone(experiment.attr.imageSetIds)
-    for (let answer of states.answers) {
-      _.remove(unAnsweredImageSetids, id => id === answer.imageSetId)
-    }
-
-    console.log('handlers.publicGetNextChoice', unAnsweredImageSetids)
-
-    if (unAnsweredImageSetids.length > 0) {
-      let i = parseInt(Math.random() * unAnsweredImageSetids.length - 1)
-      let imageSetId = unAnsweredImageSetids[i]
-      let question
-      let choices = []
-      for (let url of _.map(experiment.images, 'url')) {
-        if (!_.includes(url, imageSetId)) {
-          continue
-        }
-        if (_.includes(url, 'question')) {
-          question = {
-            url,
-            imageSetId,
-            value: _.last(path.parse(url).name.split('_'))
-          }
-        } else {
-          choices.push({
-            startTime: getCurrentTimeStr(),
-            endTime: null,
-            url,
-            imageSetId,
-            value: _.last(path.parse(url).name.split('_'))
-          })
-        }
-      }
-      return {
-        status: 'runningMultiple',
-        question,
-        choices,
-        experimentAttr,
-        imageSetId,
-        progress: calcParticipantProgress(participant, experimentAttr)
       }
     } else {
+      let query = multiple.makeThisQuery(experiment, participant)
       return {
-        status: 'done',
-        surveyCode: await getSurveyCode(participateId)
+        status: 'runningMultiple',
+        urls,
+        experimentAttr,
+        progress: participant.attr.progress,
+        question: query.question,
+        choices: query.choices
       }
     }
   }
@@ -433,18 +351,33 @@ async function publicGetNextChoice (participateId) {
 async function publicChoose2afc (participateId, comparison) {
   let participant = await models.fetchParticipant(participateId)
   let urlA = comparison.itemA.url
-  let imageSetId = models.getImageSetIdFromPath(urlA)
+  let imageSetId = models.extractId(urlA)
   let states = participant.states
   let state = states[imageSetId]
-  tree.makeChoice(state, comparison)
+  twochoice.makeChoice(state, comparison)
   await models.saveParticipant(participateId, {states})
   return publicGetNextChoice(participateId)
 }
 
+function pushToListProp (o, key, item) {
+  if (!(key in o)) {
+    o[key] = []
+  }
+  o[key].push(item)
+}
+
 async function publicChooseMultiple (participateId, question, answer) {
   let participant = await models.fetchParticipant(participateId)
-  answer.endTime = getCurrentTimeStr()
-  participant.states.answers.push(answer)
+  answer.endTime = util.getCurrentTimeStr()
+  if (!answer.isRepeat) {
+    participant.states.answers.push(answer)
+    pushToListProp(participant.states, 'toRepeatIds', answer.imageSetId)
+  } else {
+    let originalAnswer = _.find(participant.states.answers, a => a.imageSetId === answer.imageSetId)
+    _.remove(participant.states.toRepeatIds, id => id === answer.imageSetId)
+    console.log(answer, originalAnswer, participant.states.toRepeatIds)
+    originalAnswer.repeatValue = answer.value
+  }
   console.log('> handlers.publicChooseMultiple', participant.states)
   await models.saveParticipant(participateId, {states: participant.states})
   return publicGetNextChoice(participateId)
@@ -470,7 +403,7 @@ async function uploadImagesAndCreateExperiment (filelist, userId, attr) {
     let imageSetIds = []
     let nImageById = {}
     for (let path of paths) {
-      let imageSetId = models.getImageSetIdFromPath(path)
+      let imageSetId = models.extractId(path)
       if (!_.includes(imageSetIds, imageSetId)) {
         imageSetIds.push(imageSetId)
         nImageById[imageSetId] = 0
@@ -484,7 +417,7 @@ async function uploadImagesAndCreateExperiment (filelist, userId, attr) {
     let urls = _.map(paths, f => '/file/' + f)
 
     if (attr.questionType === '2afc') {
-      _.assign(attr, tree.calcTreeAttr(_.values(nImageById), tree.probRepeat))
+      _.assign(attr, twochoice.calcTreeAttr(_.values(nImageById), twochoice.probRepeat))
     } else if (attr.questionType === 'multiple') {
       let nQuestion = imageSetIds.length
       let probRepeat = 0.2
@@ -509,8 +442,6 @@ async function uploadImagesAndCreateExperiment (filelist, userId, attr) {
     return {success: false, error: error.toString()}
   }
 }
-
-
 
 module.exports = {
   publicRegisterUser,

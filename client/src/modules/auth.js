@@ -53,14 +53,15 @@ export default {
   async login (newUser) {
     let payload = hashUserPassword(newUser)
     console.log('> auth.login', payload)
-    let res = await rpc.rpcRun('login', payload)
-    if (res.data.success) {
+    let response = await rpc.rpcRun('login', payload)
+    console.log('> auth.login response', response)
+    if (response.result) {
       user.authenticated = true
-      _.assign(user, res.data.user)
+      _.assign(user, response.result.user)
       user.password = payload.password
       localStorage.setItem('user', util.jstr(user))
     }
-    return res
+    return response
   },
 
   register (newUser) {
@@ -72,17 +73,17 @@ export default {
   async update (editUser) {
     let payload = hashUserPassword(editUser)
     console.log('> auth.update', util.jstr(payload))
-    let res = await rpc.rpcRun('updateUser', payload)
-    if (res.data.success) {
+    let response = await rpc.rpcRun('updateUser', payload)
+    if (response.result) {
       _.assign(user, payload)
       localStorage.setItem('user', JSON.stringify(user))
     }
-    return res
+    return response
   },
 
   async forceUpdate (editUser) {
     let payload = hashUserPassword(editUser)
-    console.log('> auth.update', util.jstr(payload))
+    console.log('> auth.forceUpdate', util.jstr(payload))
     return await rpc.rpcRun('publicForceUpdatePassword', payload)
   },
 
@@ -90,7 +91,7 @@ export default {
     let lastUser = JSON.parse(localStorage.getItem('user'))
     console.log('> auth.restoreLastUser from localStorage', lastUser)
     if (lastUser) {
-      return this.login(lastUser)
+      return await this.login(lastUser)
     }
   },
 

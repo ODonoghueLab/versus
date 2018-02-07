@@ -16,6 +16,7 @@
   "dependencies": {
     "axios": "^0.16.2",
     "lodash": "^4.17.4",
+    "path": "^0.12.7",
     "pretty-ms": "^3.1.0",
     "template-html-loader": "^1.0.0",
     "vue": "^2.3.3",

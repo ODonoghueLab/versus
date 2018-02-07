@@ -11,19 +11,9 @@
 
       <p>
         You have been invited to participate in an experiment on Versus.
-        Experiments on Versus are easy.
-      </p>
-
-      <p>
-        You will be ranking {{experimentAttr.nImage}} images,
-        with at most {{experimentAttr.maxTreeComparison}} image comparisons,
-        of which {{experimentAttr.nRepeat}} will be repeated in a
-        random order.
-      </p>
-
-      <p>
-        For each comparison, all you need to do
-        is view the two images and click on the one you believe is better.
+        <br>
+        You will be asked at most {{experimentAttr.maxTreeComparison}} questions,
+        of which {{experimentAttr.nRepeat}} will be randomly repeated.
       </p>
 
       <form
@@ -32,7 +22,7 @@
             @click="startSurvey"
             class="md-raised md-primary"
             style="margin-left: 1em">
-          Look at images
+          Begin
         </md-button>
       </form>
 
@@ -226,19 +216,19 @@
 
       async handleRes (res) {
 
-        this.status = res.data.status
+        this.status = res.result.status
         console.log('> Invite.handleRes status:', this.status)
 
         if (this.status === 'start') {
-          this.experimentAttr = res.data.experimentAttr
+          this.experimentAttr = res.result.experimentAttr
 
         } else if (this.status === 'done') {
-          this.surveyCode = res.data.surveyCode
+          this.surveyCode = res.result.surveyCode
 
         } else if (this.status === 'running2afc') {
 
-          this.experimentAttr = res.data.experimentAttr
-          this.progress = res.data.progress
+          this.experimentAttr = res.result.experimentAttr
+          this.progress = res.result.progress
 
           // clear screen, delay required for page to redraw
           this.question = null
@@ -247,7 +237,7 @@
           await delay(200)
 
           this.isLoading = true
-          let comparison = res.data.comparison
+          let comparison = res.result.comparison
           this.comparison = comparison
           let comparisonUrls = []
           let choices = []
@@ -273,8 +263,8 @@
 
         } else if (this.status === 'runningMultiple') {
 
-          this.experimentAttr = res.data.experimentAttr
-          this.progress = res.data.progress
+          this.experimentAttr = res.result.experimentAttr
+          this.progress = res.result.progress
 
           // clear screen, delay required for page to redraw
           this.question = null
@@ -284,15 +274,15 @@
 
           this.isLoading = true
 
-          for (let choice of res.data.choices) {
+          for (let choice of res.result.choices) {
             choice.fullUrl = config.apiUrl + choice.url
             choice.isClick = false
           }
 
-          res.data.question.fullUrl = config.apiUrl + res.data.question.url
+          res.result.question.fullUrl = config.apiUrl + res.result.question.url
 
-          let fullUrls = [config.apiUrl + res.data.question.url]
-          for (let choice of res.data.choices) {
+          let fullUrls = [config.apiUrl + res.result.question.url]
+          for (let choice of res.result.choices) {
             choice.fullUrl = config.apiUrl + choice.url
             fullUrls.push(choice.fullUrl)
           }
@@ -303,8 +293,8 @@
           }
 
           this.isLoading = false
-          this.question = res.data.question
-          this.choices = res.data.choices
+          this.question = res.result.question
+          this.choices = res.result.choices
         }
 
       },

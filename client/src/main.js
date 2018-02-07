@@ -10,18 +10,22 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 import VueMaterial from 'vue-material'
 
+import config from './config.js'
 import auth from './modules/auth.js'
 import App from './App'
 import router from './router'
 import store from './store'
 
-async function init() {
-  // Allows vue to initialize directly with user
-  await auth.restoreLastUser()
+Vue.config.productionTip = false
+Vue.use(VueMaterial)
+Vue.use(Vuex)
 
-  Vue.config.productionTip = false
-  Vue.use(VueMaterial)
-  Vue.use(Vuex)
+async function init() {
+
+  // Allows vue to initialize directly with user
+  if (config.isUser) {
+    await auth.restoreLastUser()
+  }
 
   new Vue({
     el: '#app',

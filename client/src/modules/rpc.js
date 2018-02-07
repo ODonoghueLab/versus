@@ -13,27 +13,47 @@ axios.defaults.withCredentials = true
 
 export default {
 
-  rpcRun (method, ...args) {
-    let params = _.cloneDeep(args)
-    let payload = {method, args: params, jsonrpc: "2.0"}
+  async rpcRun (method, ...params) {
+    let payload = {method, params, jsonrpc: '2.0'}
+
     console.log('> rpc.rpcRun', method, ...params)
-    return axios.post(`${config.apiUrl}/api/rpc-run`, payload)
+
+    try {
+      let res = await axios.post(`${config.apiUrl}/api/rpc-run`, payload)
+      return res.data
+    } catch (e) {
+      return {
+        error: {
+          code: -32000,
+          message: e.toString(),
+        }
+      }
+    }
   },
 
-  rpcUpload (method, files, ...args) {
-    let params = _.cloneDeep(args)
-
+  async rpcUpload (method, files, ...params) {
     let formData = new FormData()
     formData.append('method', method)
-    formData.append('args', JSON.stringify(params))
-    formData.append('jsonrpc',  "2.0")
+    formData.append('params', JSON.stringify(params))
+    formData.append('jsonrpc', '2.0')
+
     for (let f of files) {
       formData.append('uploadFiles', f, f.name)
     }
 
-    let filenames = _.map(files, 'name')
-    console.log('> rpc.rpcUpoad', method, ...params, filenames)
-    return axios.post(`${config.apiUrl}/api/rpc-upload`, formData)
+    console.log('> rpc.rpcUpoad', method, ...params, _.map(files, 'name'))
+
+    try {
+      let res = await axios.post(`${config.apiUrl}/api/rpc-upload`, formData)
+      return res.data
+    } catch (e) {
+      return {
+        error: {
+          code: -32000,
+          message: e.toString(),
+        }
+      }
+    }
   }
 
 }

@@ -10,7 +10,7 @@ const bcrypt = require('bcryptjs')
 const Sequelize = require('sequelize')
 const sequelizeJson = require('sequelize-json')
 
-const tree = require('./modules/tree')
+const twochoice = require('./modules/twochoice')
 const util = require('./modules/util')
 const config = require('./config')
 const conn = require('./conn')
@@ -358,8 +358,8 @@ async function createParticipant (experimentId, email) {
   let states = {}
   if (experiment.attr.questionType === '2afc') {
     for (let imageSetId of experiment.attr.imageSetIds) {
-      let theseUrls = _.filter(urls, u => _.includes(u, imageSetId))
-      states[imageSetId] = tree.newState(theseUrls)
+      let theseUrls = _.filter(urls, u => util.extractId(u) === imageSetId)
+      states[imageSetId] = twochoice.newState(theseUrls)
     }
   } else if (experiment.attr.questionType === 'multiple') {
     states = {
@@ -408,7 +408,7 @@ init()
 
 module.exports = {
   storeFilesInConfigDir,
-  getImageSetIdFromPath,
+  extractId: getImageSetIdFromPath,
   createUser,
   fetchUser,
   checkUserWithPassword,

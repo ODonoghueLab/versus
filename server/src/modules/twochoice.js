@@ -91,7 +91,7 @@ function makeComparison (state, iImageA, iImageB) {
     choice: null,
     isRepeat: false,
     repeat: null,
-    startTime: getCurrentTimeStr(),
+    startTime: util.getCurrentTimeStr(),
     endTime: null,
     repeatStartTime: null,
     repeatEndTime: null
@@ -251,16 +251,11 @@ function checkNodes (nodes) {
   return pass
 }
 
-function getCurrentTimeStr () {
-  let date = new Date()
-  return date.toJSON()
-}
-
 function makeChoice (state, comparison) {
   if (comparison.isRepeat) {
     let i = state.iComparisonRepeat
     state.comparisons[i].repeat = comparison.repeat
-    state.comparisons[i].repeatEndTime = getCurrentTimeStr()
+    state.comparisons[i].repeatEndTime = util.getCurrentTimeStr()
     setNextRepeatComparison(state)
   } else {
     let compareNode = state.nodes[state.iNodeCompare]
@@ -290,7 +285,7 @@ function makeChoice (state, comparison) {
       }
     }
 
-    comparison.endTime = getCurrentTimeStr()
+    comparison.endTime = util.getCurrentTimeStr()
     let iComparisonNew = state.comparisons.length
     state.comparisons.push(comparison)
     state.comparisonIndices.push(iComparisonNew)
@@ -412,7 +407,7 @@ function getComparison (state) {
     let comparison = state.comparisons[state.iComparisonRepeat]
     comparison.isRepeat = true
     if (comparison.repeatStartTime === null) {
-      comparison.repeatStartTime = getCurrentTimeStr()
+      comparison.repeatStartTime = util.getCurrentTimeStr()
     }
     return comparison
   } else {
@@ -420,7 +415,7 @@ function getComparison (state) {
     let node = state.nodes[state.iNodeCompare]
     let comparison = makeComparison(state, state.iImageTest, node.iImage)
     if (comparison.startTime === null) {
-      comparison.startTime = getCurrentTimeStr()
+      comparison.startTime = util.getCurrentTimeStr()
     }
     return comparison
   }
@@ -442,11 +437,34 @@ function calcTreeAttr (imageSizes, probRepeat) {
   return attr
 }
 
+function isStatesDone (states) {
+  for (let state of _.values(states)) {
+    if (!isDone(state)) {
+      return false
+    }
+  }
+  return true
+}
+
+function getRandomUnfinishedState (states) {
+  let choices = []
+  for (let [id, state] of _.toPairs(states)) {
+    if (!isDone(state)) {
+      _.times(
+        state.imageUrls.length,
+        () => { choices.push(id) })
+    }
+  }
+  let id = choices[_.random(choices.length - 1)]
+  return states[id]
+}
+
 module.exports = {
-  isDone,
   newState,
   probRepeat,
   makeChoice,
   getComparison,
-  calcTreeAttr
+  calcTreeAttr,
+  isStatesDone,
+  getRandomUnfinishedState
 }

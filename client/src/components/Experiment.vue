@@ -9,9 +9,8 @@
 
       Experiment:
       <span v-if="experiment.attr">
-        {{experiment.attr.name}} - {{experiment.attr.version}}
+        {{experiment.attr.name}}
       </span>
-
     </h2>
 
 
@@ -81,7 +80,6 @@
         <md-table-header>
           <md-table-row>
             <md-table-head>Invite</md-table-head>
-            <md-table-head>Version</md-table-head>
             <md-table-head>SurveyCode</md-table-head>
             <md-table-head>Comparisons</md-table-head>
             <md-table-head>Time</md-table-head>
@@ -101,13 +99,10 @@
                 v-bind:to="getInviteRoute(participant)">
                 link
               </router-link>
-              &nbsp;(<a
+              &nbsp;<a
                 @click="copyInviteRoute(participant)">
                 copy
-              </a>)
-            </md-table-cell>
-            <md-table-cell>
-              {{ participant.attr.version}}
+              </a>
             </md-table-cell>
             <md-table-cell>
               {{ participant.attr.surveyCode }}
@@ -254,11 +249,11 @@
     },
     async mounted () {
       let experimentId = this.$route.params.experimentId
-      console.log('> Experiment.mounted whhaaat!')
+
       let res = await rpc.rpcRun('getExperiment', experimentId)
 
-      let experiment = res.data.experiment
-      this.$data.experiment = experiment
+      let experiment = res.result.experiment
+      this.experiment = experiment
 
       console.log('> Experiment.mounted', util.jstr(experiment.attr))
 
@@ -268,10 +263,10 @@
       let images = {}
       let urls = _.map(experiment.images, i => i.url)
       for (let imageSetId of experiment.attr.imageSetIds) {
-        let containsSetId = s => _.includes(s, imageSetId)
-        images[imageSetId] = _.filter(urls, containsSetId)
+        images[imageSetId] = _.filter(
+          urls, url => util.extractId(url) === imageSetId)
       }
-      console.log('> Experiment.mounted images', util.jstr(images))
+      console.log('> Experiment.mounted images', _.clone(images))
       this.$data.images = images
     },
 
@@ -306,9 +301,11 @@
         rpc
           .rpcRun('deleteParticipant', participant.participateId)
           .then((res) => {
-            console.log('> Experiment.deleteInvite', res.data)
-            let participants = this.$data.experiment.participants
-            util.removeItem(participants, participant, 'participateId')
+            console.log('> Experiment.deleteInvite', res)
+            if (!res.error) {
+              let participants = this.$data.experiment.participants
+              util.removeItem(participants, participant, 'participateId')
+            }
           })
       },
       makeInvite () {
@@ -317,16 +314,14 @@
         rpc
           .rpcRun('publicInviteParticipant', experimentId, 'test@test.com')
           .then((res) => {
-            console.log('> Experiment.makeInvite', res.data)
-            participants.push(res.data.participant)
+            console.log('> Experiment.makeInvite', res)
+            participants.push(res.result.participant)
           })
       },
       saveExperimentAttr () {
         let experiment = this.$data.experiment
         rpc
           .rpcRun('saveExperimentAttr', experiment.id, experiment.attr)
-          .then((res) => {
-          })
       },
       getMturkLink () {
         return `./#/mechanical-turk/${this.$data.experiment.id}`

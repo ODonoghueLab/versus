@@ -1,71 +1,84 @@
 <template>
-  <div style="padding: 1em">
-    <h2 class="md-display-2">
-      {{ title }}
-    </h2>
-    <form v-on:submit.prevent="submit">
-      <md-input-container>
-        <label>User name</label>
-        <md-input
-          type='text'
-          v-model='name'
-          placeholder='User name'>
-        </md-input>
-      </md-input-container>
-      <md-input-container>
-        <label>E-mail address</label>
-        <md-input
-          type='text'
-          v-model='email'
-          placeholder='E-mail address'>
-        </md-input>
-      </md-input-container>
-      <md-input-container>
-        <label>New Password</label>
-        <md-input
-          type='password'
-          v-model='rawPassword'
-          placeholder='New Password'>
-        </md-input>
-      </md-input-container>
-      <md-input-container>
-        <label>New Password</label>
-        <md-input
-          type='password'
-          v-model='rawPasswordConfirm'
-          placeholder='Confirm Password'>
-        </md-input>
-      </md-input-container>
-      <md-button type="submit" class="md-raised md-primary">
-        Update
-      </md-button>
-      <div v-if="msg" class="card error">
-        {{ msg }}
-      </div>
-    </form>
-  </div>
+  <md-layout md-align="center">
+    <md-whiteframe style="margin-top: 4em; padding: 3em">
+      <md-layout md-flex="50" md-align="center" md-column>
+
+        <h2 class="md-display-2">
+          {{ title }}
+        </h2>
+
+        <form v-on:submit.prevent="submit">
+
+          <md-input-container>
+            <label>User name</label>
+            <md-input
+              type='text'
+              v-model='name'
+              placeholder='User name'>
+            </md-input>
+          </md-input-container>
+
+          <md-input-container>
+            <label>E-mail address</label>
+            <md-input
+              type='text'
+              v-model='email'
+              placeholder='E-mail address'>
+            </md-input>
+          </md-input-container>
+
+          <md-input-container>
+            <label>New Password</label>
+            <md-input
+              type='password'
+              v-model='rawPassword'
+              placeholder='New Password'>
+            </md-input>
+          </md-input-container>
+
+          <md-input-container>
+            <label>New Password</label>
+            <md-input
+              type='password'
+              v-model='rawPasswordConfirm'
+              placeholder='Confirm Password'>
+            </md-input>
+          </md-input-container>
+
+          <md-button type="submit" class="md-raised md-primary">
+            Update
+          </md-button>
+
+          <div v-if="error" style="color: red">
+            {{error}}
+          </div>
+
+        </form>
+
+      </md-layout>
+    </md-whiteframe>
+  </md-layout>
 </template>
 
 <script>
-  import _ from 'lodash'
   import auth from '../modules/auth'
-  import util from '../modules/util'
+  import _ from 'lodash'
 
   export default {
     name: 'EditUser',
     data () {
-      let payload = _.assign({}, auth.user)
-      _.assign(payload, {
+      let result = _.assign({}, auth.user)
+      _.assign(result, {
         title: 'Edit Your Details',
         rawPassword: '',
         rawPasswordConfirm: '',
-        msg: ''
+        error: ''
       })
-      console.log('> EditUser.data', util.jstr(payload))
-      return payload
+      return result
     },
     methods: {
       async submit () {
+        this.error = ''
 
         let payload = {}
         const keys = ['id', 'name', 'email', 'rawPassword', 'rawPasswordConfirm']
@@ -75,20 +88,13 @@
           }
         }
 
-        let res = await auth.update(payload)
+        let response = await auth.update(payload)
 
-        if (res.data.success) {
-
-          this.$data.msg = 'success'
-          this.$router.push('/experiments')
-
+        if (response.result) {
+          this.error = 'User updated'
         } else {
-
-          console.log('> EditUser.submit fail')
-          if (res.data.errors) {
-            this.$data.msg = res.data.errors
-          }
-
+          console.log('> EditUser.submit fail', response)
+          this.error = response.error.message
         }
       }
     }

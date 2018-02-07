@@ -99,21 +99,13 @@
   import _ from 'lodash'
   import rpc from '../modules/rpc'
   import auth from '../modules/auth'
+  import util from '../modules/util'
 
   /**
    * Key function to return imageSetId from a path name, else empty string
    * These function should be used to allow unique imageSetIds to be
    * extracted across the app.
    */
-  function getImageSetIdFromPath (p) {
-    let tokens = p.split('_')
-    if (tokens.length > 0) {
-      return tokens[0]
-    } else {
-      return ''
-    }
-  }
-
   /**
    * @returns error string on error, otherwise empty string
    */
@@ -127,16 +119,16 @@
         return 'only .png, .jpg, .gif allowed'
       }
       // size checking
-      if (f.size / 1000000 > 2) {
-        return 'only images under 2MB allowed'
-      }
+      // if (f.size / 1000000 > 2) {
+      //   return 'only images under 2MB allowed'
+      // }
     }
     if (questionType === '2afc') {
       let imageSetIds = []
       let nImageById = {}
       for (let f of filelist) {
         let path = f.name
-        let imageSetId = getImageSetIdFromPath(path)
+        let imageSetId = util.extractId(path)
         if (!_.includes(imageSetIds, imageSetId)) {
           imageSetIds.push(imageSetId)
           nImageById[imageSetId] = 0

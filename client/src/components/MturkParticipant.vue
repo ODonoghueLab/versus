@@ -6,18 +6,18 @@
     </h2>
 
     <p>
-      A new survey has been prepared for you.
+      A new survey will be prepared for you.
     </p>
 
     <p>
-      A survey code will be issued for you at the end of the survey.
+      A survey code will be issued for you on completion of the survey.
     </p>
 
     <md-button
         v-if="participateId"
         class="md-raised md-primary"
         @click="startRun">
-      Start survey
+      Create survey
     </md-button>
 
   </div>

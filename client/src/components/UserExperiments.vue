@@ -68,8 +68,9 @@
     },
     async mounted() {
       let res = await rpc.rpcRun('getExperimentSummaries', auth.user.id)
-      console.log('> UserExperiments.mounted', util.jstr(res.data))
-      this.$data.experiments = res.data.experiments
+      if (res.result) {
+        this.$data.experiments = res.result.experiments
+      }
     },
     methods: {
       title () {

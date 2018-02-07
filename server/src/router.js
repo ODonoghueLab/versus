@@ -39,13 +39,13 @@ const remoteRunFns = require('./handlers')
  * functions found in the exports of `handlers.js`.
  */
 router.post('/api/rpc-run', (req, res, next) => {
-  let args = req.body.args
+  let params = req.body.params
   let method = req.body.method
   console.log(`>> router.rpc-run.${method}`)
 
   if (method === 'login') {
-    req.body.email = args[0].email
-    req.body.password = args[0].password
+    req.body.email = params[0].email
+    req.body.password = params[0].password
 
     passport.authenticate('local', (err, user) => {
       if (err) {
@@ -55,8 +55,10 @@ router.post('/api/rpc-run', (req, res, next) => {
       if (!user) {
         console.log('>> router.rpc-run.login no user found')
         return res.json({
-          success: false,
-          msg: 'user/password not found'
+          error: {
+            code: -1,
+            message: 'user/password not found'
+          }
         })
       }
       req.logIn(user, (error) => {
@@ -68,8 +70,10 @@ router.post('/api/rpc-run', (req, res, next) => {
         let returnUser = _.cloneDeep(user)
         delete returnUser.password
         return res.json({
-          success: true,
-          user: returnUser
+          result: {
+            success: true,
+            user: returnUser
+          }
         })
       })
     })(req, res, next)
@@ -86,12 +90,26 @@ router.post('/api/rpc-run', (req, res, next) => {
 
     const runFn = remoteRunFns[method]
 
-    runFn(...args)
+    runFn(...params)
       .then(result => {
-        res.json(result)
+        res.json({result})
       })
+      .catch(e => {
+        res.json({
+          error: {
+            code: -1,
+            message: e.toString()
+          }
+        })
+      })
+
   } else {
-    throw new Error(`Remote runFn ${method} not found`)
+    res.json({
+      error: {
+        code: -1,
+        message: `Remote runFn ${method} not found`
+      }
+    })
   }
 })
 
@@ -115,19 +133,32 @@ router.get('/file/:timestampDir/:basename', (req, res) => {
  */
 router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
   let method = req.body.method
-  let args = JSON.parse(req.body.args)
+  let params = JSON.parse(req.body.params)
   console.log('>> router.rpc-upload.' + method)
   if (method in remoteRunFns) {
     if (!_.startsWith(method, 'upload')) {
       throw new Error(`Remote uploadFn ${method} should start with 'upload'`)
     }
     const uploadFn = remoteRunFns[method]
-    args = _.concat([req.files], args)
-    uploadFn(...args)
+    params = _.concat([req.files], params)
+    uploadFn(...params)
       .then(result => {
         res.json(result)
       })
+      .catch(e => {
+        res.json({
+          error: {
+            code: -1,
+            message: e.toString()
+          }
+        })
+      })
   } else {
-    throw new Error(`Remote uploadFn ${method} not found`)
+    res.json({
+      error: {
+        code: -1,
+        message: `Remote uploadFn ${method} not found`
+      }
+    })
   }
 })

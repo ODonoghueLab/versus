@@ -1,3 +1,5 @@
+import path from 'path'
+
 export default {
 
   jstr (o) {
@@ -137,6 +139,17 @@ export default {
     link.setAttribute('href', data)
     link.setAttribute('download', filename)
     link.click()
+  },
+
+  extractId (p, delimiter='_', iToken=0) {
+    let ext = path.extname(p)
+    let base = path.basename(p, ext)
+    let tokens = base.split(delimiter)
+    if (tokens.length > iToken) {
+      return tokens[iToken]
+    } else {
+      return ''
+    }
   },
 
 }
