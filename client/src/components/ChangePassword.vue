@@ -57,19 +57,17 @@
           }
         }
 
-        let res = await auth.forceUpdate(payload)
+        let response = await auth.forceUpdate(payload)
 
-        if (res.data.success) {
+        if (response.result) {
 
-          this.$data.msg = 'success'
+          this.msg = 'success'
           this.$router.push('/experiments')
 
         } else {
 
           console.log('> ChangePassword.submit fail')
-          if (res.data.errors) {
-            this.$data.msg = res.data.errors
-          }
+          this.msg = response.error.message
 
         }
       }

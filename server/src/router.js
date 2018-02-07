@@ -143,7 +143,7 @@ router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
     params = _.concat([req.files], params)
     uploadFn(...params)
       .then(result => {
-        res.json(result)
+        res.json({result})
       })
       .catch(e => {
         res.json({

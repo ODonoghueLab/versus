@@ -31,11 +31,7 @@ function lengthOfPropList (o, key) {
   }
 }
 
-function makeQuery (imageSetId, images, isRepeat) {
-
-}
-
-function makeThisQuery (experiment, participant) {
+function makeChoices (experiment, participant) {
   let states = participant.states
 
   let unansweredIds = _.clone(experiment.attr.imageSetIds)
@@ -105,6 +101,11 @@ function makeThisQuery (experiment, participant) {
   return {question, choices}
 }
 
+function isDone (experiment, participant) {
+  return (participant.attr.nComparisonDone >= experiment.attr.maxTreeComparison) &&
+    (participant.attr.nRepeatTotal >= experiment.attr.nRepeat)
+}
+
 module.exports = {
-  makeThisQuery
+  makeChoices, isDone
 }

@@ -459,12 +459,32 @@ function getRandomUnfinishedState (states) {
   return states[id]
 }
 
+
+function getChoices (states) {
+
+  let comparison = getComparison(getRandomUnfinishedState(states))
+  let choices = []
+  for (let item of [comparison.itemA, comparison.itemB]) {
+    let chosenComparison = _.cloneDeep(comparison)
+    if (chosenComparison.isRepeat) {
+      chosenComparison.repeat = item.value
+    } else {
+      chosenComparison.choice = item.value
+    }
+    choices.push({
+      url: item.url,
+      comparison: chosenComparison
+    })
+  }
+
+  return choices
+}
+
 module.exports = {
   newState,
   probRepeat,
   makeChoice,
-  getComparison,
   calcTreeAttr,
   isStatesDone,
-  getRandomUnfinishedState
+  getChoices
 }

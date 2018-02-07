@@ -12,15 +12,15 @@ exports.assertion = function (selector, count) {
   this.pass = function (val) {
     return val === this.expected
   }
-  this.value = function (res) {
-    return res.value
+  this.value = function (response) {
+    return response.value
   }
   this.command = function (cb) {
     var self = this
     return this.api.execute(function (selector) {
       return document.querySelectorAll(selector).length
-    }, [selector], function (res) {
-      cb.call(self, res)
+    }, [selector], function (response) {
+      cb.call(self, response)
     })
   }
 }

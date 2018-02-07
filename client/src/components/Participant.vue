@@ -56,9 +56,7 @@
     </div>
 
     <div
-        v-else-if="
-          status === 'running2afc' ||
-          status === 'runningMultiple'">
+        v-else-if=" status === 'running'">
 
       <md-layout md-align="center">
 
@@ -209,62 +207,28 @@
       let participateId = this.$route.params.participateId
       rpc
         .rpcRun('publicGetNextChoice', participateId)
-        .then(this.handleRes)
+        .then(this.handleResponse)
     },
 
     methods: {
 
-      async handleRes (res) {
+      async handleResponse (response) {
 
-        this.status = res.result.status
-        console.log('> Invite.handleRes status:', this.status)
+        let result = response.result
+        console.log('> Participant.handleResponse', result)
+        this.status = result.status
 
         if (this.status === 'start') {
-          this.experimentAttr = res.result.experimentAttr
+          this.experimentAttr = result.experimentAttr
 
         } else if (this.status === 'done') {
-          this.surveyCode = res.result.surveyCode
+          this.surveyCode = result.surveyCode
 
-        } else if (this.status === 'running2afc') {
+        } else if (this.status === 'running') {
 
-          this.experimentAttr = res.result.experimentAttr
-          this.progress = res.result.progress
-
-          // clear screen, delay required for page to redraw
-          this.question = null
-          this.choices.length = 0
-          this.isChosen = false
-          await delay(200)
-
-          this.isLoading = true
-          let comparison = res.result.comparison
-          this.comparison = comparison
-          let comparisonUrls = []
-          let choices = []
-          for (let item of [comparison.itemA, comparison.itemB]) {
-            let fullUrl = config.apiUrl + item.url
-            choices.push({
-              fullUrl,
-              isClick: false,
-              item
-            })
-            comparisonUrls.push(fullUrl)
-          }
-
-          preloadImages(comparisonUrls)
-          preloadImages(_.map(res.data.urls, u => config.apiUrl + u))
-
-          while (!areImagesLoaded(comparisonUrls)) {
-            await delay(100)
-          }
-
-          this.isLoading = false
-          this.choices = choices
-
-        } else if (this.status === 'runningMultiple') {
-
-          this.experimentAttr = res.result.experimentAttr
-          this.progress = res.result.progress
+          this.experimentAttr = result.experimentAttr
+          this.progress = result.progress
+          this.method = result.method
 
           // clear screen, delay required for page to redraw
           this.question = null
@@ -274,62 +238,60 @@
 
           this.isLoading = true
 
-          for (let choice of res.result.choices) {
+          let waitToLoadUrls = []
+          if (result.question) {
+            result.question.fullUrl = config.apiUrl + result.question.url
+            waitToLoadUrls.push(config.apiUrl + result.question.url)
+          }
+          for (let choice of result.choices) {
             choice.fullUrl = config.apiUrl + choice.url
             choice.isClick = false
+            waitToLoadUrls.push(choice.fullUrl)
           }
 
-          res.result.question.fullUrl = config.apiUrl + res.result.question.url
-
-          let fullUrls = [config.apiUrl + res.result.question.url]
-          for (let choice of res.result.choices) {
-            choice.fullUrl = config.apiUrl + choice.url
-            fullUrls.push(choice.fullUrl)
+          preloadImages(waitToLoadUrls)
+          if (result.urls) {
+            preloadImages(_.map(result.urls, u => config.apiUrl + u))
           }
-          preloadImages(fullUrls)
-
-          while (!areImagesLoaded(fullUrls)) {
+          while (!areImagesLoaded(waitToLoadUrls)) {
             await delay(100)
           }
 
           this.isLoading = false
-          this.question = res.result.question
-          this.choices = res.result.choices
+          this.choices = result.choices
+          if (result.question) {
+            this.question = result.question
+          }
+
+          let repeat = false
+          if (this.choices[0].isRepeat) {
+            repeat = this.choices[0].isRepeat
+          } else if (this.choices[0].comparison) {
+            repeat = this.choices[0].comparison.isRepeat
+          }
+          console.log(
+            `> Invite.handleResponse`,
+            `status:${this.status}, repeat: ${repeat}`,
+            _.cloneDeep(result))
         }
 
       },
 
       async choose (choice) {
-
         choice.isClick = true
         this.isChosen = true
         this.$forceUpdate()
-
         let participateId = this.$route.params.participateId
-
-        let res
-        let questionType = this.experimentAttr.questionType
-        if (questionType === '2afc') {
-          if (this.comparison.isRepeat) {
-            this.comparison.repeat = choice.item.value
-          } else {
-            this.comparison.choice = choice.item.value
-          }
-          res = await rpc.rpcRun(
-            'publicChoose2afc', participateId, this.comparison)
-        } else if (questionType === 'multiple') {
-          res = await rpc.rpcRun(
-            'publicChooseMultiple', participateId, this.question, choice)
-        }
-
-        return await this.handleRes(res)
+        let response = await rpc.rpcRun(
+          this.method, participateId, choice)
+        return await this.handleResponse(response)
       },
 
       startSurvey () {
         let participateId = this.$route.params.participateId
         return rpc
           .rpcRun('publicSaveParticipantUserDetails', participateId, {})
-          .then(this.handleRes)
+          .then(this.handleResponse)
       },
     }
   }

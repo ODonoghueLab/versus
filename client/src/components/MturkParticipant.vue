@@ -39,9 +39,9 @@
       rpc
         .rpcRun(
           'publicInviteParticipant', this.$data.experimentId, 'test@test.com')
-        .then((res) => {
-          console.log('> Experiment.makeInvite', res.data)
-          this.$data.participateId = res.data.participant.participateId
+        .then((response) => {
+          console.log('> Experiment.makeInvite', response)
+          this.$data.participateId = response.result.participant.participateId
         })
     },
     methods: {

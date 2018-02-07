@@ -75,11 +75,9 @@ async function updateUser (user) {
       values[key] = user[key]
     }
   }
-
   if (!values) {
     throw 'No values to update'
   }
-
   if (!values.id) {
     throw 'No user.id to identify user'
   }
@@ -101,11 +99,9 @@ async function publicForceUpdatePassword (user) {
       values[key] = user[key]
     }
   }
-
   if (!values) {
     throw 'No values to update'
   }
-
   if (!values.id) {
     throw 'No user.id to identify user'
   }
@@ -125,20 +121,21 @@ async function updateParticipant (participant, experimentAttr) {
   if (experimentAttr.questionType === '2afc') {
     attr.nRepeatTotal = 0
     attr.consistency = 0
-    attr.nComparisonDone = 0
     for (let state of _.values(participant.states)) {
       attr.nRepeatTotal += state.consistencies.length
       attr.consistency += _.sum(state.consistencies)
-      attr.nComparisonDone += state.comparisons.length
+      console.log('> updateParticipant state.consistencies', state.consistencies)
     }
     let time = 0
+    attr.nComparisonDone = 0
     for (let state of _.values(participant.states)) {
       for (let comparison of state.comparisons) {
         let startMs = new Date(comparison.startTime).getTime()
         let endMs = new Date(comparison.endTime).getTime()
         time += endMs - startMs
-        if (comparison.repeat) {
-          attr.nnComparisonDone += 1
+        attr.nComparisonDone += 1
+        if (comparison.repeat !== null) {
+          attr.nComparisonDone += 1
         }
       }
     }
@@ -161,7 +158,7 @@ async function updateParticipant (participant, experimentAttr) {
           time += endMs - startMs
         }
         attr.nComparisonDone += 1
-        if (answer.repeatValue) {
+        if ('repeatValue' in answer) {
           attr.nComparisonDone += 1
           attr.nRepeatTotal += 1
         }
@@ -172,7 +169,7 @@ async function updateParticipant (participant, experimentAttr) {
     attr.version = 2
   }
 
-  await models.saveParticipant(participant.participateId, {attr})
+  await models.saveParticipant(participant.participateId, {attr, states: participant.states})
 }
 
 /**
@@ -309,46 +306,49 @@ async function publicGetNextChoice (participateId) {
     }
   }
 
-  await updateParticipant(participant, experiment.attr)
-
   if (experiment.attr.questionType === '2afc') {
     if (twochoice.isStatesDone(states)) {
+      await updateParticipant(participant, experiment.attr)
       return {
         status: 'done',
         surveyCode: await getSurveyCode(participateId)
       }
     } else {
+      await updateParticipant(participant, experiment.attr)
       return {
-        status: 'running2afc',
+        status: 'running',
+        method: 'publicChoose2afc',
         urls,
         experimentAttr,
         progress: participant.attr.progress,
-        comparison: twochoice.getComparison(twochoice.getRandomUnfinishedState(states))
+        choices: twochoice.getChoices(states)
       }
     }
   } else if (experiment.attr.questionType === 'multiple') {
-    let isDone = (participant.attr.nComparisonDone >= experiment.attr.maxTreeComparison) &&
-      (participant.attr.nRepeatTotal >= experimentAttr.nRepeat)
-    if (isDone) {
+    await updateParticipant(participant, experiment.attr)
+    if (multiple.isDone(experiment, participant)) {
       return {
         status: 'done',
         surveyCode: await getSurveyCode(participateId)
       }
     } else {
-      let query = multiple.makeThisQuery(experiment, participant)
+      let {question, choices} = multiple.makeChoices(experiment, participant)
+      console.log('> publicGetNextChoice multiple', question, choices)
       return {
-        status: 'runningMultiple',
+        status: 'running',
+        method: 'publicChooseMultiple',
         urls,
         experimentAttr,
+        question,
+        choices,
         progress: participant.attr.progress,
-        question: query.question,
-        choices: query.choices
       }
     }
   }
 }
 
-async function publicChoose2afc (participateId, comparison) {
+async function publicChoose2afc (participateId, choice) {
+  let comparison = choice.comparison
   let participant = await models.fetchParticipant(participateId)
   let urlA = comparison.itemA.url
   let imageSetId = models.extractId(urlA)
@@ -366,7 +366,7 @@ function pushToListProp (o, key, item) {
   o[key].push(item)
 }
 
-async function publicChooseMultiple (participateId, question, answer) {
+async function publicChooseMultiple (participateId, answer) {
   let participant = await models.fetchParticipant(participateId)
   answer.endTime = util.getCurrentTimeStr()
   if (!answer.isRepeat) {

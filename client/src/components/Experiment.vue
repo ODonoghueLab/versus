@@ -250,9 +250,9 @@
     async mounted () {
       let experimentId = this.$route.params.experimentId
 
-      let res = await rpc.rpcRun('getExperiment', experimentId)
+      let response = await rpc.rpcRun('getExperiment', experimentId)
 
-      let experiment = res.result.experiment
+      let experiment = response.result.experiment
       this.experiment = experiment
 
       console.log('> Experiment.mounted', util.jstr(experiment.attr))
@@ -300,9 +300,9 @@
       deleteInvite (participant) {
         rpc
           .rpcRun('deleteParticipant', participant.participateId)
-          .then((res) => {
-            console.log('> Experiment.deleteInvite', res)
-            if (!res.error) {
+          .then((response) => {
+            console.log('> Experiment.deleteInvite', response)
+            if (!response.error) {
               let participants = this.$data.experiment.participants
               util.removeItem(participants, participant, 'participateId')
             }
@@ -313,9 +313,9 @@
         let participants = this.$data.experiment.participants
         rpc
           .rpcRun('publicInviteParticipant', experimentId, 'test@test.com')
-          .then((res) => {
-            console.log('> Experiment.makeInvite', res)
-            participants.push(res.result.participant)
+          .then((response) => {
+            console.log('> Experiment.makeInvite', response)
+            participants.push(response.result.participant)
           })
       },
       saveExperimentAttr () {

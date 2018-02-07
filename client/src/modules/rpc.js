@@ -19,8 +19,8 @@ export default {
     console.log('> rpc.rpcRun', method, ...params)
 
     try {
-      let res = await axios.post(`${config.apiUrl}/api/rpc-run`, payload)
-      return res.data
+      let response = await axios.post(`${config.apiUrl}/api/rpc-run`, payload)
+      return response.data
     } catch (e) {
       return {
         error: {
@@ -44,8 +44,8 @@ export default {
     console.log('> rpc.rpcUpoad', method, ...params, _.map(files, 'name'))
 
     try {
-      let res = await axios.post(`${config.apiUrl}/api/rpc-upload`, formData)
-      return res.data
+      let response = await axios.post(`${config.apiUrl}/api/rpc-upload`, formData)
+      return response.data
     } catch (e) {
       return {
         error: {
