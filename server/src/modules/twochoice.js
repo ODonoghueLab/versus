@@ -459,9 +459,7 @@ function getRandomUnfinishedState (states) {
   return states[id]
 }
 
-
 function getChoices (states) {
-
   let comparison = getComparison(getRandomUnfinishedState(states))
   let choices = []
   for (let item of [comparison.itemA, comparison.itemB]) {

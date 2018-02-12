@@ -102,7 +102,6 @@ router.post('/api/rpc-run', (req, res, next) => {
           }
         })
       })
-
   } else {
     res.json({
       error: {

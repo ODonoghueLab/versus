@@ -422,5 +422,5 @@ module.exports = {
   createParticipant,
   fetchParticipant,
   saveParticipant,
-  deleteParticipant,
+  deleteParticipant
 }

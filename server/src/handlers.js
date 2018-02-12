@@ -28,10 +28,9 @@ const multiple = require('./modules/multiple')
  * upload, and the first parameter will be a filelist object that
  * determines the names and locations of the uploaded files on the
  * server.
- */
-
-/**
+ *
  * User handlers
+ *
  */
 
 async function publicRegisterUser (user) {

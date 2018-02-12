@@ -1,5 +1,5 @@
 const _ = require('lodash')
-const path = require("path")
+const path = require('path')
 
 module.exports = {
 
@@ -62,7 +62,7 @@ module.exports = {
     return date.toJSON()
   },
 
-  extractId (p, delimiter='_', iToken=0) {
+  extractId (p, delimiter = '_', iToken = 0) {
     let ext = path.extname(p)
     let base = path.basename(p, ext)
     let tokens = base.split(delimiter)
@@ -71,6 +71,6 @@ module.exports = {
     } else {
       return ''
     }
-  },
+  }
 
 }

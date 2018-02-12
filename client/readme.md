@@ -56,7 +56,8 @@ The web-client will make cross-origin-site JSON api calls to the url designated 
 
 This Vue install
 
-- vue init webpack
+- vue init webpack (version 2.9.3)
 ​- config.build.assetsPublicPath = './'
+- .eslintrc.js parserOptions.ecmaVersion = 7
 
   

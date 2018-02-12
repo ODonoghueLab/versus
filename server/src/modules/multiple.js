@@ -39,17 +39,6 @@ function makeChoices (experiment, participant) {
     _.remove(unansweredIds, id => id === answer.imageSetId)
   }
 
-  let nRepeat = 0
-  let nAnswer = 0
-  for (let a of states.answers) {
-    nAnswer += 1
-    if (a.repeatValue) {
-      nRepeat += 1
-    }
-  }
-
-  let probRepeat = 0.2
-
   let isRepeat = false
   if (unansweredIds.length === 0) {
     if (lengthOfPropList(states, 'toRepeatIds')) {
@@ -65,7 +54,7 @@ function makeChoices (experiment, participant) {
   }
 
   console.log('> handlers.publicGetNextChoice doRepeatComparison',
-    isRepeat, nRepeat, experiment.attr.nRepeat, unansweredIds)
+    isRepeat, experiment.attr.nRepeat, unansweredIds)
 
   let imageSetId
   if (!isRepeat) {
