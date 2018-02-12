@@ -20,7 +20,7 @@ const util = require('./util')
 const path = require('path')
 
 // probability that a repeat comparison will be chosen
-let probRepeat = 0.2
+const probRepeat = 0.2
 
 function lengthOfPropList (o, key) {
   if (!(key in o)) {
@@ -107,5 +107,6 @@ function isDone (experiment, participant) {
 }
 
 module.exports = {
-  makeChoices, isDone
+  makeChoices,
+  isDone
 }

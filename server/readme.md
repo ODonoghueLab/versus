@@ -26,8 +26,6 @@ The base user class in the database is implemented, which hooks into the the aut
 The specific domain functions are placed in the `modules` directory:
 
 - `modules/twochoice.js` - implements the binary-tree search and handles all the comparisons and image comparisons
+- `modules/multiple.js` - implements the multiple choice module
 
-  ​
-
-  ## 
 

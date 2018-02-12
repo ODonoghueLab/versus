@@ -9,11 +9,10 @@
  */
 
 import _ from 'lodash'
-import SHA224 from '../modules/sha224/sha224'
+import SHA224 from 'crypto-js/sha224'
 
 import util from '../modules/util'
 import rpc from '../modules/rpc'
-
 
 function hashPassword (password) {
   return SHA224(password).toString()
@@ -84,14 +83,14 @@ export default {
   async forceUpdate (editUser) {
     let payload = hashUserPassword(editUser)
     console.log('> auth.forceUpdate', util.jstr(payload))
-    return await rpc.rpcRun('publicForceUpdatePassword', payload)
+    return rpc.rpcRun('publicForceUpdatePassword', payload)
   },
 
   async restoreLastUser () {
     let lastUser = JSON.parse(localStorage.getItem('user'))
     console.log('> auth.restoreLastUser from localStorage', lastUser)
     if (lastUser) {
-      return await this.login(lastUser)
+      return this.login(lastUser)
     }
   },
 

@@ -48,55 +48,54 @@
           </div>
         </form>
 
-
       </md-layout>
     </md-whiteframe>
   </md-layout>
 </template>
 
 <script>
-  import auth from '../modules/auth'
-  import config from '../config'
+import auth from '../modules/auth'
+import config from '../config'
 
-  export default {
-    name: 'Register',
-    data () {
-      return {
-        title: config.title,
-        name: '',
-        email: '',
-        rawPassword: '',
-        rawPasswordConfirm: '',
-        user: auth.user,
-        error: ''
+export default {
+  name: 'Register',
+  data () {
+    return {
+      title: config.title,
+      name: '',
+      email: '',
+      rawPassword: '',
+      rawPasswordConfirm: '',
+      user: auth.user,
+      error: ''
+    }
+  },
+  methods: {
+    async submit () {
+      let payload = {
+        name: this.$data.name,
+        email: this.$data.email,
+        rawPassword: this.$data.rawPassword,
+        rawPasswordConfirm: this.$data.rawPasswordConfirm
       }
-    },
-    methods: {
-      async submit () {
-        let payload = {
-          name: this.$data.name,
-          email: this.$data.email,
-          rawPassword: this.$data.rawPassword,
-          rawPasswordConfirm: this.$data.rawPasswordConfirm
-        }
-        let response = await auth.register(payload)
+      let response = await auth.register(payload)
 
-        if (response.result) {
-          console.log('> Register.submit register success', response.result)
-          response = await auth.login({
-            email: payload.email,
-            rawPassword: payload.rawPassword
-          })
-        }
+      if (response.result) {
+        console.log('> Register.submit register success', response.result)
+        response = await auth.login({
+          email: payload.email,
+          rawPassword: payload.rawPassword
+        })
+      }
 
-        if (response.result) {
-          console.log('> Register.submit login success', response.result)
-          this.$router.push('/experiments')
-        } else {
-          console.log('> Register.submit fail', response.error)
-          this.error = response.error.message
-        }
+      if (response.result) {
+        console.log('> Register.submit login success', response.result)
+        this.$router.push('/experiments')
+      } else {
+        console.log('> Register.submit fail', response.error)
+        this.error = response.error.message
       }
     }
   }
+}
 </script>

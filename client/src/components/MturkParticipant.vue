@@ -24,32 +24,30 @@
 </template>
 
 <script>
-  import rpc from '../modules/rpc'
+import rpc from '../modules/rpc'
 
-  export default {
-    name: 'experiment',
-    data () {
-      return {
-        participateId: null,
-      }
-    },
-    mounted () {
-      this.$data.experimentId = this.$route.params.experimentId
-      console.log('> MturkParticipant.mounted', this.$data.experimentId)
-      rpc
-        .rpcRun(
-          'publicInviteParticipant', this.$data.experimentId, 'test@test.com')
-        .then((response) => {
-          console.log('> Experiment.makeInvite', response)
-          this.$data.participateId = response.result.participant.participateId
-        })
-    },
-    methods: {
-      startRun () {
-        this.$router.push('/participant/' + this.$data.participateId)
-      },
+export default {
+  name: 'experiment',
+  data () {
+    return {
+      participateId: null
+    }
+  },
+  mounted () {
+    this.$data.experimentId = this.$route.params.experimentId
+    console.log('> MturkParticipant.mounted', this.$data.experimentId)
+    rpc
+      .rpcRun(
+        'publicInviteParticipant', this.$data.experimentId, 'test@test.com')
+      .then((response) => {
+        console.log('> Experiment.makeInvite', response)
+        this.$data.participateId = response.result.participant.participateId
+      })
+  },
+  methods: {
+    startRun () {
+      this.$router.push('/participant/' + this.$data.participateId)
     }
   }
-
+}
 </script>
-

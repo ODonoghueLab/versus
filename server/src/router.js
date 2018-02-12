@@ -13,13 +13,13 @@ const passport = require('passport')
 const express = require('express')
 
 /**
-Main router for the Versus server. This provides the main
-interface for the RPC-JSON api architecture.
+ Main router for the Versus server. This provides the main
+ interface for the RPC-JSON api architecture.
 
-As well the server provides a generic file upload/download
-that will store files directly on the server, which will be
-available for the web-client via a get call
-*/
+ As well the server provides a generic file upload/download
+ that will store files directly on the server, which will be
+ available for the web-client via a get call
+ */
 
 // the router is defined here, and exported for the main express app
 const router = express.Router()
@@ -120,8 +120,10 @@ router.get('/file/:timestampDir/:basename', (req, res) => {
   let basename = req.params.basename
   let timestampDir = req.params.timestampDir
   console.log('>> router.file', timestampDir, basename)
+
   let filename = path.join(config.filesDir, timestampDir, basename)
   let mimeType = mime.lookup(filename)
+
   res.setHeader('Content-disposition', `attachment; filename=${basename}`)
   res.setHeader('Content-type', mimeType)
   fs.createReadStream(filename).pipe(res)
@@ -134,7 +136,9 @@ router.get('/file/:timestampDir/:basename', (req, res) => {
 router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
   let method = req.body.method
   let params = JSON.parse(req.body.params)
+
   console.log('>> router.rpc-upload.' + method)
+
   if (method in remoteRunFns) {
     if (!_.startsWith(method, 'upload')) {
       throw new Error(`Remote uploadFn ${method} should start with 'upload'`)
@@ -160,5 +164,49 @@ router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
         message: `Remote uploadFn ${method} not found`
       }
     })
+  }
+})
+
+/**
+ * Upload file handlers, sends to 'upload*' function with the
+ * implicit first argument, a filelist of the uploaded files.
+ */
+router.post('/api/rpc-download', (req, res) => {
+  let method = req.body.method
+  let params = req.body.params
+
+  console.log('>> router.rpc-download.' + method, params)
+
+  if (method in remoteRunFns) {
+    if (!_.startsWith(method, 'download')) {
+      throw new Error(`Remote download ${method} should start with 'download'`)
+    }
+
+    const downloadFn = remoteRunFns[method]
+
+    downloadFn(...params)
+      .then(result => {
+        res.set('data', JSON.stringify({result: result.result}))
+        res.set('filename', path.basename(result.filename))
+        res.set('Access-Control-Expose-Headers', 'data, filename')
+        res.download(result.filename)
+      })
+      .catch(e => {
+        let error = {
+          code: -1,
+          message: e.toString()
+        }
+        res.set('data', JSON.stringify({error}))
+        res.set('Access-Control-Expose-Headers', 'data, filename')
+        res.json({error})
+      })
+  } else {
+    let error = {
+      code: -1,
+      message: `Remote uploadFn ${method} not found`
+    }
+    res.set('data', JSON.stringify({error}))
+    res.set('Access-Control-Expose-Headers', 'data')
+    res.json({error})
   }
 })

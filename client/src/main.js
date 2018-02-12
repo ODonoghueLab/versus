@@ -1,5 +1,5 @@
 /**
- * @fileOverview Entry point the the Versus web-client.
+ * @fileOverview Entry point the web-client.
  *
  * The Vue build version to load with the `import` command
  * (runtime-only or standalone) has been set in webpack.base.conf
@@ -19,15 +19,14 @@ import store from './store'
 Vue.config.productionTip = false
 Vue.use(VueMaterial)
 Vue.use(Vuex)
+document.title = config.title
 
-async function init() {
-
-  // Allows vue to initialize directly with user
+async function init () {
   if (config.isUser) {
     await auth.restoreLastUser()
   }
 
-  new Vue({
+  return new Vue({
     el: '#app',
     router,
     store: new Vuex.Store(store),

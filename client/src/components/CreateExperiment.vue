@@ -96,104 +96,103 @@
 </template>
 
 <script>
-  import _ from 'lodash'
-  import rpc from '../modules/rpc'
-  import auth from '../modules/auth'
-  import util from '../modules/util'
+import _ from 'lodash'
+import rpc from '../modules/rpc'
+import auth from '../modules/auth'
+import util from '../modules/util'
 
-  /**
-   * Key function to return imageSetId from a path name, else empty string
-   * These function should be used to allow unique imageSetIds to be
-   * extracted across the app.
-   */
-  /**
-   * @returns error string on error, otherwise empty string
-   */
-  function checkFilelistError (filelist, questionType) {
+/**
+ * Key function to return imageSetId from a path name, else empty string
+ * These function should be used to allow unique imageSetIds to be
+ * extracted across the app.
+ */
+/**
+ * @returns error string on error, otherwise empty string
+ */
+function checkFilelistError (filelist, questionType) {
+  for (let f of filelist) {
+    let path = f.name
+    let ext = _.last(path.split('.')).toLowerCase()
+    console.log(path, ext)
+    let isExt = _.includes(['png', 'gif', 'jpg', 'jpeg'], ext)
+    if (!isExt) {
+      return 'only .png, .jpg, .gif allowed'
+    }
+    // size checking
+    // if (f.size / 1000000 > 2) {
+    //   return 'only images under 2MB allowed'
+    // }
+  }
+  if (questionType === '2afc') {
+    let imageSetIds = []
+    let nImageById = {}
     for (let f of filelist) {
       let path = f.name
-      let ext = _.last(path.split('.')).toLowerCase()
-      console.log(path, ext)
-      let isExt = _.includes(['png', 'gif', 'jpg', 'jpeg'], ext)
-      if (!isExt) {
-        return 'only .png, .jpg, .gif allowed'
+      let imageSetId = util.extractId(path)
+      if (!_.includes(imageSetIds, imageSetId)) {
+        imageSetIds.push(imageSetId)
+        nImageById[imageSetId] = 0
       }
-      // size checking
-      // if (f.size / 1000000 > 2) {
-      //   return 'only images under 2MB allowed'
-      // }
+      nImageById[imageSetId] += 1
     }
-    if (questionType === '2afc') {
-      let imageSetIds = []
-      let nImageById = {}
-      for (let f of filelist) {
-        let path = f.name
-        let imageSetId = util.extractId(path)
-        if (!_.includes(imageSetIds, imageSetId)) {
-          imageSetIds.push(imageSetId)
-          nImageById[imageSetId] = 0
-        }
-        nImageById[imageSetId] += 1
-      }
-      for (let [imageSetId, nImage] of _.toPairs(nImageById)) {
-        console.log(imageSetId, nImage)
-        if (nImage < 2) {
-          return `minimum two images for ${imageSetId}`
-        }
+    for (let [imageSetId, nImage] of _.toPairs(nImageById)) {
+      console.log(imageSetId, nImage)
+      if (nImage < 2) {
+        return `minimum two images for ${imageSetId}`
       }
     }
-    return ''
   }
+  return ''
+}
 
-  export default {
-    name: 'createExperiment',
-    data () {
-      return {
-        files: '',
-        fileStr: '',
-        attr: {
-          title: 'Which image looks better?',
-          blurb: 'Click on the image that looks better. Take your time',
-          name: '',
-          questionType: '2afc'
-        },
-        isUploading: false,
-        error: ''
-      }
-    },
-    methods: {
-      selectFiles (files) {
-        this.$data.files = files
-        this.$data.fileStr = `${files.length} files`
+export default {
+  name: 'createExperiment',
+  data () {
+    return {
+      files: '',
+      fileStr: '',
+      attr: {
+        title: 'Which image looks better?',
+        blurb: 'Click on the image that looks better. Take your time',
+        name: '',
+        questionType: '2afc'
       },
-      async submit () {
+      isUploading: false,
+      error: ''
+    }
+  },
+  methods: {
+    selectFiles (files) {
+      this.$data.files = files
+      this.$data.fileStr = `${files.length} files`
+    },
+    async submit () {
+      let error = checkFilelistError(
+        this.$data.files, this.$data.attr.questionType)
+      if (!this.$data.attr.name) {
+        error = 'must have experiment name'
+      }
+      if (error) {
+        this.$data.error = 'Error: ' + error
+        return
+      }
 
-        let error = checkFilelistError(
-          this.$data.files, this.$data.attr.questionType)
-        if (!this.$data.attr.name) {
-          error = 'must have experiment name'
-        }
-        if (error) {
-          this.$data.error = 'Error: ' + error
-          return
-        }
+      this.$data.isUploading = true
 
-        this.$data.isUploading = true
+      let response = await rpc.rpcUpload(
+        'uploadImagesAndCreateExperiment',
+        this.$data.files, auth.user.id, this.$data.attr)
 
-        let response = await rpc.rpcUpload(
-          'uploadImagesAndCreateExperiment',
-          this.$data.files, auth.user.id, this.$data.attr)
+      console.log('> CreateExperiment.submit respnse', response)
 
-        console.log('> CreateExperiment.submit respnse', response)
-
-        if (response.result) {
-          console.log('> CreateExperiment.submit', response)
-          let experimentId = response.result.experimentId
-          this.$router.push('/experiment/' + experimentId)
-        } else {
-          this.error = response.error.message
-        }
+      if (response.result) {
+        console.log('> CreateExperiment.submit', response)
+        let experimentId = response.result.experimentId
+        this.$router.push('/experiment/' + experimentId)
+      } else {
+        this.error = response.error.message
       }
     }
   }
+}
 </script>

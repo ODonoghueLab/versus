@@ -1,8 +1,10 @@
-
 const _ = require('lodash')
 const shortid = require('shortid')
 const prettyMs = require('pretty-ms')
+const path = require('path')
+const fs = require('fs')
 
+const config = require('./config')
 const models = require('./models')
 const twochoice = require('./modules/twochoice')
 const util = require('./modules/util')
@@ -443,6 +445,78 @@ async function uploadImagesAndCreateExperiment (filelist, userId, attr) {
   }
 }
 
+async function downloadResults (experimentId) {
+
+  console.log('> handlers.downloadResults experiment', experimentId)
+
+  let experiment = await models.fetchExperiment(experimentId)
+
+  let isFoundHeader = false
+  let imageSet = {}
+
+  let headerRow = ['participantId', 'surveyCode', 'time']
+  let rows = []
+
+  for (let participant of experiment.participants) {
+
+    if (!isFoundHeader) {
+      for (let [imageSetId, state] of _.toPairs(participant.states)) {
+        imageSet[imageSetId] = {
+          imageUrls: state.imageUrls,
+          iImage: {}
+        }
+        headerRow = _.concat(headerRow, state.imageUrls)
+        _.each(state.imageUrls, (url, i) => {
+          imageSet[imageSetId].iImage[url] = i
+        })
+      }
+      isFoundHeader = true
+      console.log('> makeResultCsv header', headerRow)
+    }
+
+    let row = [
+      participant.participateId,
+      participant.attr.surveyCode,
+      participant.time
+    ]
+
+    for (let [imageSetId, state] of _.toPairs(participant.states)) {
+      let thisRow = util.makeArray(state.rankedImageUrls.length, '')
+      if (!_.isUndefined(state.rankedImageUrls) && (state.rankedImageUrls.length > 0)) {
+        _.each(state.rankedImageUrls, (url, iRank) => {
+          thisRow[imageSet[imageSetId].iImage[url]] = iRank
+        })
+      }
+      row = _.concat(row, thisRow)
+    }
+
+    console.log('> downloadResults row', row)
+
+    rows.push(row)
+  }
+
+  headerRow = _.map(headerRow, h => path.basename(h))
+  let result = headerRow.join(',') + '\n'
+  for (let row of rows) {
+    result += row.join(',') + '\n'
+  }
+
+  const timestampDir = String(new Date().getTime())
+  const fullDir = path.join(config.filesDir, timestampDir)
+  if (!fs.existsSync(fullDir)) {
+    fs.mkdirSync(fullDir, 0o744)
+  }
+
+  let filename = path.join(config.filesDir, timestampDir, 'results.csv')
+  fs.writeFileSync(filename, result)
+  console.log('> downloadResults filename', filename)
+
+  return {
+    filename,
+    result: {success: true}
+  }
+}
+
 module.exports = {
   publicRegisterUser,
   updateUser,
@@ -457,5 +531,6 @@ module.exports = {
   publicChoose2afc,
   publicChooseMultiple,
   publicSaveParticipantUserDetails,
-  uploadImagesAndCreateExperiment
+  uploadImagesAndCreateExperiment,
+  downloadResults
 }

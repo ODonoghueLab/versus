@@ -1,4 +1,5 @@
 import path from 'path'
+import _ from 'lodash'
 
 export default {
 
@@ -22,12 +23,11 @@ export default {
   },
 
   /**
-   * Download a JSON literal as JSON file from the client
+   * Download a string into fname on the browser
    * @param {String} fname
-   * @param {Object} obj - JSON literal to download
+   * @param {String} s - contents of file
    */
-  downloadObject (fname, obj) {
-    let s = JSON.stringify(obj, null, 2)
+  downloadFile (fname, s) {
     let data = 'text/json;charset=utf-8,' + encodeURIComponent(s)
 
     let a = document.createElement('a')
@@ -120,28 +120,7 @@ export default {
     document.body.removeChild(textArea)
   },
 
-  /**
-   * Downloads a list of rows as a CSV file
-   * https://appendto.com/2017/04/use-javascript-to-export-your-data-as-csv/
-   */
-  downloadCSV (csv, filename) {
-    filename = filename || 'export.csv'
-
-    if (csv === null) {
-      return
-    }
-    if (!csv.match(/^data:text\/csv/i)) {
-      csv = 'data:text/csv;charset=utf-8,' + csv
-    }
-    let data = encodeURI(csv)
-
-    let link = document.createElement('a')
-    link.setAttribute('href', data)
-    link.setAttribute('download', filename)
-    link.click()
-  },
-
-  extractId (p, delimiter='_', iToken=0) {
+  extractId (p, delimiter = '_', iToken = 0) {
     let ext = path.extname(p)
     let base = path.basename(p, ext)
     let tokens = base.split(delimiter)
@@ -150,6 +129,6 @@ export default {
     } else {
       return ''
     }
-  },
+  }
 
 }

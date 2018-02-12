@@ -31,46 +31,41 @@
 </template>
 
 <script>
-  import auth from '../modules/auth'
-  import util from '../modules/util'
+import auth from '../modules/auth'
+import util from '../modules/util'
 
-  export default {
-    name: 'ChangePassword',
-    data () {
-      let payload = {
-        id: '',
-        title: 'Edit Your Details',
-        rawPassword: '',
-        msg: ''
+export default {
+  name: 'ChangePassword',
+  data () {
+    let payload = {
+      id: '',
+      title: 'Edit Your Details',
+      rawPassword: '',
+      msg: ''
+    }
+    console.log('> ChangePassword.data', util.jstr(payload))
+    return payload
+  },
+  methods: {
+    async submit () {
+      let payload = {}
+      const keys = ['id', 'rawPassword']
+      for (let key of keys) {
+        if (this.$data[key]) {
+          payload[key] = this.$data[key]
+        }
       }
-      console.log('> ChangePassword.data', util.jstr(payload))
-      return payload
-    },
-    methods: {
-      async submit () {
 
-        let payload = {}
-        const keys = ['id', 'rawPassword']
-        for (let key of keys) {
-          if (this.$data[key]) {
-            payload[key] = this.$data[key]
-          }
-        }
+      let response = await auth.forceUpdate(payload)
 
-        let response = await auth.forceUpdate(payload)
-
-        if (response.result) {
-
-          this.msg = 'success'
-          this.$router.push('/experiments')
-
-        } else {
-
-          console.log('> ChangePassword.submit fail')
-          this.msg = response.error.message
-
-        }
+      if (response.result) {
+        this.msg = 'success'
+        this.$router.push('/experiments')
+      } else {
+        console.log('> ChangePassword.submit fail')
+        this.msg = response.error.message
       }
     }
   }
+}
 </script>

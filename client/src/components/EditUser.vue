@@ -61,42 +61,42 @@
 </template>
 
 <script>
-  import auth from '../modules/auth'
-  import _ from 'lodash'
+import auth from '../modules/auth'
+import _ from 'lodash'
 
-  export default {
-    name: 'EditUser',
-    data () {
-      let result = _.assign({}, auth.user)
-      _.assign(result, {
-        title: 'Edit Your Details',
-        rawPassword: '',
-        rawPasswordConfirm: '',
-        error: ''
-      })
-      return result
-    },
-    methods: {
-      async submit () {
-        this.error = ''
+export default {
+  name: 'EditUser',
+  data () {
+    let result = _.assign({}, auth.user)
+    _.assign(result, {
+      title: 'Edit Your Details',
+      rawPassword: '',
+      rawPasswordConfirm: '',
+      error: ''
+    })
+    return result
+  },
+  methods: {
+    async submit () {
+      this.error = ''
 
-        let payload = {}
-        const keys = ['id', 'name', 'email', 'rawPassword', 'rawPasswordConfirm']
-        for (let key of keys) {
-          if (this.$data[key]) {
-            payload[key] = this.$data[key]
-          }
+      let payload = {}
+      const keys = ['id', 'name', 'email', 'rawPassword', 'rawPasswordConfirm']
+      for (let key of keys) {
+        if (this.$data[key]) {
+          payload[key] = this.$data[key]
         }
+      }
 
-        let response = await auth.update(payload)
+      let response = await auth.update(payload)
 
-        if (response.result) {
-          this.error = 'User updated'
-        } else {
-          console.log('> EditUser.submit fail', response)
-          this.error = response.error.message
-        }
+      if (response.result) {
+        this.error = 'User updated'
+      } else {
+        console.log('> EditUser.submit fail', response)
+        this.error = response.error.message
       }
     }
   }
+}
 </script>

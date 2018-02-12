@@ -23,22 +23,30 @@
           Experiments
         </router-link>
 
-          <md-menu>
+        <md-menu>
+          <md-button
+            md-menu-trigger>
+            {{user.name}}
+          </md-button>
 
-            <md-button md-menu-trigger>
-                {{user.name}}
-            </md-button>
-
-            <md-menu-content>
-              <md-menu-item @click="editUser">Edit User
-              </md-menu-item>
-              <md-menu-item @click="logout">Logout</md-menu-item>
-            </md-menu-content>
-          </md-menu>
+          <md-menu-content>
+            <md-menu-item
+              @click="editUser">
+              Edit User
+            </md-menu-item>
+            <md-menu-item
+              @click="logout">
+              Logout
+            </md-menu-item>
+          </md-menu-content>
+        </md-menu>
 
       </span>
 
-      <router-link v-else to='/login' tag='md-button'>
+      <router-link
+        v-else
+        to='/login'
+        tag='md-button'>
         Login
       </router-link>
 
@@ -47,47 +55,45 @@
 </template>
 
 <script>
-  import auth from '../modules/auth'
-  import router from '../router'
-  import util from '../modules/util'
-  import config from '../config'
+import auth from '../modules/auth'
+import util from '../modules/util'
+import config from '../config'
 
-  let publicPathTokens = [
-    '/mechanical-turk',
-    '/participant',
-  ]
+let publicPathTokens = [
+  '/mechanical-turk',
+  '/participant'
+]
 
-  export default {
-    name: 'navbar',
-    data () {
-      return {
-        user: auth.user,
-        title: config.title,
-        isUser: config.isUser
-      }
-    },
-    computed: {
-      isShowNavbar () {
-        if (this.$route.fullPath) {
-          if (util.isStringInStringList(this.$route.fullPath, publicPathTokens)) {
-            return false
-          }
+export default {
+  name: 'navbar',
+  data () {
+    return {
+      user: auth.user,
+      title: config.title,
+      isUser: config.isUser
+    }
+  },
+  computed: {
+    isShowNavbar () {
+      if (this.$route.fullPath) {
+        if (util.isStringInStringList(this.$route.fullPath, publicPathTokens)) {
+          return false
         }
-        return true
       }
+      return true
+    }
+  },
+  methods: {
+    editUser () {
+      this.$router.push('/edit-user')
     },
-    methods: {
-      editUser () {
-        router.push('/edit-user')
-      },
-      home () {
-        router.push('/')
-      },
-      async logout () {
-        await auth.logout()
-        this.$router.push('/login')
-      }
+    home () {
+      this.$router.push('/')
+    },
+    async logout () {
+      await auth.logout()
+      this.$router.push('/login')
     }
   }
+}
 </script>
-

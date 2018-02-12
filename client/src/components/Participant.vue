@@ -150,150 +150,145 @@
 </style>
 
 <script>
-  import config from '../config'
-  import rpc from '../modules/rpc'
+import _ from 'lodash'
+import config from '../config'
+import rpc from '../modules/rpc'
 
-  function delay (timeMs) {
-    return new Promise(resolve => { setTimeout(resolve, timeMs) })
-  }
+function delay (timeMs) {
+  return new Promise(resolve => { setTimeout(resolve, timeMs) })
+}
 
-  let loadedImages = {}
+let loadedImages = {}
 
-  function preloadImages (urls) {
-    for (let url of urls) {
-      if (!(url in loadedImages)) {
-        let img = new Image
-        img.src = url
-        loadedImages[url] = img
-        console.log('> Particpant.preloadImage', img.src)
-      }
+function preloadImages (urls) {
+  for (let url of urls) {
+    if (!(url in loadedImages)) {
+      let img = new Image()
+      img.src = url
+      loadedImages[url] = img
+      console.log('> Particpant.preloadImage', img.src)
     }
   }
+}
 
-  function areImagesLoaded (urls) {
-    for (let url of urls) {
-      if (url in loadedImages) {
-        let image = loadedImages[url]
-        let isLoaded = image.complete && image.naturalHeight !== 0
-        if (!isLoaded) {
-          return false
-        }
-      } else {
-        console.log(`> isImagesLoaded warning: ${url} not found in ${_.keys(loadedImages)}`)
+function areImagesLoaded (urls) {
+  for (let url of urls) {
+    if (url in loadedImages) {
+      let image = loadedImages[url]
+      let isLoaded = image.complete && image.naturalHeight !== 0
+      if (!isLoaded) {
         return false
       }
+    } else {
+      console.log(`> isImagesLoaded warning: ${url} not found in ${_.keys(loadedImages)}`)
+      return false
     }
-    return true
   }
+  return true
+}
 
-  export default {
+export default {
 
-    name: 'invite',
+  name: 'invite',
 
-    data () {
-      return {
-        status: null,
-        surveyCode: null,
-        progress: 0,
-        question: null,
-        choices: [],
-        isChosen: false,
-        isLoading: true,
-        experimentAttr: {},
+  data () {
+    return {
+      status: null,
+      surveyCode: null,
+      progress: 0,
+      question: null,
+      choices: [],
+      isChosen: false,
+      isLoading: true,
+      experimentAttr: {}
+    }
+  },
+
+  mounted () {
+    let participateId = this.$route.params.participateId
+    rpc
+      .rpcRun('publicGetNextChoice', participateId)
+      .then(this.handleResponse)
+  },
+
+  methods: {
+
+    async handleResponse (response) {
+      let result = response.result
+      console.log('> Participant.handleResponse', result)
+      this.status = result.status
+
+      if (this.status === 'start') {
+        this.experimentAttr = result.experimentAttr
+      } else if (this.status === 'done') {
+        this.surveyCode = result.surveyCode
+      } else if (this.status === 'running') {
+        this.experimentAttr = result.experimentAttr
+        this.progress = result.progress
+        this.method = result.method
+
+        // clear screen, delay required for page to redraw
+        this.question = null
+        this.choices.length = 0
+        this.isChosen = false
+        await delay(200)
+
+        this.isLoading = true
+
+        let waitToLoadUrls = []
+        if (result.question) {
+          result.question.fullUrl = config.apiUrl + result.question.url
+          waitToLoadUrls.push(config.apiUrl + result.question.url)
+        }
+        for (let choice of result.choices) {
+          choice.fullUrl = config.apiUrl + choice.url
+          choice.isClick = false
+          waitToLoadUrls.push(choice.fullUrl)
+        }
+
+        preloadImages(waitToLoadUrls)
+        if (result.urls) {
+          preloadImages(_.map(result.urls, u => config.apiUrl + u))
+        }
+        while (!areImagesLoaded(waitToLoadUrls)) {
+          await delay(100)
+        }
+
+        this.isLoading = false
+        this.choices = result.choices
+        if (result.question) {
+          this.question = result.question
+        }
+
+        let repeat = false
+        if (this.choices[0].isRepeat) {
+          repeat = this.choices[0].isRepeat
+        } else if (this.choices[0].comparison) {
+          repeat = this.choices[0].comparison.isRepeat
+        }
+        console.log(
+          `> Invite.handleResponse`,
+          `status:${this.status}, repeat: ${repeat}`,
+          _.cloneDeep(result))
       }
     },
 
-    mounted () {
+    async choose (choice) {
+      choice.isClick = true
+      this.isChosen = true
+      this.$forceUpdate()
       let participateId = this.$route.params.participateId
-      rpc
-        .rpcRun('publicGetNextChoice', participateId)
-        .then(this.handleResponse)
+      let response = await rpc.rpcRun(
+        this.method, participateId, choice)
+      return this.handleResponse(response)
     },
 
-    methods: {
-
-      async handleResponse (response) {
-
-        let result = response.result
-        console.log('> Participant.handleResponse', result)
-        this.status = result.status
-
-        if (this.status === 'start') {
-          this.experimentAttr = result.experimentAttr
-
-        } else if (this.status === 'done') {
-          this.surveyCode = result.surveyCode
-
-        } else if (this.status === 'running') {
-
-          this.experimentAttr = result.experimentAttr
-          this.progress = result.progress
-          this.method = result.method
-
-          // clear screen, delay required for page to redraw
-          this.question = null
-          this.choices.length = 0
-          this.isChosen = false
-          await delay(200)
-
-          this.isLoading = true
-
-          let waitToLoadUrls = []
-          if (result.question) {
-            result.question.fullUrl = config.apiUrl + result.question.url
-            waitToLoadUrls.push(config.apiUrl + result.question.url)
-          }
-          for (let choice of result.choices) {
-            choice.fullUrl = config.apiUrl + choice.url
-            choice.isClick = false
-            waitToLoadUrls.push(choice.fullUrl)
-          }
-
-          preloadImages(waitToLoadUrls)
-          if (result.urls) {
-            preloadImages(_.map(result.urls, u => config.apiUrl + u))
-          }
-          while (!areImagesLoaded(waitToLoadUrls)) {
-            await delay(100)
-          }
-
-          this.isLoading = false
-          this.choices = result.choices
-          if (result.question) {
-            this.question = result.question
-          }
-
-          let repeat = false
-          if (this.choices[0].isRepeat) {
-            repeat = this.choices[0].isRepeat
-          } else if (this.choices[0].comparison) {
-            repeat = this.choices[0].comparison.isRepeat
-          }
-          console.log(
-            `> Invite.handleResponse`,
-            `status:${this.status}, repeat: ${repeat}`,
-            _.cloneDeep(result))
-        }
-
-      },
-
-      async choose (choice) {
-        choice.isClick = true
-        this.isChosen = true
-        this.$forceUpdate()
-        let participateId = this.$route.params.participateId
-        let response = await rpc.rpcRun(
-          this.method, participateId, choice)
-        return await this.handleResponse(response)
-      },
-
-      startSurvey () {
-        let participateId = this.$route.params.participateId
-        return rpc
-          .rpcRun('publicSaveParticipantUserDetails', participateId, {})
-          .then(this.handleResponse)
-      },
+    startSurvey () {
+      let participateId = this.$route.params.participateId
+      return rpc
+        .rpcRun('publicSaveParticipantUserDetails', participateId, {})
+        .then(this.handleResponse)
     }
   }
+}
 </script>
-

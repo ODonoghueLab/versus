@@ -54,3 +54,9 @@ The web-client needs to be compiled to be used. There are two options for this.
 The web-client will make cross-origin-site JSON api calls to the url designated in `src/config.js`. By default, this is `localhost:3000`, but you should put in the full IP address of the backend-server.
 
 
+This Vue install
+
+- vue init webpack
+​- config.build.assetsPublicPath = './'
+
+  

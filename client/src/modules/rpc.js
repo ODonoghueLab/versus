@@ -1,6 +1,7 @@
 import axios from 'axios'
 import _ from 'lodash'
 import config from '../config'
+import saveAs from 'file-saver'
 
 /**
  * @fileOverview rpc module provides a clean rpc interface for JSON-based
@@ -25,7 +26,7 @@ export default {
       return {
         error: {
           code: -32000,
-          message: e.toString(),
+          message: e.toString()
         }
       }
     }
@@ -41,7 +42,7 @@ export default {
       formData.append('uploadFiles', f, f.name)
     }
 
-    console.log('> rpc.rpcUpoad', method, ...params, _.map(files, 'name'))
+    console.log('> rpc.rpcUpoad', method, files, ...params)
 
     try {
       let response = await axios.post(`${config.apiUrl}/api/rpc-upload`, formData)
@@ -50,7 +51,31 @@ export default {
       return {
         error: {
           code: -32000,
-          message: e.toString(),
+          message: e.toString()
+        }
+      }
+    }
+  },
+
+  async rpcDownload (method, ...params) {
+    let payload = {method, params, jsonrpc: '2.0'}
+
+    console.log('> rpc.rpcDownload', ...params)
+
+    try {
+      let response = await axios.post(`${config.apiUrl}/api/rpc-download`, payload)
+      let filename = response.headers.filename
+      let data = JSON.parse(response.headers.data)
+      if (!data.error) {
+        let blob = new Blob([response.data])
+        saveAs.saveAs(blob, (filename))
+      }
+      return data
+    } catch (e) {
+      return {
+        error: {
+          code: -32000,
+          message: e.toString()
         }
       }
     }

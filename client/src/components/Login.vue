@@ -47,35 +47,35 @@
 </template>
 
 <script>
-  import auth from '../modules/auth'
-  import config from '../config'
+import auth from '../modules/auth'
+import config from '../config'
 
-  export default {
-    name: 'Login',
-    data () {
-      return {
-        title: config.title,
-        email: '',
-        rawPassword: '',
-        error: ''
+export default {
+  name: 'Login',
+  data () {
+    return {
+      title: config.title,
+      email: '',
+      rawPassword: '',
+      error: ''
+    }
+  },
+  methods: {
+    async submit () {
+      let payload = {
+        email: this.$data.email,
+        rawPassword: this.$data.rawPassword
       }
-    },
-    methods: {
-      async submit () {
-        let payload = {
-          email: this.$data.email,
-          rawPassword: this.$data.rawPassword
-        }
-        console.log('> Login.submit', payload)
-        let response = await auth.login(payload)
-        console.log('> Login.submit response', response)
+      console.log('> Login.submit', payload)
+      let response = await auth.login(payload)
+      console.log('> Login.submit response', response)
 
-        if (response.result) {
-          this.$router.push('/experiments')
-        } else {
-          this.error = response.error.message
-        }
+      if (response.result) {
+        this.$router.push('/experiments')
+      } else {
+        this.error = response.error.message
       }
     }
   }
+}
 </script>

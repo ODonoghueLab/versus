@@ -5,7 +5,6 @@
 
 import Vue from 'vue'
 import Router from 'vue-router'
-Vue.use(Router)
 
 import auth from './modules/auth'
 import util from './modules/util'
@@ -20,6 +19,8 @@ import Register from './components/Register'
 import EditUser from './components/EditUser'
 import MturkParticipant from './components/MturkParticipant'
 import ChangePassword from './components/ChangePassword'
+
+Vue.use(Router)
 
 let router = new Router({
   routes: [
@@ -76,7 +77,6 @@ let router = new Router({
   ]
 })
 
-
 let publicPathTokens = [
   '/mechanical-turk',
   '/participant',
@@ -84,10 +84,9 @@ let publicPathTokens = [
   '/register'
 ]
 
-
 router.beforeEach((to, from, next) => {
-  if (util.isStringInStringList(to.path, publicPathTokens)
-       || to.path === '/') {
+  if (util.isStringInStringList(to.path, publicPathTokens) ||
+      to.path === '/') {
     console.log('> router.beforeEach public', to.path)
     next()
   } else {
