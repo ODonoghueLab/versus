@@ -69,10 +69,8 @@ function newState (imageUrls) {
     repeatComparisonIndices: [], // indices to repeated comparisons
 
     // the following are only calculated when done
-    consistencies: [], // list of (0, 1) for consistency of repeated comparisons
     fractions: [], // list of number of winning votes for each image-url
     rankedImageUrls: [], // ranked list of the image-url for user preference
-    time: null // time taken to complete survey
   }
 }
 
@@ -337,18 +335,6 @@ function isDone (state) {
     return false
   }
 
-  if (state.consistencies.length === 0) {
-    state.consistencies = _.map(state.repeatComparisonIndices, i => {
-      let comparison = state.comparisons[i]
-      if (comparison.choice === comparison.repeat) {
-        return 1
-      } else {
-        return 0
-      }
-    })
-    console.log('> tree.isDone consistencies', state.consistencies)
-  }
-
   if (state.rankedImageUrls.length === 0) {
     let sortedNodes = getOrderedNodeList(state)
     state.rankedImageUrls = _.map(sortedNodes, node => state.imageUrls[node.iImage])
@@ -371,20 +357,6 @@ function isDone (state) {
 
   let result = checkComparisons(state)
   console.log('> tree.isDone checkComparisons', result)
-
-  function getTimeInterval (start, end) {
-    let startMs = new Date(start).getTime()
-    let endMs = new Date(end).getTime()
-    return endMs - startMs
-  }
-
-  if (!state.time) {
-    let time = 0
-    for (let comparison of state.comparisons) {
-      time += getTimeInterval(comparison.startTime, comparison.endTime)
-    }
-    state.time = time / 1000
-  }
 
   return true
 }

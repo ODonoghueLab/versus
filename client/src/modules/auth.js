@@ -9,13 +9,13 @@
  */
 
 import _ from 'lodash'
-import SHA224 from 'crypto-js/sha224'
+import sha224 from 'crypto-js/sha224'
 
 import util from '../modules/util'
 import rpc from '../modules/rpc'
 
 function hashPassword (password) {
-  return SHA224(password).toString()
+  return sha224(password).toString()
 }
 
 // global reference to user in the authentication system

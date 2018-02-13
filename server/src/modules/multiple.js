@@ -90,9 +90,9 @@ function makeChoices (experiment, participant) {
   return {question, choices}
 }
 
-function isDone (experiment, participant) {
-  return (participant.attr.nComparisonDone >= experiment.attr.maxTreeComparison) &&
-    (participant.attr.nRepeatTotal >= experiment.attr.nRepeat)
+function isDone (experimentAttr, participant) {
+  return (participant.attr.nComparisonDone >= experimentAttr.maxTreeComparison) &&
+    (participant.attr.nRepeatTotal >= experimentAttr.nRepeat)
 }
 
 module.exports = {

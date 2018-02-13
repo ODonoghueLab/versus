@@ -112,23 +112,19 @@ async function publicForceUpdatePassword (user) {
     await models.updateUser(values)
     return {success: true}
   } catch (err) {
-    throw 'Couldn\'t update' + err
+    throw `Update failure ${err}`
   }
 }
 
 async function updateParticipant (participant, experimentAttr) {
   let attr = participant.attr
 
+  attr.nRepeatTotal = 0
+  attr.consistency = 0
+  attr.nComparisonDone = 0
+  let time = 0
+
   if (experimentAttr.questionType === '2afc') {
-    attr.nRepeatTotal = 0
-    attr.consistency = 0
-    for (let state of _.values(participant.states)) {
-      attr.nRepeatTotal += state.consistencies.length
-      attr.consistency += _.sum(state.consistencies)
-      console.log('> updateParticipant state.consistencies', state.consistencies)
-    }
-    let time = 0
-    attr.nComparisonDone = 0
     for (let state of _.values(participant.states)) {
       for (let comparison of state.comparisons) {
         let startMs = new Date(comparison.startTime).getTime()
@@ -137,23 +133,18 @@ async function updateParticipant (participant, experimentAttr) {
         attr.nComparisonDone += 1
         if (comparison.repeat !== null) {
           attr.nComparisonDone += 1
+          attr.nRepeatTotal += 1
+          if (comparison.choice === comparison.repeat) {
+            attr.consistency += 1
+          }
         }
       }
     }
-    attr.progress = attr.nComparisonDone / experimentAttr.maxComparison * 100
-    attr.time = prettyMs(time)
-    attr.version = 2
+    attr.isDone = twochoice.isStatesDone(participant.states)
   } else {
-    attr.nRepeatTotal = 0
-    attr.consistency = 0
-    attr.nComparisonDone = 0
-    let time = 0
     if (!_.isUndefined(participant.states.answers)) {
       for (let answer of participant.states.answers) {
         if (answer.startTime) {
-          if (answer.repeatValue === answer.value) {
-            attr.consistency += 1
-          }
           let startMs = new Date(answer.startTime).getTime()
           let endMs = new Date(answer.endTime).getTime()
           time += endMs - startMs
@@ -162,12 +153,25 @@ async function updateParticipant (participant, experimentAttr) {
         if ('repeatValue' in answer) {
           attr.nComparisonDone += 1
           attr.nRepeatTotal += 1
+          if (answer.repeatValue === answer.value) {
+            attr.consistency += 1
+          }
         }
       }
     }
-    attr.progress = attr.nComparisonDone / experimentAttr.maxComparison * 100
-    attr.time = prettyMs(time)
-    attr.version = 2
+    attr.isDone = multiple.isDone(experimentAttr, participant)
+  }
+
+  attr.progress = attr.nComparisonDone / experimentAttr.maxComparison * 100
+  console.log('> updateParticipant experimentAttr\n', experimentAttr)
+  console.log('> updateParticipant progress', attr.nComparisonDone, experimentAttr.maxComparison)
+  attr.time = prettyMs(time)
+  attr.version = 2
+
+  if (attr.isDone) {
+    if (!attr.surveyCode) {
+      attr.surveyCode = shortid.generate()
+    }
   }
 
   await models.saveParticipant(participant.participateId, {attr, states: participant.states})
@@ -190,9 +194,11 @@ async function updateExperimentStructure (experiment) {
     delete experiment.attr.maxComparisons
   }
 
-  if (experiment.attr.questionType === '2fac') {
+  if (experiment.attr.questionType === '2afc') {
     experiment.attr.maxComparison = experiment.attr.maxTreeComparison + experiment.attr.nRepeat
-  } else if (experiment.attr.questionType === 'multiple') {
+  }
+
+  if (experiment.attr.questionType === 'multiple') {
     let probRepeat = 0.2
     let maxTreeComparison = experiment.attr.imageSetIds.length
     let nRepeat = Math.ceil((probRepeat) * maxTreeComparison)
@@ -275,16 +281,6 @@ function deleteParticipant (participantId) {
     })
 }
 
-async function getSurveyCode (participateId) {
-  let participant = await models.fetchParticipant(participateId)
-  let attr = participant.attr
-  if (!attr.surveyCode) {
-    attr.surveyCode = shortid.generate()
-    await models.saveParticipant(participateId, {attr})
-  }
-  return attr.surveyCode
-}
-
 /**
  * @param participateId
  * @returns {Promise<*>}
@@ -307,43 +303,32 @@ async function publicGetNextChoice (participateId) {
     }
   }
 
-  if (experiment.attr.questionType === '2afc') {
-    if (twochoice.isStatesDone(states)) {
-      await updateParticipant(participant, experiment.attr)
-      return {
-        status: 'done',
-        surveyCode: await getSurveyCode(participateId)
-      }
-    } else {
-      await updateParticipant(participant, experiment.attr)
-      return {
-        status: 'running',
-        method: 'publicChoose2afc',
-        urls,
-        experimentAttr,
-        progress: participant.attr.progress,
-        choices: twochoice.getChoices(states)
-      }
+  await updateParticipant(participant, experiment.attr)
+
+  if (participant.attr.isDone) {
+    return {
+      status: 'done',
+      surveyCode: participant.attr.surveyCode
+    }
+  } else if (experiment.attr.questionType === '2afc') {
+    return {
+      status: 'running',
+      method: 'publicChoose2afc',
+      urls,
+      experimentAttr,
+      choices: twochoice.getChoices(states),
+      progress: participant.attr.progress
     }
   } else if (experiment.attr.questionType === 'multiple') {
-    await updateParticipant(participant, experiment.attr)
-    if (multiple.isDone(experiment, participant)) {
-      return {
-        status: 'done',
-        surveyCode: await getSurveyCode(participateId)
-      }
-    } else {
-      let {question, choices} = multiple.makeChoices(experiment, participant)
-      console.log('> publicGetNextChoice multiple', question, choices)
-      return {
-        status: 'running',
-        method: 'publicChooseMultiple',
-        urls,
-        experimentAttr,
-        question,
-        choices,
-        progress: participant.attr.progress,
-      }
+    let {question, choices} = multiple.makeChoices(experiment, participant)
+    return {
+      status: 'running',
+      method: 'publicChooseMultiple',
+      urls,
+      experimentAttr,
+      question,
+      choices,
+      progress: participant.attr.progress,
     }
   }
 }
