@@ -9,6 +9,8 @@ module.exports = {
   },
   env: {
     node: true,
+    browser: true,
+    es6: true
   },
   extends: [
     // https://github.com/standard/standard/blob/master/docs/RULES-en.md

@@ -105,14 +105,14 @@
               {{ participant.attr.surveyCode }}
             </md-table-cell>
             <md-table-cell>
-              {{ participant.attr.nComparisonDone }}
+              {{ participant.attr.nAnswer }}
             </md-table-cell>
             <md-table-cell>
               {{ participant.attr.time }}
             </md-table-cell>
             <md-table-cell>
-              <span v-if="participant.attr.consistency">
-                {{ participant.attr.consistency }}/{{ participant.attr.nRepeatTotal}}
+              <span v-if="participant.attr.nConsistentAnswer">
+                {{ participant.attr.nConsistentAnswer }}/{{ participant.attr.nRepeatAnswer}}
               </span>
             </md-table-cell>
             <md-table-cell>

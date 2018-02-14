@@ -54,7 +54,7 @@ function makeChoices (experiment, participant) {
   }
 
   console.log('> handlers.publicGetNextChoice doRepeatComparison',
-    isRepeat, experiment.attr.nRepeat, unansweredIds)
+    isRepeat, experiment.attr.nRepeatQuestionMax, unansweredIds)
 
   let imageSetId
   if (!isRepeat) {
@@ -91,8 +91,8 @@ function makeChoices (experiment, participant) {
 }
 
 function isDone (experimentAttr, participant) {
-  return (participant.attr.nComparisonDone >= experimentAttr.maxTreeComparison) &&
-    (participant.attr.nRepeatTotal >= experimentAttr.nRepeat)
+  return (participant.attr.nAnswer >= experimentAttr.nQuestionMax) &&
+    (participant.attr.nRepeatAnswer >= experimentAttr.nRepeatQuestionMax)
 }
 
 module.exports = {

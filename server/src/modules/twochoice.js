@@ -183,13 +183,13 @@ function getNextImage (state) {
   state.iNodeRoot = newRootNode.i
   state.iNodeCompare = state.iNodeRoot
 
-  console.log('>> tree.getNextImage ===>',
+  console.log('> tree.getNextImage ===>',
     'iNodeRoot', state.iNodeRoot,
     'iNodeCompare', state.iNodeCompare,
     'iImageTest', state.iImageTest,
     state.testImageIndices)
 
-  console.log('> tree.getNextImage consistency', checkNodes(state.nodes))
+  console.log('> tree.getNextImage nConsistentAnswer', checkNodes(state.nodes))
 }
 
 function setNextRepeatComparison (state) {
@@ -204,7 +204,7 @@ function setNextRepeatComparison (state) {
 }
 
 /**
- * Checks the consistency of the binary tree in terms of
+ * Checks the nConsistentAnswer of the binary tree in terms of
  * 1. one root node;
  * 2. parent indices match
  * 3. children indices match
@@ -259,7 +259,7 @@ function makeChoice (state, comparison) {
     let compareNode = state.nodes[state.iNodeCompare]
     let chosenImageIndex = comparison.choice
 
-    console.log('>> tree.makeChoice',
+    console.log('> twochoice.makeChoice',
       'iNodeRoot', state.iNodeRoot,
       'compareNode.iImage', compareNode.iImage,
       'iImageTest', state.iImageTest,
@@ -337,9 +337,9 @@ function isDone (state) {
 
   if (state.rankedImageUrls.length === 0) {
     let sortedNodes = getOrderedNodeList(state)
-    state.rankedImageUrls = _.map(sortedNodes, node => state.imageUrls[node.iImage])
-    console.log('> tree.isDone sorted nodes', sortedNodes)
-    console.log('> tree.isDone rankedImageUrls', state.rankedImageUrls)
+    let urls = _.map(sortedNodes, node => state.imageUrls[node.iImage])
+    state.rankedImageUrls = urls
+    console.log('> twochoice.isDone sort urls', sortedNodes, urls)
   }
 
   if (state.fractions.length === 0) {
@@ -352,11 +352,10 @@ function isDone (state) {
       seen[comparison.itemB.value] += 1
     }
     state.fractions = _.map(_.range(nImage), i => chosen[i] / seen[i])
-    console.log('> tree.isDone fractions', state.fractions)
   }
 
   let result = checkComparisons(state)
-  console.log('> tree.isDone checkComparisons', result)
+  console.log('> twochoice.isDone checkComparisons', result)
 
   return true
 }
@@ -396,16 +395,17 @@ function getComparison (state) {
 function calcTreeAttr (imageSizes, probRepeat) {
   let attr = {
     nImage: 0,
-    maxTreeComparison: 0,
-    nRepeat: 0
+    nQuestionMax: 0,
+    nRepeatQuestionMax: 0
   }
   for (let n of imageSizes) {
-    let maxTreeComparison = Math.ceil(n * Math.log2(n))
-    let nRepeat = Math.ceil(probRepeat * maxTreeComparison)
+    let nQuestion = Math.ceil(n * Math.log2(n))
+    let nRepeat = Math.ceil(probRepeat * nQuestion)
     attr.nImage += n
-    attr.maxTreeComparison += maxTreeComparison
-    attr.nRepeat += nRepeat
+    attr.nQuestionMax += nQuestion
+    attr.nRepeatQuestionMax += nRepeat
   }
+  attr.nQuestion = attr.nQuestionMax + attr.nRepeatQuestionMax
   return attr
 }
 
@@ -446,7 +446,6 @@ function getChoices (states) {
       comparison: chosenComparison
     })
   }
-
   return choices
 }
 

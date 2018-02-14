@@ -12,8 +12,8 @@
       <p>
         You have been invited to participate in an experiment on Versus.
         <br>
-        You will be asked at most {{experimentAttr.maxTreeComparison}} questions,
-        of which {{experimentAttr.nRepeat}} will be randomly repeated.
+        You will be asked at most {{experimentAttr.nQuestionMax}} questions,
+        of which {{experimentAttr.nRepeatQuestionMax}} will be randomly repeated.
       </p>
 
       <form
@@ -267,8 +267,7 @@ export default {
           repeat = this.choices[0].comparison.isRepeat
         }
         console.log(
-          `> Invite.handleResponse`,
-          `status:${this.status}, repeat: ${repeat}`,
+          `> Invite.handleResponse status:${this.status}, repeat: ${repeat}`,
           _.cloneDeep(result))
       }
     },

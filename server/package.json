@@ -1,5 +1,5 @@
 {
-  "name": "csiro-versus",
+  "name": "versus-server",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -17,32 +17,14 @@
       "url": "http://boscoh.com"
     }
   ],
-  "bugs": {
-    "url": "https://github.com/codenetwork/SlackBot/issues"
-  },
-  "license": "UNLICENSED",
+  "license": "MIT",
   "dependencies": {
-    "bcryptjs": "*",
-    "body-parser": "~1.15.1",
-    "connect-multiparty": "^2.0.0",
-    "debug": "~2.2.0",
-    "del": "^3.0.0",
-    "denodeify": "^1.2.1",
-    "express": "~4.13.4",
-    "express-session": "*",
-    "fs-extra": "^4.0.1",
-    "global": "^4.3.2",
-    "morgan": "~1.7.0",
-    "multer": "*",
-    "passport": "*",
-    "passport-local": "*",
-    "pretty-ms": "^3.1.0",
-    "rimraf": "^2.6.2",
-    "sequelize": "^3.24.3",
-    "sequelize-json": "^2.1.2",
-    "shortid": "^2.2.8",
-    "sqlite3": "^3.1.13",
     "babel-eslint": "^8.2.1",
+    "bcryptjs": "*",
+    "body-parser": "*",
+    "debug": "*",
+    "del": "*",
+    "denodeify": "*",
     "eslint": "^4.15.0",
     "eslint-config-standard": "^10.2.1",
     "eslint-friendly-formatter": "^3.0.0",
@@ -51,6 +33,19 @@
     "eslint-plugin-node": "^5.2.0",
     "eslint-plugin-promise": "^3.4.0",
     "eslint-plugin-standard": "^3.0.1",
-    "eslint-plugin-vue": "^4.0.0"
+    "eslint-plugin-vue": "^4.0.0",
+    "express": "*",
+    "express-session": "*",
+    "fs-extra": "*",
+    "morgan": "*",
+    "multer": "*",
+    "passport": "*",
+    "passport-local": "*",
+    "pretty-ms": "*",
+    "rimraf": "*",
+    "sequelize": "*",
+    "sequelize-json": "*",
+    "shortid": "*",
+    "sqlite3": "*"
   }
 }

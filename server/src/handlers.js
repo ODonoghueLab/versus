@@ -117,44 +117,47 @@ async function publicForceUpdatePassword (user) {
 }
 
 async function updateParticipant (participant, experimentAttr) {
+  let id = participant.participateId
   let attr = participant.attr
+  let states = participant.states
 
-  attr.nRepeatTotal = 0
-  attr.consistency = 0
-  attr.nComparisonDone = 0
+  attr.nAnswer = 0
+  attr.nRepeatAnswer = 0
+  attr.nConsistentAnswer = 0
+
   let time = 0
 
   if (experimentAttr.questionType === '2afc') {
-    for (let state of _.values(participant.states)) {
+    for (let state of _.values(states)) {
       for (let comparison of state.comparisons) {
         let startMs = new Date(comparison.startTime).getTime()
         let endMs = new Date(comparison.endTime).getTime()
         time += endMs - startMs
-        attr.nComparisonDone += 1
+        attr.nAnswer += 1
         if (comparison.repeat !== null) {
-          attr.nComparisonDone += 1
-          attr.nRepeatTotal += 1
+          attr.nAnswer += 1
+          attr.nRepeatAnswer += 1
           if (comparison.choice === comparison.repeat) {
-            attr.consistency += 1
+            attr.nConsistentAnswer += 1
           }
         }
       }
     }
-    attr.isDone = twochoice.isStatesDone(participant.states)
+    attr.isDone = twochoice.isStatesDone(states)
   } else {
-    if (!_.isUndefined(participant.states.answers)) {
-      for (let answer of participant.states.answers) {
+    if (!_.isUndefined(states.answers)) {
+      for (let answer of states.answers) {
         if (answer.startTime) {
           let startMs = new Date(answer.startTime).getTime()
           let endMs = new Date(answer.endTime).getTime()
           time += endMs - startMs
         }
-        attr.nComparisonDone += 1
+        attr.nAnswer += 1
         if ('repeatValue' in answer) {
-          attr.nComparisonDone += 1
-          attr.nRepeatTotal += 1
+          attr.nAnswer += 1
+          attr.nRepeatAnswer += 1
           if (answer.repeatValue === answer.value) {
-            attr.consistency += 1
+            attr.nConsistentAnswer += 1
           }
         }
       }
@@ -162,9 +165,7 @@ async function updateParticipant (participant, experimentAttr) {
     attr.isDone = multiple.isDone(experimentAttr, participant)
   }
 
-  attr.progress = attr.nComparisonDone / experimentAttr.maxComparison * 100
-  console.log('> updateParticipant experimentAttr\n', experimentAttr)
-  console.log('> updateParticipant progress', attr.nComparisonDone, experimentAttr.maxComparison)
+  attr.progress = attr.nAnswer / experimentAttr.nQuestion * 100
   attr.time = prettyMs(time)
   attr.version = 2
 
@@ -174,7 +175,7 @@ async function updateParticipant (participant, experimentAttr) {
     }
   }
 
-  await models.saveParticipant(participant.participateId, {attr, states: participant.states})
+  await models.saveParticipant(id, {attr, states})
 }
 
 /**
@@ -189,26 +190,32 @@ async function updateExperimentStructure (experiment) {
     delete experiment.attr.params
   }
 
-  if (experiment.attr.maxComparisons) {
-    experiment.attr.maxTreeComparison = experiment.attr.maxComparisons
-    delete experiment.attr.maxComparisons
+  function replaceAttrKey (oldKey, newKey) {
+    if (oldKey in experiment.attr) {
+      experiment.attr[newKey] = experiment.attr[oldKey]
+      delete experiment.attr[oldKey]
+    }
   }
+  replaceAttrKey('maxComparisons', 'nQuestionMax')
+  replaceAttrKey('maxTreeComparison', 'nQuestionMax')
+  replaceAttrKey('nRepeatAnswer', 'nRepeatQuestionMax')
+  replaceAttrKey('nRepeatMax', 'nRepeatQuestionMax')
+  replaceAttrKey('nRepeat', 'nRepeatQuestionMax')
 
   if (experiment.attr.questionType === '2afc') {
-    experiment.attr.maxComparison = experiment.attr.maxTreeComparison + experiment.attr.nRepeat
+    experiment.attr.nQuestion = experiment.attr.nQuestionMax +
+      experiment.attr.nRepeatQuestionMax
   }
 
   if (experiment.attr.questionType === 'multiple') {
     let probRepeat = 0.2
-    let maxTreeComparison = experiment.attr.imageSetIds.length
-    let nRepeat = Math.ceil((probRepeat) * maxTreeComparison)
-    let maxComparison = maxTreeComparison + nRepeat
-    experiment.attr = _.assign(experiment.attr, {
-      nRepeat,
-      maxTreeComparison,
-      maxComparison
-    })
+    let nQuestionMax = experiment.attr.imageSetIds.length
+    let nRepeatMax = Math.ceil((probRepeat) * nQuestionMax)
+    experiment.attr.nQuestionMax = nQuestionMax
+    experiment.attr.nRepeatQuestionMax = nRepeatMax
   }
+
+  experiment.attr.nQuestion = experiment.attr.nQuestionMax + experiment.attr.nRepeatQuestionMax
 
   await models.saveExperimentAttr(experiment.id, experiment.attr)
 
@@ -405,14 +412,11 @@ async function uploadImagesAndCreateExperiment (filelist, userId, attr) {
     if (attr.questionType === '2afc') {
       _.assign(attr, twochoice.calcTreeAttr(_.values(nImageById), twochoice.probRepeat))
     } else if (attr.questionType === 'multiple') {
-      let nQuestion = imageSetIds.length
       let probRepeat = 0.2
-      let nRepeat = Math.ceil(probRepeat * nQuestion)
-      _.assign(attr, {
-        nQuestion,
-        nRepeat,
-        maxComparisons: nQuestion + nRepeat,
-      })
+      let nQuestionMax = imageSetIds.length
+      let nRepeatQuestionMax = Math.ceil(probRepeat * nQuestionMax)
+      let nQuestion = nQuestionMax + nRepeatQuestionMax
+      _.assign(attr, {nQuestionMax, nRepeatQuestionMax, nQuestion})
     }
 
     let experiment = await models.createExperiment(userId, attr, urls)
