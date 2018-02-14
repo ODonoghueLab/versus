@@ -183,7 +183,7 @@ export default {
         'uploadImagesAndCreateExperiment',
         this.$data.files, auth.user.id, this.$data.attr)
 
-      console.log('> CreateExperiment.submit respnse', response)
+      console.log('> CreateExperiment.submit response', response)
 
       if (response.result) {
         console.log('> CreateExperiment.submit', response)

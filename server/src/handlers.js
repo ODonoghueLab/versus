@@ -215,6 +215,10 @@ async function updateExperimentStructure (experiment) {
     experiment.attr.nRepeatQuestionMax = nRepeatMax
   }
 
+  if (!('questionType' in experiment.attr)) {
+    experiment.attr.questionType = '2afc'
+  }
+
   experiment.attr.nQuestion = experiment.attr.nQuestionMax + experiment.attr.nRepeatQuestionMax
 
   await models.saveExperimentAttr(experiment.id, experiment.attr)
@@ -311,6 +315,8 @@ async function publicGetNextChoice (participateId) {
   }
 
   await updateParticipant(participant, experiment.attr)
+
+  console.log('> handlers.publicGetNextChoice', experiment.attr)
 
   if (participant.attr.isDone) {
     return {
