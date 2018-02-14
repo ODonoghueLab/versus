@@ -183,7 +183,7 @@ async function updateParticipant (participant, experimentAttr) {
  * @param experiment
  * @returns {Object} experiment
  */
-async function updateExperimentStructure (experiment) {
+async function updateExperimentAttr (experiment) {
   console.log('> handlers.updateExperimentStructure experiment', experiment.attr.name)
   if (experiment.attr.params) {
     _.assign(experiment.attr, experiment.attr.params)
@@ -233,7 +233,7 @@ async function updateExperimentStructure (experiment) {
 async function updateDatabaseOnInit () {
   let experiments = await models.fetchAllExperiments()
   for (let experiment of experiments) {
-    await updateExperimentStructure(experiment)
+    await updateExperimentAttr(experiment)
   }
 }
 

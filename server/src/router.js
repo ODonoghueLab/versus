@@ -115,12 +115,15 @@ router.post('/api/rpc-run', (req, res, next) => {
 /**
  * Returns a file stored on the server
  */
-router.get('/file/:timestampDir/:basename', (req, res) => {
+router.get('/file/:subDir/:basename', (req, res) => {
   let basename = req.params.basename
-  let timestampDir = req.params.timestampDir
-  console.log('>> router.file', timestampDir, basename)
+  let subDir = req.params.subDir
+  console.log('>> router.file', subDir, basename)
 
-  let filename = path.join(config.filesDir, timestampDir, basename)
+  let filename = path.join(config.filesDir, subDir, basename)
+  if (!fs.existsSync(filename)) {
+    throw `File not found ${filename}`
+  }
   let mimeType = mime.lookup(filename)
 
   res.setHeader('Content-disposition', `attachment; filename=${basename}`)
