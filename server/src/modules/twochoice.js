@@ -453,7 +453,7 @@ module.exports = {
   newState,
   probRepeat,
   makeChoice,
-  calcTreeAttr,
+  calcExperimentAttr: calcTreeAttr,
   isStatesDone,
   getChoices
 }

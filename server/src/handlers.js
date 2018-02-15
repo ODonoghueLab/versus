@@ -2,7 +2,7 @@ const _ = require('lodash')
 const shortid = require('shortid')
 const prettyMs = require('pretty-ms')
 const path = require('path')
-const fs = require('fs')
+const fs = require('fs-extra')
 
 const config = require('./config')
 const models = require('./models')
@@ -116,6 +116,12 @@ async function publicForceUpdatePassword (user) {
   }
 }
 
+function getTime (answer) {
+  let startMs = new Date(answer.startTime).getTime()
+  let endMs = new Date(answer.endTime).getTime()
+  return endMs - startMs
+}
+
 async function updateParticipant (participant, experimentAttr) {
   let id = participant.participateId
   let attr = participant.attr
@@ -130,9 +136,7 @@ async function updateParticipant (participant, experimentAttr) {
   if (experimentAttr.questionType === '2afc') {
     for (let state of _.values(states)) {
       for (let comparison of state.comparisons) {
-        let startMs = new Date(comparison.startTime).getTime()
-        let endMs = new Date(comparison.endTime).getTime()
-        time += endMs - startMs
+        time += getTime(comparison)
         attr.nAnswer += 1
         if (comparison.repeat !== null) {
           attr.nAnswer += 1
@@ -147,11 +151,7 @@ async function updateParticipant (participant, experimentAttr) {
   } else {
     if (!_.isUndefined(states.answers)) {
       for (let answer of states.answers) {
-        if (answer.startTime) {
-          let startMs = new Date(answer.startTime).getTime()
-          let endMs = new Date(answer.endTime).getTime()
-          time += endMs - startMs
-        }
+        time += getTime(answer)
         attr.nAnswer += 1
         if ('repeatValue' in answer) {
           attr.nAnswer += 1
@@ -196,16 +196,12 @@ async function updateExperimentAttr (experiment) {
       delete experiment.attr[oldKey]
     }
   }
+
   replaceAttrKey('maxComparisons', 'nQuestionMax')
   replaceAttrKey('maxTreeComparison', 'nQuestionMax')
   replaceAttrKey('nRepeatAnswer', 'nRepeatQuestionMax')
   replaceAttrKey('nRepeatMax', 'nRepeatQuestionMax')
   replaceAttrKey('nRepeat', 'nRepeatQuestionMax')
-
-  if (experiment.attr.questionType === '2afc') {
-    experiment.attr.nQuestion = experiment.attr.nQuestionMax +
-      experiment.attr.nRepeatQuestionMax
-  }
 
   if (experiment.attr.questionType === 'multiple') {
     let probRepeat = 0.2
@@ -219,7 +215,8 @@ async function updateExperimentAttr (experiment) {
     experiment.attr.questionType = '2afc'
   }
 
-  experiment.attr.nQuestion = experiment.attr.nQuestionMax + experiment.attr.nRepeatQuestionMax
+  experiment.attr.nQuestion =
+    experiment.attr.nQuestionMax + experiment.attr.nRepeatQuestionMax
 
   await models.saveExperimentAttr(experiment.id, experiment.attr)
 
@@ -416,7 +413,8 @@ async function uploadImagesAndCreateExperiment (filelist, userId, attr) {
     let urls = _.map(paths, f => '/file/' + f)
 
     if (attr.questionType === '2afc') {
-      _.assign(attr, twochoice.calcTreeAttr(_.values(nImageById), twochoice.probRepeat))
+      _.assign(attr, twochoice.calcExperimentAttr(
+        _.values(nImageById), twochoice.probRepeat))
     } else if (attr.questionType === 'multiple') {
       let probRepeat = 0.2
       let nQuestionMax = imageSetIds.length
@@ -445,63 +443,130 @@ async function downloadResults (experimentId) {
 
   let experiment = await models.fetchExperiment(experimentId)
 
-  let isFoundHeader = false
-  let imageSet = {}
-
-  let headerRow = ['participantId', 'surveyCode', 'time']
   let rows = []
 
-  for (let participant of experiment.participants) {
+  if (experiment.attr.questionType === '2afc') {
+    let isFoundHeader = false
+    let imageSet = {}
 
-    if (!isFoundHeader) {
-      for (let [imageSetId, state] of _.toPairs(participant.states)) {
-        imageSet[imageSetId] = {
-          imageUrls: state.imageUrls,
-          iImage: {}
+    let headerRow = ['participantId', 'surveyCode', 'time']
+
+    for (let participant of experiment.participants) {
+
+      if (!isFoundHeader) {
+        for (let [imageSetId, state] of _.toPairs(participant.states)) {
+          imageSet[imageSetId] = {
+            imageUrls: state.imageUrls,
+            iImage: {}
+          }
+          headerRow = _.concat(headerRow, state.imageUrls)
+          _.each(state.imageUrls, (url, i) => {
+            imageSet[imageSetId].iImage[url] = i
+          })
         }
-        headerRow = _.concat(headerRow, state.imageUrls)
-        _.each(state.imageUrls, (url, i) => {
-          imageSet[imageSetId].iImage[url] = i
-        })
+        isFoundHeader = true
+        console.log('> makeResultCsv header', headerRow)
       }
-      isFoundHeader = true
-      console.log('> makeResultCsv header', headerRow)
+
+      let row = [
+        participant.participateId,
+        participant.attr.surveyCode,
+        participant.attr.time
+      ]
+
+      for (let [imageSetId, state] of _.toPairs(participant.states)) {
+        let thisRow = util.makeArray(state.rankedImageUrls.length, '')
+        if (!_.isUndefined(state.rankedImageUrls) && (state.rankedImageUrls.length > 0)) {
+          _.each(state.rankedImageUrls, (url, iRank) => {
+            thisRow[imageSet[imageSetId].iImage[url]] = iRank
+          })
+        }
+        row = _.concat(row, thisRow)
+      }
+
+      console.log('> downloadResults row', row)
+
+      rows.push(row)
     }
 
-    let row = [
-      participant.participateId,
-      participant.attr.surveyCode,
-      participant.time
-    ]
+    headerRow = _.map(headerRow, h => path.basename(h))
+    rows.unshift(headerRow)
 
-    for (let [imageSetId, state] of _.toPairs(participant.states)) {
-      let thisRow = util.makeArray(state.rankedImageUrls.length, '')
-      if (!_.isUndefined(state.rankedImageUrls) && (state.rankedImageUrls.length > 0)) {
-        _.each(state.rankedImageUrls, (url, iRank) => {
-          thisRow[imageSet[imageSetId].iImage[url]] = iRank
-        })
+    for (let participant of experiment.participants) {
+      rows.push(['---'])
+      rows.push(['participantId', participant.participateId])
+      for (let state of _.values(participant.states)) {
+        for (let comparison of state.comparisons) {
+          let fnameA = path.basename(comparison.itemA.url)
+          let fnameB = path.basename(comparison.itemA.url)
+          let time = getTime(comparison)
+          let choice
+          if (comparison.itemA.value === comparison.choice) {
+            choice = fnameA
+          } else {
+            choice = fnameB
+          }
+          rows.push([fnameA, fnameB, choice, prettyMs(time)])
+        }
       }
-      row = _.concat(row, thisRow)
     }
-
-    console.log('> downloadResults row', row)
-
-    rows.push(row)
   }
 
-  headerRow = _.map(headerRow, h => path.basename(h))
-  let result = headerRow.join(',') + '\n'
-  for (let row of rows) {
-    result += row.join(',') + '\n'
+  if (experiment.attr.questionType === 'multiple') {
+    let isFoundHeader = false
+    let headerRow = ['participantId', 'surveyCode', 'time']
+    for (let participant of experiment.participants) {
+      if (!isFoundHeader) {
+        headerRow = _.concat(headerRow, experiment.attr.imageSetIds)
+        rows.push(headerRow)
+        let row = ['answer', '', '']
+        isFoundHeader = true
+        for (let id of experiment.attr.imageSetIds) {
+          let image = _.find(experiment.images, image => {
+            let urlId = util.extractId(image.url)
+            if (urlId !== id) {
+              return false
+            }
+            return _.includes(image.url, 'question')
+          })
+          console.log('url', id, image.url)
+          let value = _.last(path.parse(image.url).name.split('_'))
+          row.push(`="${value}"`)
+        }
+        rows.push(row)
+        console.log('> makeResultCsv header', headerRow)
+      }
+
+      let row = [
+        participant.participateId,
+        participant.attr.surveyCode,
+        participant.attr.time
+      ]
+
+      for (let id of experiment.attr.imageSetIds) {
+        let answer = _.find(participant.states.answers, a => a.imageSetId === id)
+        let value = ''
+        if (answer) {
+          value = `="${answer.value}"`
+        }
+        console.log('answer', id, value)
+        row.push(`${value}`)
+      }
+      rows.push(row)
+    }
   }
 
   const timestampDir = String(new Date().getTime())
   const fullDir = path.join(config.filesDir, timestampDir)
-  if (!fs.existsSync(fullDir)) {
-    fs.mkdirSync(fullDir, 0o744)
-  }
+  fs.ensureDirSync(fullDir)
 
   let filename = path.join(config.filesDir, timestampDir, 'results.csv')
+
+  let result = ''
+  for (let row of rows) {
+    result += row.join(',') + '\n'
+  }
+
   fs.writeFileSync(filename, result)
   console.log('> downloadResults filename', filename)
 

@@ -65,6 +65,7 @@ export default {
       let response = await axios.post(`${config.apiUrl}/api/rpc-download`, payload)
       let filename = response.headers.filename
       let data = JSON.parse(response.headers.data)
+      console.log('> rpc.rpcDownload response', data)
       if (!data.error) {
         let blob = new Blob([response.data])
         saveAs.saveAs(blob, (filename))

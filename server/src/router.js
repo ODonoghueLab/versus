@@ -95,6 +95,7 @@ router.post('/api/rpc-run', (req, res, next) => {
         res.json({result})
       })
       .catch(e => {
+        console.log(e.toString())
         res.json({
           error: {
             code: -1,
@@ -124,6 +125,7 @@ router.get('/file/:subDir/:basename', (req, res) => {
   if (!fs.existsSync(filename)) {
     throw `File not found ${filename}`
   }
+
   let mimeType = mime.lookup(filename)
 
   res.setHeader('Content-disposition', `attachment; filename=${basename}`)
@@ -152,6 +154,7 @@ router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
         res.json({result})
       })
       .catch(e => {
+        console.log(e.toString())
         res.json({
           error: {
             code: -1,
@@ -198,6 +201,7 @@ router.post('/api/rpc-download', (req, res) => {
           code: -1,
           message: e.toString()
         }
+        console.log(e.toString())
         res.set('data', JSON.stringify({error}))
         res.set('Access-Control-Expose-Headers', 'data, filename')
         res.json({error})
