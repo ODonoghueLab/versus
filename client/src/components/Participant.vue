@@ -247,9 +247,6 @@ export default {
         }
 
         preloadImages(waitToLoadUrls)
-        if (result.urls) {
-          preloadImages(_.map(result.urls, u => config.apiUrl + u))
-        }
         while (!areImagesLoaded(waitToLoadUrls)) {
           await delay(100)
         }
@@ -266,6 +263,11 @@ export default {
         } else if (this.choices[0].comparison) {
           repeat = this.choices[0].comparison.isRepeat
         }
+
+        if (result.urls) {
+          preloadImages(_.map(result.urls, u => config.apiUrl + u))
+        }
+
         console.log(
           `> Invite.handleResponse status:${this.status}, repeat: ${repeat}`,
           _.cloneDeep(result))
