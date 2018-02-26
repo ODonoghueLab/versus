@@ -16,11 +16,33 @@
  */
 
 const _ = require('lodash')
-const util = require('./util')
 const path = require('path')
+const util = require('./util')
 
-// probability that a repeat comparison will be chosen
-const probRepeat = 0.2
+function getExperimentAttr (paths, probRepeat) {
+  let attr = {
+    probRepeat,
+    nImage: 0,
+    nQuestionMax: 0,
+    nRepeatQuestionMax: 0,
+  }
+
+  let imageSetIds = []
+  for (let path of paths) {
+    let imageSetId = util.extractId(path)
+    if (!_.includes(imageSetIds, imageSetId)) {
+      imageSetIds.push(imageSetId)
+    }
+  }
+
+  attr.imageSetIds = imageSetIds
+
+  attr.nQuestionMax = imageSetIds.length
+  attr.nRepeatQuestionMax = Math.ceil(attr.probRepeat * attr.nQuestionMax)
+  attr.nQuestion = attr.nQuestionMax + attr.nRepeatQuestionMax
+
+  return attr
+}
 
 function lengthOfPropList (o, key) {
   if (!(key in o)) {
@@ -31,15 +53,22 @@ function lengthOfPropList (o, key) {
   }
 }
 
-function makeChoices (experiment, participant) {
+function getIntFromStr (s) {
+  try {
+    return parseInt(s.replace(/^\D+/g, ''))
+  } catch (e) {
+    return null
+  }
+}
+
+function getChoices (experiment, participant) {
   let states = participant.states
 
+  let isRepeat = false
   let unansweredIds = _.clone(experiment.attr.imageSetIds)
   for (let answer of states.answers) {
     _.remove(unansweredIds, id => id === answer.imageSetId)
   }
-
-  let isRepeat = false
   if (unansweredIds.length === 0) {
     if (lengthOfPropList(states, 'toRepeatIds')) {
       isRepeat = true
@@ -47,18 +76,26 @@ function makeChoices (experiment, participant) {
   } else {
     if (lengthOfPropList(states, 'toRepeatIds')) {
       // Here is the random probability to do a repeat
-      if (Math.random() <= probRepeat) {
+      if (Math.random() <= experiment.attr.probRepeat) {
         isRepeat = true
       }
     }
   }
-
-  console.log('> handlers.publicGetNextChoice doRepeatComparison',
+  console.log('> handlers.publicGetNextChoice repeat',
     isRepeat, experiment.attr.nRepeatQuestionMax, unansweredIds)
+
+  let qualificationIds = _.filter(
+    unansweredIds, i => _.startsWith(i.toLowerCase(), 'test'))
+  qualificationIds = _.sortBy(qualificationIds, i => getIntFromStr(i))
+  console.log('> getChoices testIds', qualificationIds)
 
   let imageSetId
   if (!isRepeat) {
-    imageSetId = unansweredIds[Math.floor(Math.random() * unansweredIds.length)]
+    if (qualificationIds.length > 0) {
+      imageSetId = qualificationIds[0]
+    } else {
+      imageSetId = unansweredIds[Math.floor(Math.random() * unansweredIds.length)]
+    }
   } else {
     imageSetId = _.shuffle(states.toRepeatIds)[0]
   }
@@ -95,7 +132,84 @@ function isDone (experimentAttr, participant) {
     (participant.attr.nRepeatAnswer >= experimentAttr.nRepeatQuestionMax)
 }
 
+function getStatus (experimentAttr, participant) {
+  if (isDone(experimentAttr, participant)) {
+    return 'done'
+  }
+
+  if (participant.attr.user === null) {
+    return 'qualificationStart'
+  }
+
+  let unansweredIds = _.clone(experimentAttr.imageSetIds)
+  for (let answer of participant.states.answers) {
+    _.remove(unansweredIds, id => id === answer.imageSetId)
+  }
+  let qualificationIds = _.filter(
+    unansweredIds, i => _.startsWith(i.toLowerCase(), 'test'))
+
+  console.log('> multiple.getStatus', qualificationIds, participant.states.toRepeatIds)
+
+  if (qualificationIds.length > 0) {
+    return 'qualifying'
+  }
+
+  if (participant.attr.user.isQualified) {
+    return 'running'
+  }
+
+  if (_.isUndefined(participant.states.toRepeatIds)) {
+    participant.states.toRepeatIds = []
+  }
+
+  if (participant.states.toRepeatIds.length === 0) {
+    let nQualificationFail = 0
+    if (nQualificationFail > 0) {
+      return 'qualificationFailed'
+    } else {
+      return 'start'
+    }
+  }
+
+  return 'running'
+
+}
+
+function getNewStates (experiment) {
+  return {
+    answers: [],
+    toRepeatIds: []
+  }
+}
+
+function pushToListProp (o, key, item) {
+  if (!(key in o)) {
+    o[key] = []
+  }
+  o[key].push(item)
+}
+
+function makeChoice(states, answer) {
+  answer.endTime = util.getCurrentTimeStr()
+  if (!answer.isRepeat) {
+    states.answers.push(answer)
+    console.log(answer)
+    if (!_.startsWith(answer.imageSetId.toLowerCase(), 'test')) {
+      pushToListProp(states, 'toRepeatIds', answer.imageSetId)
+    }
+  } else {
+    let originalAnswer = _.find(states.answers, a => a.imageSetId === answer.imageSetId)
+    _.remove(states.toRepeatIds, id => id === answer.imageSetId)
+    console.log(answer, originalAnswer, states.toRepeatIds)
+    originalAnswer.repeatValue = answer.value
+  }
+}
+
 module.exports = {
-  makeChoices,
-  isDone
+  getExperimentAttr,
+  getChoices,
+  isDone,
+  getNewStates,
+  makeChoice,
+  getStatus
 }

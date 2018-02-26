@@ -1,6 +1,5 @@
 const _ = require('lodash')
 const shortid = require('shortid')
-const prettyMs = require('pretty-ms')
 const path = require('path')
 const fs = require('fs-extra')
 
@@ -119,7 +118,7 @@ async function publicForceUpdatePassword (user) {
 function getTime (answer) {
   let startMs = new Date(answer.startTime).getTime()
   let endMs = new Date(answer.endTime).getTime()
-  return endMs - startMs
+  return (endMs - startMs) / 1000
 }
 
 async function updateParticipant (participant, experimentAttr) {
@@ -163,10 +162,11 @@ async function updateParticipant (participant, experimentAttr) {
       }
     }
     attr.isDone = multiple.isDone(experimentAttr, participant)
+    attr.status = multiple.getStatus(experimentAttr, participant)
   }
 
   attr.progress = attr.nAnswer / experimentAttr.nQuestion * 100
-  attr.time = prettyMs(time)
+  attr.time = time
   attr.version = 2
 
   if (attr.isDone) {
@@ -189,35 +189,21 @@ async function updateExperimentAttr (experiment) {
     _.assign(experiment.attr, experiment.attr.params)
     delete experiment.attr.params
   }
-
-  function replaceAttrKey (oldKey, newKey) {
-    if (oldKey in experiment.attr) {
-      experiment.attr[newKey] = experiment.attr[oldKey]
-      delete experiment.attr[oldKey]
-    }
-  }
-
-  replaceAttrKey('maxComparisons', 'nQuestionMax')
-  replaceAttrKey('maxTreeComparison', 'nQuestionMax')
-  replaceAttrKey('nRepeatAnswer', 'nRepeatQuestionMax')
-  replaceAttrKey('nRepeatMax', 'nRepeatQuestionMax')
-  replaceAttrKey('nRepeat', 'nRepeatQuestionMax')
-
-  if (experiment.attr.questionType === 'multiple') {
-    let probRepeat = 0.2
-    let nQuestionMax = experiment.attr.imageSetIds.length
-    let nRepeatMax = Math.ceil((probRepeat) * nQuestionMax)
-    experiment.attr.nQuestionMax = nQuestionMax
-    experiment.attr.nRepeatQuestionMax = nRepeatMax
-  }
-
   if (!('questionType' in experiment.attr)) {
     experiment.attr.questionType = '2afc'
   }
+  if (!('probRepeat' in experiment.attr)) {
+    experiment.attr.probRepeat = 0.2
+  }
 
-  experiment.attr.nQuestion =
-    experiment.attr.nQuestionMax + experiment.attr.nRepeatQuestionMax
+  let urls = _.map(experiment.images, 'url')
+  let probRepeat = experiment.attr.probRepeat
 
+  if (experiment.attr.questionType === '2afc') {
+    _.assign(experiment.attr, twochoice.getExperimentAttr(urls, probRepeat))
+  } else if (experiment.attr.questionType === 'multiple') {
+    _.assign(experiment.attr, multiple.getExperimentAttr(urls, probRepeat))
+  }
   await models.saveExperimentAttr(experiment.id, experiment.attr)
 
   if (experiment.participants) {
@@ -295,23 +281,31 @@ function deleteParticipant (participantId) {
  */
 
 async function publicGetNextChoice (participateId) {
-  console.log('> handlers.publicGetNextChoice')
   let participant = await models.fetchParticipant(participateId)
-  let states = participant.states
 
   let experiment = await models.fetchExperiment(participant.ExperimentId)
   let experimentAttr = experiment.attr
   let urls = _.map(experiment.images, 'url')
 
-  if (participant.attr.user === null) {
+  await updateParticipant(participant, experimentAttr)
+
+  console.log(`> handlers.publicGetNextChoice`, participant.attr)
+
+  if (participant.attr.status === 'qualificationStart') {
+    return {
+      status: 'qualificationStart',
+      experimentAttr,
+      urls
+    }
+  }
+
+  if ((participant.attr.user === null) || (participant.attr.status === 'start')) {
     return {
       status: 'start',
       experimentAttr,
       urls
     }
   }
-
-  await updateParticipant(participant, experiment.attr)
 
   console.log('> handlers.publicGetNextChoice', experiment.attr)
 
@@ -326,11 +320,11 @@ async function publicGetNextChoice (participateId) {
       method: 'publicChoose2afc',
       urls,
       experimentAttr,
-      choices: twochoice.getChoices(states),
+      choices: twochoice.getChoices(experiment, participant),
       progress: participant.attr.progress
     }
   } else if (experiment.attr.questionType === 'multiple') {
-    let {question, choices} = multiple.makeChoices(experiment, participant)
+    let {question, choices} = multiple.getChoices(experiment, participant)
     return {
       status: 'running',
       method: 'publicChooseMultiple',
@@ -346,36 +340,17 @@ async function publicGetNextChoice (participateId) {
 async function publicChoose2afc (participateId, choice) {
   let comparison = choice.comparison
   let participant = await models.fetchParticipant(participateId)
-  let urlA = comparison.itemA.url
-  let imageSetId = models.extractId(urlA)
   let states = participant.states
-  let state = states[imageSetId]
-  twochoice.makeChoice(state, comparison)
+  twochoice.makeChoice(states, comparison)
   await models.saveParticipant(participateId, {states})
   return publicGetNextChoice(participateId)
 }
 
-function pushToListProp (o, key, item) {
-  if (!(key in o)) {
-    o[key] = []
-  }
-  o[key].push(item)
-}
-
 async function publicChooseMultiple (participateId, answer) {
   let participant = await models.fetchParticipant(participateId)
-  answer.endTime = util.getCurrentTimeStr()
-  if (!answer.isRepeat) {
-    participant.states.answers.push(answer)
-    pushToListProp(participant.states, 'toRepeatIds', answer.imageSetId)
-  } else {
-    let originalAnswer = _.find(participant.states.answers, a => a.imageSetId === answer.imageSetId)
-    _.remove(participant.states.toRepeatIds, id => id === answer.imageSetId)
-    console.log(answer, originalAnswer, participant.states.toRepeatIds)
-    originalAnswer.repeatValue = answer.value
-  }
-  console.log('> handlers.publicChooseMultiple', participant.states)
-  await models.saveParticipant(participateId, {states: participant.states})
+  let states = participant.states
+  multiple.makeChoice(states, answer)
+  await models.saveParticipant(participateId, {states})
   return publicGetNextChoice(participateId)
 }
 
@@ -395,39 +370,15 @@ async function publicSaveParticipantUserDetails (participateId, user) {
 async function uploadImagesAndCreateExperiment (filelist, userId, attr) {
   try {
     let paths = await models.storeFilesInConfigDir(filelist)
-
-    let imageSetIds = []
-    let nImageById = {}
-    for (let path of paths) {
-      let imageSetId = models.extractId(path)
-      if (!_.includes(imageSetIds, imageSetId)) {
-        imageSetIds.push(imageSetId)
-        nImageById[imageSetId] = 0
-      }
-      nImageById[imageSetId] += 1
-    }
-
-    attr.imageSetIds = imageSetIds
-    console.log('>> routes.uploadImagesAndCreateExperiment attr', attr)
-
     let urls = _.map(paths, f => '/file/' + f)
-
     if (attr.questionType === '2afc') {
-      _.assign(attr, twochoice.calcExperimentAttr(
-        _.values(nImageById), twochoice.probRepeat))
+      _.assign(attr, twochoice.getExperimentAttr(urls, 0.2))
     } else if (attr.questionType === 'multiple') {
-      let probRepeat = 0.2
-      let nQuestionMax = imageSetIds.length
-      let nRepeatQuestionMax = Math.ceil(probRepeat * nQuestionMax)
-      let nQuestion = nQuestionMax + nRepeatQuestionMax
-      _.assign(attr, {nQuestionMax, nRepeatQuestionMax, nQuestion})
+      _.assign(attr, multiple.getExperimentAttr(urls, 0.2))
     }
-
     let experiment = await models.createExperiment(userId, attr, urls)
-
     console.log(
       '> routers.uploadImagesAndCreateExperiment output', experiment)
-
     return {
       success: true,
       experimentId: experiment.id
@@ -506,7 +457,7 @@ async function downloadResults (experimentId) {
           } else {
             choice = fnameB
           }
-          rows.push([fnameA, fnameB, choice, prettyMs(time)])
+          rows.push([fnameA, fnameB, choice, time])
         }
       }
     }

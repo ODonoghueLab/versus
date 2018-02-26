@@ -11,6 +11,7 @@ const Sequelize = require('sequelize')
 const sequelizeJson = require('sequelize-json')
 
 const twochoice = require('./modules/twochoice')
+const multiple = require('./modules/multiple')
 const util = require('./modules/util')
 const config = require('./config')
 const conn = require('./conn')
@@ -243,20 +244,6 @@ async function cleanupImages () {
 }
 
 /**
- * Key function to return imageSetId from a path name, else empty string
- * These function should be used to allow unique imageSetIds to be
- * extracted across the app.
- */
-function getImageSetIdFromPath (p) {
-  let tokens = path.basename(p).split('_')
-  if (tokens.length > 0) {
-    return tokens[0]
-  } else {
-    return ''
-  }
-}
-
-/**
  * Experiment access functions
  *
  * Unwrapped instance JSON structure:
@@ -350,25 +337,13 @@ async function fetchExperiments (userId) {
 
 async function createParticipant (experimentId, email) {
   let experiment = await findExperiment(experimentId)
-
-  const urls = _.map(experiment.images, 'url')
-
-  let attr = {email, user: null}
-
-  let states = {}
+  let states
   if (experiment.attr.questionType === '2afc') {
-    for (let imageSetId of experiment.attr.imageSetIds) {
-      let theseUrls = _.filter(urls, u => util.extractId(u) === imageSetId)
-      states[imageSetId] = twochoice.newState(theseUrls)
-    }
+    states = twochoice.getNewStates(experiment)
   } else if (experiment.attr.questionType === 'multiple') {
-    states = {
-      answers: [],
-      repeatIndices: [],
-      version: 1
-    }
+    states = multiple.getNewStates(experiment)
   }
-
+  let attr = {email, user: null}
   let participant = await Participant.create({attr, states})
   await experiment.addParticipant(participant)
   return unwrapInstance(participant)
@@ -408,7 +383,6 @@ init()
 
 module.exports = {
   storeFilesInConfigDir,
-  extractId: getImageSetIdFromPath,
   createUser,
   fetchUser,
   checkUserWithPassword,

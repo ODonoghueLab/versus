@@ -2,8 +2,33 @@
   <div>
 
     <div
-      style="padding: 1em"
-      v-if="status === 'start'">
+      v-if="status === 'qualificationStart'"
+      style="padding: 1em">
+
+      <h2 class="md-display-2">
+        Welcome to Versus!
+      </h2>
+
+      <p>
+        This is a qualification round. You will be asked a few questions
+        to allow access to the main survey.
+      </p>
+
+      <form
+        v-on:submit.prevent="startSurvey">
+        <md-button
+          @click="startQualification"
+          class="md-raised md-primary"
+          style="margin-left: 1em">
+          Begin
+        </md-button>
+      </form>
+
+    </div>
+
+    <div
+      v-if="status === 'start'"
+      style="padding: 1em">
 
       <h2 class="md-display-2">
         Welcome to Versus!
@@ -79,8 +104,19 @@
           <br>
         </md-layout>
 
+        <div
+            v-if="isLoading">
+          <md-spinner
+            style="margin-top: 3em"
+            :md-size="150"
+            md-indeterminate/>
+          <div style="text-align: center">
+            Loading...
+          </div>
+        </div>
+
         <md-layout
-            v-if="question"
+            v-if="!isLoading && question"
             md-align="center"
             md-flex="100">
           <img
@@ -89,6 +125,7 @@
         </md-layout>
 
         <md-layout
+            v-if="!isLoading"
             v-for="(choice, i) of choices"
             :key="i"
             md-align="center">
@@ -153,6 +190,7 @@
 import _ from 'lodash'
 import config from '../config'
 import rpc from '../modules/rpc'
+import util from '../modules/util'
 
 function delay (timeMs) {
   return new Promise(resolve => { setTimeout(resolve, timeMs) })
@@ -215,11 +253,11 @@ export default {
 
     async handleResponse (response) {
       let result = response.result
-      console.log('> Participant.handleResponse', result)
+      console.log(`> Participant.handleResponse status=${result.status}`, result)
       this.status = result.status
+      this.experimentAttr = result.experimentAttr
 
       if (this.status === 'start') {
-        this.experimentAttr = result.experimentAttr
       } else if (this.status === 'done') {
         this.surveyCode = result.surveyCode
       } else if (this.status === 'running') {
@@ -231,9 +269,9 @@ export default {
         this.question = null
         this.choices.length = 0
         this.isChosen = false
-        await delay(200)
-
         this.isLoading = true
+
+        await delay(200)
 
         let waitToLoadUrls = []
         if (result.question) {
@@ -268,9 +306,9 @@ export default {
           preloadImages(_.map(result.urls, u => config.apiUrl + u))
         }
 
+        let setId = util.extractId(waitToLoadUrls[0])
         console.log(
-          `> Invite.handleResponse status:${this.status}, repeat: ${repeat}`,
-          _.cloneDeep(result))
+          `> Invite.handleResponse running repeat=${repeat} setid=${setId}`)
       }
     },
 
@@ -279,15 +317,22 @@ export default {
       this.isChosen = true
       this.$forceUpdate()
       let participateId = this.$route.params.participateId
-      let response = await rpc.rpcRun(
-        this.method, participateId, choice)
+      let method = this.method
+      let response = await rpc.rpcRun(method, participateId, choice)
       return this.handleResponse(response)
     },
 
     startSurvey () {
       let participateId = this.$route.params.participateId
       return rpc
-        .rpcRun('publicSaveParticipantUserDetails', participateId, {})
+        .rpcRun('publicSaveParticipantUserDetails', participateId, {isQualified: true})
+        .then(this.handleResponse)
+    },
+
+    startQualification () {
+      let participateId = this.$route.params.participateId
+      return rpc
+        .rpcRun('publicSaveParticipantUserDetails', participateId, {isQualified: false})
         .then(this.handleResponse)
     }
   }

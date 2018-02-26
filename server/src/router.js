@@ -43,44 +43,51 @@ router.post('/api/rpc-run', (req, res, next) => {
   let method = req.body.method
   console.log(`>> router.rpc-run.${method}`)
 
-  if (method === 'login') {
+  if (method === 'publicLoginUser') {
     req.body.email = params[0].email
     req.body.password = params[0].password
 
     passport.authenticate('local', (err, user) => {
       if (err) {
-        console.log('>> router.rpc-run.login authenticate error')
+        console.log('>> router.rpc-run.publicLoginUser authenticate error')
         return next(err)
       }
       if (!user) {
-        console.log('>> router.rpc-run.login no user found')
+        console.log('>> router.rpc-run.publicLoginUser no user found')
         return res.json({
           error: {
             code: -1,
             message: 'user/password not found'
-          }
+          },
+          jsonrpc: '2.0'
         })
       }
       req.logIn(user, (error) => {
         if (error) {
-          console.log('>> router.rpc-run.login session login error', err)
+          console.log('>> router.rpc-run.publicLoginUser session publicLoginUser error', err)
           return next(error)
         }
-        console.log('>> router.rpc-run.login success', user)
+        console.log('>> router.rpc-run.publicLoginUser success', user)
         let returnUser = _.cloneDeep(user)
         delete returnUser.password
         return res.json({
           result: {
             success: true,
             user: returnUser
-          }
+          },
+          jsonrpc: '2.0'
         })
       })
     })(req, res, next)
-  } else if (method === 'logout') {
+  } else if (method === 'publicLogoutUser') {
     req.session.destroy()
     req.logout()
-    res.json({success: true})
+    res.json({
+      result: {
+        success: true
+      },
+      jsonrpc: '2.0'
+    })
   } else if (method in remoteRunFns) {
     if (!_.startsWith(method, 'public')) {
       if (!req.isAuthenticated || !req.isAuthenticated()) {
@@ -92,7 +99,10 @@ router.post('/api/rpc-run', (req, res, next) => {
 
     runFn(...params)
       .then(result => {
-        res.json({result})
+        res.json({
+          result,
+          jsonrpc: '2.0'
+        })
       })
       .catch(e => {
         console.log(e.toString())
@@ -100,7 +110,8 @@ router.post('/api/rpc-run', (req, res, next) => {
           error: {
             code: -1,
             message: e.toString()
-          }
+          },
+          jsonrpc: '2.0'
         })
       })
   } else {
@@ -108,29 +119,10 @@ router.post('/api/rpc-run', (req, res, next) => {
       error: {
         code: -1,
         message: `Remote runFn ${method} not found`
-      }
+      },
+      jsonrpc: '2.0'
     })
   }
-})
-
-/**
- * Returns a file stored on the server
- */
-router.get('/file/:subDir/:basename', (req, res) => {
-  let basename = req.params.basename
-  let subDir = req.params.subDir
-  console.log('>> router.file', subDir, basename)
-
-  let filename = path.join(config.filesDir, subDir, basename)
-  if (!fs.existsSync(filename)) {
-    throw `File not found ${filename}`
-  }
-
-  let mimeType = mime.lookup(filename)
-
-  res.setHeader('Content-disposition', `attachment; filename=${basename}`)
-  res.setHeader('Content-type', mimeType)
-  fs.createReadStream(filename).pipe(res)
 })
 
 /**
@@ -151,7 +143,10 @@ router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
     params = _.concat([req.files], params)
     uploadFn(...params)
       .then(result => {
-        res.json({result})
+        res.json({
+          result,
+          jsonrpc: '2.0'
+        })
       })
       .catch(e => {
         console.log(e.toString())
@@ -159,7 +154,8 @@ router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
           error: {
             code: -1,
             message: e.toString()
-          }
+          },
+          jsonrpc: '2.0'
         })
       })
   } else {
@@ -167,7 +163,8 @@ router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
       error: {
         code: -1,
         message: `Remote uploadFn ${method} not found`
-      }
+      },
+      jsonrpc: '2.0'
     })
   }
 })
@@ -191,7 +188,10 @@ router.post('/api/rpc-download', (req, res) => {
 
     downloadFn(...params)
       .then(result => {
-        res.set('data', JSON.stringify({result: result.result}))
+        res.set('data', JSON.stringify({
+          result: result.result,
+          jsonrpc: '2.0'
+        }))
         res.set('filename', path.basename(result.filename))
         res.set('Access-Control-Expose-Headers', 'data, filename')
         res.download(result.filename)
@@ -202,17 +202,42 @@ router.post('/api/rpc-download', (req, res) => {
           message: e.toString()
         }
         console.log(e.toString())
-        res.set('data', JSON.stringify({error}))
+        res.set('data', JSON.stringify({
+          error,
+          jsonrpc: '2.0'
+        }))
         res.set('Access-Control-Expose-Headers', 'data, filename')
-        res.json({error})
       })
   } else {
     let error = {
       code: -1,
       message: `Remote uploadFn ${method} not found`
     }
-    res.set('data', JSON.stringify({error}))
+    res.set('data', JSON.stringify({
+      error,
+      jsonrpc: '2.0'
+    }))
     res.set('Access-Control-Expose-Headers', 'data')
-    res.json({error})
   }
 })
+
+/**
+ * Returns a file stored on the server
+ */
+router.get('/file/:subDir/:basename', (req, res) => {
+  let basename = req.params.basename
+  let subDir = req.params.subDir
+  console.log('>> router.file', subDir, basename)
+
+  let filename = path.join(config.filesDir, subDir, basename)
+  if (!fs.existsSync(filename)) {
+    throw `File not found ${filename}`
+  }
+
+  let mimeType = mime.lookup(filename)
+
+  res.setHeader('Content-disposition', `attachment; filename=${basename}`)
+  res.setHeader('Content-type', mimeType)
+  fs.createReadStream(filename).pipe(res)
+})
+

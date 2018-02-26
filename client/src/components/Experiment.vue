@@ -24,25 +24,37 @@
 
       <md-input-container>
         <label>Title</label>
-        <md-input v-model="experiment.attr.title">
-        </md-input>
+        <md-input v-model="experiment.attr.title"/>
       </md-input-container>
 
       <md-input-container>
         <label>Blurb</label>
-        <md-textarea
-          v-model="experiment.attr.blurb">
-        </md-textarea>
+        <md-textarea v-model="experiment.attr.blurb"/>
       </md-input-container>
 
       <div>
-        <md-radio v-model="experiment.attr.questionType" id="my-test1" name="my-test-group1" md-value="2afc">2
-          alternative forced choice
+        <md-radio
+          v-model="experiment.attr.questionType"
+          id="my-test1"
+          name="my-test-group1"
+          md-value="2afc">
+          2 alternative forced choice
         </md-radio>
-        <md-radio v-model="experiment.attr.questionType" id="my-test2" name="my-test-group1" md-value="multiple">
+        <md-radio
+          v-model="experiment.attr.questionType"
+          id="my-test2"
+          name="my-test-group1"
+          md-value="multiple">
           multiple choice
         </md-radio>
       </div>
+
+      <md-input-container style="width: 130px">
+        <label>Probability of Repeat</label>
+        <md-input
+          type="number"
+          v-model="experiment.attr.probRepeat"/>
+      </md-input-container>
 
       <md-button
         class="md-raised"
@@ -77,9 +89,9 @@
         <md-table-header>
           <md-table-row>
             <md-table-head>Invite</md-table-head>
-            <md-table-head>SurveyCode</md-table-head>
-            <md-table-head>Comparisons</md-table-head>
-            <md-table-head>Time</md-table-head>
+            <md-table-head>Code</md-table-head>
+            <md-table-head>Answers</md-table-head>
+            <md-table-head>Time (s)</md-table-head>
             <md-table-head>Consistency</md-table-head>
             <md-table-head>Created</md-table-head>
             <md-table-head>Updated</md-table-head>
@@ -108,7 +120,9 @@
               {{ participant.attr.nAnswer }}
             </md-table-cell>
             <md-table-cell>
-              {{ participant.attr.time }}
+              <span v-if="participant.attr.time">
+                {{ participant.attr.time.toFixed(1) }}
+              </span>
             </md-table-cell>
             <md-table-cell>
               <span v-if="participant.attr.nConsistentAnswer">

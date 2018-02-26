@@ -4,19 +4,14 @@ const path = require('path')
 module.exports = {
 
   /**
-   * Returns a nicely formatted string of JSON-literal
-   * @param o
+   * @return {String} of JSON-literal o
    */
   jstr (o) {
     return JSON.stringify(o, null, 2)
   },
 
   /**
-   * In-place removal of item from a list of dictionaries, using the key
-   * to make the comparison for equality for the item
-   * @param aList
-   * @param item
-   * @param key
+   * In-place removal of item from a list of dictionaries, using key for comparison
    */
   removeItem (aList, item, key) {
     const iLast = aList.length - 1
@@ -28,10 +23,7 @@ module.exports = {
   },
 
   /**
-   * Returns an n-length array of v values
-   * @param n
-   * @param v
-   * @returns {Array}
+   * @returns {Array} - of n-length consisting of v values
    */
   makeArray (n, v) {
     let l = []
@@ -42,11 +34,7 @@ module.exports = {
   },
 
   /**
-   * Checks if str is a sub-string in any string of a list
-   * of tesStrList
-   * @param str
-   * @param testStrList
-   * @returns {boolean}
+   * @return {boolean} if str is a sub-string of any string of testStrList
    */
   isStringInStringList (str, testStrList) {
     for (let testStr of testStrList) {

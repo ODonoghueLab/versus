@@ -22,9 +22,6 @@
 const _ = require('lodash')
 const util = require('./util')
 
-// probability that a repeat comparison will be chosen
-let probRepeat = 0.2
-
 /**
  * Creates a new node, defined by its index i
  */
@@ -38,7 +35,7 @@ function newNode (i, iImage, left, right, parent) {
  * @param {Array<String>} imageUrls
  * @returns {Object} State of the binary-choice-tree
  */
-function newState (imageUrls) {
+function newState (imageUrls, probRepeat) {
   let nImage = imageUrls.length
   let maxNComparison = Math.floor(nImage * Math.log2(nImage))
   let totalRepeat = Math.ceil(maxNComparison * probRepeat)
@@ -72,6 +69,16 @@ function newState (imageUrls) {
     fractions: [], // list of number of winning votes for each image-url
     rankedImageUrls: [], // ranked list of the image-url for user preference
   }
+}
+
+function getNewStates (experiment) {
+  states = {}
+  const urls = _.map(experiment.images, 'url')
+  for (let imageSetId of experiment.attr.imageSetIds) {
+    let theseUrls = _.filter(urls, u => util.extractId(u) === imageSetId)
+    states[imageSetId] = newState(theseUrls, experiment.attr.probRepeat)
+  }
+  return states
 }
 
 /**
@@ -249,7 +256,10 @@ function checkNodes (nodes) {
   return pass
 }
 
-function makeChoice (state, comparison) {
+function makeChoice (states, comparison) {
+  let urlA = comparison.itemA.url
+  let imageSetId = util.extractId(urlA)
+  let state = states[imageSetId]
   if (comparison.isRepeat) {
     let i = state.iComparisonRepeat
     state.comparisons[i].repeat = comparison.repeat
@@ -360,7 +370,7 @@ function isDone (state) {
   return true
 }
 
-function getComparison (state) {
+function getComparison (state, probRepeat) {
   let doRepeatComparison = false
 
   if (isAllImagesTested(state)) {
@@ -368,7 +378,7 @@ function getComparison (state) {
   } else {
     if (state.iComparisonRepeat !== null) {
       // Here is the random probability to do a repeat
-      if (Math.random() <= state.probRepeat) {
+      if (Math.random() <= probRepeat) {
         doRepeatComparison = true
       }
     }
@@ -392,20 +402,37 @@ function getComparison (state) {
   }
 }
 
-function calcTreeAttr (imageSizes, probRepeat) {
+function getExperimentAttr (urls, probRepeat) {
   let attr = {
+    probRepeat,
     nImage: 0,
     nQuestionMax: 0,
-    nRepeatQuestionMax: 0
+    nRepeatQuestionMax: 0,
   }
-  for (let n of imageSizes) {
+
+  let imageSetIds = []
+  let nImageById = {}
+  for (let path of urls) {
+    let imageSetId = util.extractId(path)
+    if (!_.includes(imageSetIds, imageSetId)) {
+      imageSetIds.push(imageSetId)
+      nImageById[imageSetId] = 0
+    }
+    nImageById[imageSetId] += 1
+  }
+
+  attr.imageSetIds = imageSetIds
+
+  for (let n of _.values(nImageById)) {
     let nQuestion = Math.ceil(n * Math.log2(n))
-    let nRepeat = Math.ceil(probRepeat * nQuestion)
+    let nRepeat = Math.ceil(attr.probRepeat * nQuestion)
     attr.nImage += n
     attr.nQuestionMax += nQuestion
     attr.nRepeatQuestionMax += nRepeat
   }
+
   attr.nQuestion = attr.nQuestionMax + attr.nRepeatQuestionMax
+
   return attr
 }
 
@@ -431,8 +458,10 @@ function getRandomUnfinishedState (states) {
   return states[id]
 }
 
-function getChoices (states) {
-  let comparison = getComparison(getRandomUnfinishedState(states))
+function getChoices (experiment, participant) {
+  let states = participant.states
+  let probRepeat = experiment.attr.probRepeat
+  let comparison = getComparison(getRandomUnfinishedState(states), probRepeat)
   let choices = []
   for (let item of [comparison.itemA, comparison.itemB]) {
     let chosenComparison = _.cloneDeep(comparison)
@@ -450,10 +479,9 @@ function getChoices (states) {
 }
 
 module.exports = {
-  newState,
-  probRepeat,
+  getNewStates,
   makeChoice,
-  calcExperimentAttr: calcTreeAttr,
+  getExperimentAttr,
   isStatesDone,
   getChoices
 }

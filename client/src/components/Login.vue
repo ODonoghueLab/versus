@@ -49,7 +49,6 @@
 <script>
 import auth from '../modules/auth'
 import config from '../config'
-
 export default {
   name: 'Login',
   data () {

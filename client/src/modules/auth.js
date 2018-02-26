@@ -52,7 +52,7 @@ export default {
   async login (newUser) {
     let payload = hashUserPassword(newUser)
     console.log('> auth.login', payload)
-    let response = await rpc.rpcRun('login', payload)
+    let response = await rpc.rpcRun('publicLoginUser', payload)
     console.log('> auth.login response', response)
     if (response.result) {
       user.authenticated = true
@@ -72,7 +72,7 @@ export default {
   async update (editUser) {
     let payload = hashUserPassword(editUser)
     console.log('> auth.update', util.jstr(payload))
-    let response = await rpc.rpcRun('updateUser', payload)
+    let response = await rpc.rpcRun('loginUpdateUser', payload)
     if (response.result) {
       _.assign(user, payload)
       localStorage.setItem('user', JSON.stringify(user))
@@ -97,6 +97,6 @@ export default {
   logout () {
     localStorage.removeItem('user')
     user.authenticated = false
-    return rpc.rpcRun('logout')
+    return rpc.rpcRun('publicLogoutUser')
   }
 }

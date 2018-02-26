@@ -100,14 +100,18 @@ passport.use(new LocalStrategy(
   })
 )
 
-// Load routes for api
-app.use(require('./router'))
-
 // Load compiled production client
 const clientDir = path.join(__dirname, '..', '..', 'client', 'dist')
 app.use(express.static(clientDir))
+
+const filesDir = path.join(__dirname, 'files')
+app.use('/file', express.static('files'))
+
+// Load routes for api
+app.use(require('./router'))
+
 app.get('/', (req, res) => {
-  res.sendFile(path.join(clientDir, 'index.html'))
+  res.sendFile(path.join(filesDir, 'index.html'))
 })
 
 // Redirect dangling calls to here
