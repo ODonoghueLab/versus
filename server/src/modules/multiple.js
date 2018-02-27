@@ -127,13 +127,27 @@ function getChoices (experiment, participant) {
   return {question, choices}
 }
 
-function getCorrectValue(experiment, testId) {
-  let image = _.find(experiment.images, image => {
-    let isSameId = util.extractId(image.url) === testId
-    let isQuestion = image.url.includes('question')
-    return isSameId && isQuestion
-  })
-  return util.extractId(image.url, '_', 2)
+function checkQualificationFail (experiment, states) {
+
+  function getCorrectValue (experiment, testId) {
+    let image = _.find(experiment.images, image => {
+      let isSameId = util.extractId(image.url) === testId
+      let isQuestion = image.url.includes('question')
+      return isSameId && isQuestion
+    })
+    return util.extractId(image.url, '_', 2)
+  }
+
+  let nQualificationFail = 0
+  let imageSetIds = experiment.attr.imageSetIds
+  let qualificationIds = _.filter(imageSetIds, i => _.startsWith(i.toLowerCase(), 'test'))
+  for (let testId of qualificationIds) {
+    let answer = _.find(states.answers, a => a.imageSetId === testId)
+    if (!(getCorrectValue(experiment, testId) === answer.value)) {
+      nQualificationFail += 1
+    }
+  }
+  return (nQualificationFail > 0)
 }
 
 function updateStatesToAttr (participant, experiment) {
@@ -163,6 +177,10 @@ function updateStatesToAttr (participant, experiment) {
   attr.isDone = (attr.nAnswer >= experimentAttr.nQuestionMax) &&
     (attr.nRepeatAnswer >= experimentAttr.nRepeatQuestionMax)
 
+  if (_.isUndefined(states.toRepeatIds)) {
+    states.toRepeatIds = []
+  }
+
   console.log('> handlers.updateStatesToAttr', experimentAttr)
 
   if (attr.isDone) {
@@ -182,20 +200,8 @@ function updateStatesToAttr (participant, experiment) {
       attr.status = 'running'
     } else {
       attr.status = 'running'
-      if (_.isUndefined(states.toRepeatIds)) {
-        states.toRepeatIds = []
-      }
       if (states.toRepeatIds.length === 0) {
-        let nQualificationFail = 0
-        let qualificationIds = _.filter(
-          experimentAttr.imageSetIds, i => _.startsWith(i.toLowerCase(), 'test'))
-        for (let testId of qualificationIds) {
-          let answer = _.find(states.answers, a => a.imageSetId === testId)
-          if (!(getCorrectValue(experiment, testId) === answer.value)) {
-            nQualificationFail += 1
-          }
-        }
-        if (nQualificationFail > 0) {
+        if (checkQualificationFail(experiment, states)) {
           attr.status = 'qualificationFailed'
         } else {
           attr.status = 'start'
