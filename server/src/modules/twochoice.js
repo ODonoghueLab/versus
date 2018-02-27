@@ -370,6 +370,45 @@ function isDone (state) {
   return true
 }
 
+function updateStatesToAttr (participant, experimentAttr) {
+  let attr = participant.attr
+  let states = participant.states
+
+  attr.nAnswer = 0
+  attr.nRepeatAnswer = 0
+  attr.nConsistentAnswer = 0
+  attr.time = 0
+  for (let state of _.values(states)) {
+    for (let comparison of state.comparisons) {
+      attr.time += util.getTimeInterval(comparison)
+      attr.nAnswer += 1
+      if (comparison.repeat !== null) {
+        attr.nAnswer += 1
+        attr.nRepeatAnswer += 1
+        if (comparison.choice === comparison.repeat) {
+          attr.nConsistentAnswer += 1
+        }
+      }
+    }
+  }
+  attr.progress = attr.nAnswer / experimentAttr.nQuestion * 100
+
+  attr.isDone = true
+  for (let state of _.values(states)) {
+    if (!isDone(state)) {
+      attr.isDone = false
+    }
+  }
+
+  if (attr.isDone) {
+    attr.status = 'done'
+  } else if (attr.user === null) {
+    attr.status = 'start'
+  } else {
+    attr.status = 'running'
+  }
+}
+
 function getComparison (state, probRepeat) {
   let doRepeatComparison = false
 
@@ -436,15 +475,6 @@ function getExperimentAttr (urls, probRepeat) {
   return attr
 }
 
-function isStatesDone (states) {
-  for (let state of _.values(states)) {
-    if (!isDone(state)) {
-      return false
-    }
-  }
-  return true
-}
-
 function getRandomUnfinishedState (states) {
   let choices = []
   for (let [id, state] of _.toPairs(states)) {
@@ -482,6 +512,6 @@ module.exports = {
   getNewStates,
   makeChoice,
   getExperimentAttr,
-  isStatesDone,
+  updateStatesToAttr,
   getChoices
 }

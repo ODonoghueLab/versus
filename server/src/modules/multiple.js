@@ -127,52 +127,81 @@ function getChoices (experiment, participant) {
   return {question, choices}
 }
 
-function isDone (experimentAttr, participant) {
-  return (participant.attr.nAnswer >= experimentAttr.nQuestionMax) &&
-    (participant.attr.nRepeatAnswer >= experimentAttr.nRepeatQuestionMax)
-}
+function updateStatesToAttr (participant, experiment) {
+  let experimentAttr = experiment.attr
+  let attr = participant.attr
+  let states = participant.states
 
-function getStatus (experimentAttr, participant) {
-  if (isDone(experimentAttr, participant)) {
-    return 'done'
-  }
-
-  if (participant.attr.user === null) {
-    return 'qualificationStart'
-  }
-
-  let unansweredIds = _.clone(experimentAttr.imageSetIds)
-  for (let answer of participant.states.answers) {
-    _.remove(unansweredIds, id => id === answer.imageSetId)
-  }
-  let qualificationIds = _.filter(
-    unansweredIds, i => _.startsWith(i.toLowerCase(), 'test'))
-
-  console.log('> multiple.getStatus', qualificationIds, participant.states.toRepeatIds)
-
-  if (qualificationIds.length > 0) {
-    return 'qualifying'
-  }
-
-  if (participant.attr.user.isQualified) {
-    return 'running'
-  }
-
-  if (_.isUndefined(participant.states.toRepeatIds)) {
-    participant.states.toRepeatIds = []
-  }
-
-  if (participant.states.toRepeatIds.length === 0) {
-    let nQualificationFail = 0
-    if (nQualificationFail > 0) {
-      return 'qualificationFailed'
-    } else {
-      return 'start'
+  attr.nAnswer = 0
+  attr.nRepeatAnswer = 0
+  attr.nConsistentAnswer = 0
+  attr.time = 0
+  if (!_.isUndefined(states.answers)) {
+    for (let answer of states.answers) {
+      attr.time += util.getTimeInterval(answer)
+      attr.nAnswer += 1
+      if ('repeatValue' in answer) {
+        attr.nAnswer += 1
+        attr.nRepeatAnswer += 1
+        if (answer.repeatValue === answer.value) {
+          attr.nConsistentAnswer += 1
+        }
+      }
     }
   }
+  attr.progress = attr.nAnswer / experimentAttr.nQuestion * 100
 
-  return 'running'
+  attr.isDone = (attr.nAnswer >= experimentAttr.nQuestionMax) &&
+    (attr.nRepeatAnswer >= experimentAttr.nRepeatQuestionMax)
 
+  console.log('> handlers.updateStatesToAttr', experimentAttr)
+
+  if (attr.isDone) {
+    attr.status = 'done'
+  } else if (attr.user === null) {
+    attr.status = 'qualificationStart'
+  } else {
+    let unansweredIds = _.clone(experimentAttr.imageSetIds)
+    for (let answer of states.answers) {
+      _.remove(unansweredIds, id => id === answer.imageSetId)
+    }
+    let qualificationIds = _.filter(
+      unansweredIds, i => _.startsWith(i.toLowerCase(), 'test'))
+    if (qualificationIds.length > 0) {
+      attr.status = 'qualifying'
+    } else if (attr.user.isQualified) {
+      attr.status = 'running'
+    } else {
+      attr.status = 'running'
+      if (_.isUndefined(states.toRepeatIds)) {
+        states.toRepeatIds = []
+      }
+      if (states.toRepeatIds.length === 0) {
+        let nQualificationFail = 0
+        let qualificationIds = _.filter(
+          experimentAttr.imageSetIds, i => _.startsWith(i.toLowerCase(), 'test'))
+        for (let testId of qualificationIds) {
+          let answer = _.find(states.answers, a => a.imageSetId === testId)
+          let image = _.find(experiment.images, image => {
+            let isSameId = util.extractId(image.url) === testId
+            let isQuestion = image.url.includes('question')
+            return isSameId && isQuestion
+          })
+          let correctValue = util.extractId(image.url, '_', 2)
+          if (!(correctValue === answer.value)) {
+            nQualificationFail += 1
+          }
+          console.log('> mutliple.updateStatesToAttr check qualification answer', answer.value, correctValue)
+        }
+        // TODO: check for qualification answers correctly
+        if (nQualificationFail > 0) {
+          attr.status = 'qualificationFailed'
+        } else {
+          attr.status = 'start'
+        }
+      }
+    }
+  }
 }
 
 function getNewStates (experiment) {
@@ -208,8 +237,7 @@ function makeChoice(states, answer) {
 module.exports = {
   getExperimentAttr,
   getChoices,
-  isDone,
   getNewStates,
   makeChoice,
-  getStatus
+  updateStatesToAttr
 }

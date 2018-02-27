@@ -81,7 +81,26 @@
     </div>
 
     <div
-        v-else-if=" status === 'running'">
+      v-else-if="status === 'qualificationFailed'"
+      class="done">
+
+      <md-layout
+        style="padding: 1em"
+        class="md-display-2 done"
+        md-align="center"
+        md-column
+        md-vertical-align="center">
+
+        Sorry, you have not passed the qualification
+        <br>
+        Thank you for your time
+
+      </md-layout>
+
+    </div>
+
+    <div
+        v-else-if="(status === 'running') || (status === 'qualifying')">
 
       <md-layout md-align="center">
 
@@ -260,7 +279,7 @@ export default {
       if (this.status === 'start') {
       } else if (this.status === 'done') {
         this.surveyCode = result.surveyCode
-      } else if (this.status === 'running') {
+      } else if (_.includes(['running', 'qualifying'], this.status)) {
         this.experimentAttr = result.experimentAttr
         this.progress = result.progress
         this.method = result.method

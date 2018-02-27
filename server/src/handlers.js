@@ -121,61 +121,24 @@ function getTime (answer) {
   return (endMs - startMs) / 1000
 }
 
-async function updateParticipant (participant, experimentAttr) {
-  let id = participant.participateId
-  let attr = participant.attr
-  let states = participant.states
-
-  attr.nAnswer = 0
-  attr.nRepeatAnswer = 0
-  attr.nConsistentAnswer = 0
-
-  let time = 0
-
+async function updateParticipant (participant, experiment) {
+  let experimentAttr = experiment.attr
   if (experimentAttr.questionType === '2afc') {
-    for (let state of _.values(states)) {
-      for (let comparison of state.comparisons) {
-        time += getTime(comparison)
-        attr.nAnswer += 1
-        if (comparison.repeat !== null) {
-          attr.nAnswer += 1
-          attr.nRepeatAnswer += 1
-          if (comparison.choice === comparison.repeat) {
-            attr.nConsistentAnswer += 1
-          }
-        }
-      }
-    }
-    attr.isDone = twochoice.isStatesDone(states)
+    twochoice.updateStatesToAttr(participant, experimentAttr)
   } else {
-    if (!_.isUndefined(states.answers)) {
-      for (let answer of states.answers) {
-        time += getTime(answer)
-        attr.nAnswer += 1
-        if ('repeatValue' in answer) {
-          attr.nAnswer += 1
-          attr.nRepeatAnswer += 1
-          if (answer.repeatValue === answer.value) {
-            attr.nConsistentAnswer += 1
-          }
-        }
-      }
-    }
-    attr.isDone = multiple.isDone(experimentAttr, participant)
-    attr.status = multiple.getStatus(experimentAttr, participant)
+    multiple.updateStatesToAttr(participant, experiment)
   }
-
-  attr.progress = attr.nAnswer / experimentAttr.nQuestion * 100
-  attr.time = time
-  attr.version = 2
-
-  if (attr.isDone) {
-    if (!attr.surveyCode) {
-      attr.surveyCode = shortid.generate()
+  if (participant.attr.status === 'done') {
+    if (!participant.attr.surveyCode) {
+      participant.attr.surveyCode = shortid.generate()
     }
   }
-
-  await models.saveParticipant(id, {attr, states})
+  await models.saveParticipant(
+    participant.participateId,
+    {
+      attr: participant.attr,
+      states: participant.states
+    })
 }
 
 /**
@@ -282,57 +245,44 @@ function deleteParticipant (participantId) {
 
 async function publicGetNextChoice (participateId) {
   let participant = await models.fetchParticipant(participateId)
-
   let experiment = await models.fetchExperiment(participant.ExperimentId)
   let experimentAttr = experiment.attr
   let urls = _.map(experiment.images, 'url')
+  await updateParticipant(participant, experiment)
+  console.log(`> handlers.publicGetNextChoice`, participant.attr, experiment.attr)
+  let status = participant.attr.status
 
-  await updateParticipant(participant, experimentAttr)
-
-  console.log(`> handlers.publicGetNextChoice`, participant.attr)
-
-  if (participant.attr.status === 'qualificationStart') {
+  if (status === 'done') {
     return {
-      status: 'qualificationStart',
-      experimentAttr,
-      urls
-    }
-  }
-
-  if ((participant.attr.user === null) || (participant.attr.status === 'start')) {
-    return {
-      status: 'start',
-      experimentAttr,
-      urls
-    }
-  }
-
-  console.log('> handlers.publicGetNextChoice', experiment.attr)
-
-  if (participant.attr.isDone) {
-    return {
-      status: 'done',
+      status,
       surveyCode: participant.attr.surveyCode
     }
-  } else if (experiment.attr.questionType === '2afc') {
-    return {
-      status: 'running',
-      method: 'publicChoose2afc',
-      urls,
-      experimentAttr,
-      choices: twochoice.getChoices(experiment, participant),
-      progress: participant.attr.progress
+  } else if (_.includes(['qualifying', 'running'], status)) {
+    let progress = participant.attr.progress
+    let choices, question, method
+    if (experiment.attr.questionType === '2afc') {
+      choices = twochoice.getChoices(experiment, participant)
+      method = 'publicChoose2afc'
+    } else if (experiment.attr.questionType === 'multiple') {
+      let result = multiple.getChoices(experiment, participant)
+      question = result.question
+      choices = result.choices
+      method = 'publicChooseMultiple'
     }
-  } else if (experiment.attr.questionType === 'multiple') {
-    let {question, choices} = multiple.getChoices(experiment, participant)
     return {
-      status: 'running',
-      method: 'publicChooseMultiple',
+      status,
       urls,
       experimentAttr,
       question,
       choices,
-      progress: participant.attr.progress,
+      progress,
+      method
+    }
+  } else {
+    return {
+      status,
+      experimentAttr,
+      urls
     }
   }
 }

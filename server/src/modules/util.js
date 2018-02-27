@@ -50,6 +50,12 @@ module.exports = {
     return date.toJSON()
   },
 
+  getTimeInterval (answer) {
+    let startMs = new Date(answer.startTime).getTime()
+    let endMs = new Date(answer.endTime).getTime()
+    return (endMs - startMs) / 1000
+  },
+
   extractId (p, delimiter = '_', iToken = 0) {
     let ext = path.extname(p)
     let base = path.basename(p, ext)
