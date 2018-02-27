@@ -127,6 +127,15 @@ function getChoices (experiment, participant) {
   return {question, choices}
 }
 
+function getCorrectValue(experiment, testId) {
+  let image = _.find(experiment.images, image => {
+    let isSameId = util.extractId(image.url) === testId
+    let isQuestion = image.url.includes('question')
+    return isSameId && isQuestion
+  })
+  return util.extractId(image.url, '_', 2)
+}
+
 function updateStatesToAttr (participant, experiment) {
   let experimentAttr = experiment.attr
   let attr = participant.attr
@@ -182,18 +191,10 @@ function updateStatesToAttr (participant, experiment) {
           experimentAttr.imageSetIds, i => _.startsWith(i.toLowerCase(), 'test'))
         for (let testId of qualificationIds) {
           let answer = _.find(states.answers, a => a.imageSetId === testId)
-          let image = _.find(experiment.images, image => {
-            let isSameId = util.extractId(image.url) === testId
-            let isQuestion = image.url.includes('question')
-            return isSameId && isQuestion
-          })
-          let correctValue = util.extractId(image.url, '_', 2)
-          if (!(correctValue === answer.value)) {
+          if (!(getCorrectValue(experiment, testId) === answer.value)) {
             nQualificationFail += 1
           }
-          console.log('> mutliple.updateStatesToAttr check qualification answer', answer.value, correctValue)
         }
-        // TODO: check for qualification answers correctly
         if (nQualificationFail > 0) {
           attr.status = 'qualificationFailed'
         } else {

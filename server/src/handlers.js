@@ -202,7 +202,7 @@ async function getExperimentSummaries (userId) {
 async function getExperiment (experimentId) {
   let experiment = await models.fetchExperiment(experimentId)
   for (let participant of experiment.participants) {
-    await updateParticipant(participant, experiment.attr)
+    await updateParticipant(participant, experiment)
   }
   return {experiment}
 }
