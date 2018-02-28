@@ -430,12 +430,12 @@ async function downloadResults (experimentId) {
             }
             return _.includes(image.url, 'question')
           })
-          console.log('url', id, image.url)
+          console.log('> downloadResults url', id, image.url)
           let value = _.last(path.parse(image.url).name.split('_'))
           row.push(`="${value}"`)
         }
         rows.push(row)
-        console.log('> makeResultCsv header', headerRow)
+        console.log('> downloadResults header', headerRow)
       }
 
       let row = [
@@ -450,24 +450,38 @@ async function downloadResults (experimentId) {
         if (answer) {
           value = `="${answer.value}"`
         }
-        console.log('answer', id, value)
+        console.log('downloadResults answer', participant.participateId, id, value)
         row.push(`${value}`)
       }
       rows.push(row)
     }
+
+    rows.push([])
+    rows.push([])
+
+    for (let participant of experiment.participants) {
+      for (let answer of participant.states.answers) {
+        let repeat = answer.repeatValue
+        repeat = _.isUndefined(repeat) ? '' : repeat
+        let row = [
+          participant.participateId,
+          answer.imageSetId,
+          `="${answer.value}"`,
+          `="${repeat}"`]
+        rows.push(row)
+      }
+    }
   }
-
-  const timestampDir = String(new Date().getTime())
-  const fullDir = path.join(config.filesDir, timestampDir)
-  fs.ensureDirSync(fullDir)
-
-  let filename = path.join(config.filesDir, timestampDir, 'results.csv')
 
   let result = ''
   for (let row of rows) {
     result += row.join(',') + '\n'
   }
 
+  const timestampDir = String(new Date().getTime())
+  const fullDir = path.join(config.filesDir, timestampDir)
+  fs.ensureDirSync(fullDir)
+  let filename = path.join(config.filesDir, timestampDir, 'results.csv')
   fs.writeFileSync(filename, result)
   console.log('> downloadResults filename', filename)
 

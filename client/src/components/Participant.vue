@@ -102,7 +102,8 @@
     <div
         v-else-if="(status === 'running') || (status === 'qualifying')">
 
-      <md-layout md-align="center">
+      <md-layout
+        md-align="center">
 
         <md-progress
             style="height: 8px"
@@ -151,7 +152,7 @@
 
           <md-whiteframe
             md-elevation="5"
-            style="margin-right: 1em">
+            style="margin-left: 1em; margin-right: 1em">
 
             <div style="height: 12px;">
               <md-progress
