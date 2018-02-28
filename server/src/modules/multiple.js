@@ -127,17 +127,16 @@ function getChoices (experiment, participant) {
   return {question, choices}
 }
 
+function getCorrectValue (experiment, testId) {
+  let image = _.find(experiment.images, image => {
+    let isSameId = util.extractId(image.url) === testId
+    let isQuestion = image.url.includes('question')
+    return isSameId && isQuestion
+  })
+  return util.extractId(image.url, '_', 2)
+}
+
 function checkQualificationFail (experiment, states) {
-
-  function getCorrectValue (experiment, testId) {
-    let image = _.find(experiment.images, image => {
-      let isSameId = util.extractId(image.url) === testId
-      let isQuestion = image.url.includes('question')
-      return isSameId && isQuestion
-    })
-    return util.extractId(image.url, '_', 2)
-  }
-
   let nQualificationFail = 0
   let imageSetIds = experiment.attr.imageSetIds
   let qualificationIds = _.filter(imageSetIds, i => _.startsWith(i.toLowerCase(), 'test'))

@@ -11,7 +11,7 @@
         style="width: 500px; text-align: center">
 
       <h2 class="md-display-2">
-        Welcome to Sean O'Donoghue's Versus
+        Welcome to Versus
       </h2>
 
       <p>

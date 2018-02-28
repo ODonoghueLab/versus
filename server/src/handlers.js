@@ -416,6 +416,7 @@ async function downloadResults (experimentId) {
   if (experiment.attr.questionType === 'multiple') {
     let isFoundHeader = false
     let headerRow = ['participantId', 'surveyCode', 'time']
+
     for (let participant of experiment.participants) {
       if (!isFoundHeader) {
         headerRow = _.concat(headerRow, experiment.attr.imageSetIds)
@@ -457,9 +458,13 @@ async function downloadResults (experimentId) {
     }
 
     rows.push([])
-    rows.push([])
 
     for (let participant of experiment.participants) {
+      rows.push([])
+      let row = [
+        participant.participateId,
+        participant.states.answers.length]
+      rows.push(row)
       for (let answer of participant.states.answers) {
         let repeat = answer.repeatValue
         repeat = _.isUndefined(repeat) ? '' : repeat
