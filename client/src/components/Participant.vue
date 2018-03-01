@@ -5,7 +5,8 @@
       v-if="status === 'qualificationStart'"
       style="padding: 1em">
 
-      <h2 class="md-display-2">
+      <h2
+        class="md-display-2">
         Welcome to Versus!
       </h2>
 
@@ -42,7 +43,7 @@
       </p>
 
       <form
-          v-on:submit.prevent="startSurvey">
+        v-on:submit.prevent="startSurvey">
         <md-button
             @click="startSurvey"
             class="md-raised md-primary"
@@ -54,15 +55,15 @@
     </div>
 
     <div
-        v-else-if="status === 'done'"
-        class="done">
+      v-else-if="status === 'done'"
+      class="done">
 
       <md-layout
-          style="padding: 1em"
-          class="md-display-2 done"
-          md-align="center"
-          md-column
-          md-vertical-align="center">
+        style="padding: 1em"
+        class="md-display-2 done"
+        md-align="center"
+        md-column
+        md-vertical-align="center">
 
         Your tests are done
         <br>
@@ -106,26 +107,26 @@
         md-align="center">
 
         <md-progress
-            style="height: 8px"
-            :md-progress="progress"/>
+          style="height: 8px"
+          :md-progress="progress"/>
 
         <md-layout
-            md-align="center"
-            md-flex="100">
+          md-align="center"
+          md-flex="100">
           <h2 class="md-display-2">
             {{experimentAttr.title}}
           </h2>
         </md-layout>
 
         <md-layout
-            md-align="center"
-            md-flex="100">
+          md-align="center"
+          md-flex="100">
           <p> {{experimentAttr.blurb}}</p>
           <br>
         </md-layout>
 
         <div
-            v-if="isLoading">
+          v-if="isLoading">
           <md-spinner
             style="margin-top: 3em"
             :md-size="150"
@@ -136,23 +137,25 @@
         </div>
 
         <md-layout
-            v-if="!isLoading && question"
-            md-align="center"
-            md-flex="100">
+          v-if="!isLoading && question"
+          md-align="center"
+          md-flex="100">
           <img
-              style="height: 300px"
-              :src="question.fullUrl"/>
+            style="height: 300px"
+            :src="question.fullUrl"/>
         </md-layout>
 
         <md-layout
-            v-if="!isLoading"
-            v-for="(choice, i) of choices"
-            :key="i"
-            md-align="center">
+          v-if="!isLoading"
+          v-for="(choice, i) of choices"
+          :key="i"
+          md-align="center">
 
           <md-whiteframe
             md-elevation="5"
-            style="margin-left: 1em; margin-right: 1em">
+            style="
+              margin-left: 1em;
+              margin-right: 1em">
 
             <div style="height: 12px;">
               <md-progress
@@ -166,7 +169,8 @@
 
           </md-whiteframe>
 
-          <div style="
+          <div
+            style="
               width: 100%;
               padding-top: 1em;
               text-align: center;">
@@ -328,7 +332,7 @@ export default {
 
         let setId = util.extractId(waitToLoadUrls[0])
         console.log(
-          `> Invite.handleResponse running repeat=${repeat} setid=${setId}`)
+          `> Invite.handleResponse running setid=${setId}, repeat=${repeat} `)
       }
     },
 

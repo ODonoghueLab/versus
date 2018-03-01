@@ -154,8 +154,6 @@ function updateStatesToAttr (participant, experiment) {
   let attr = participant.attr
   let states = participant.states
 
-  console.log('> handlers.updateStatesToAttr', experimentAttr)
-
   if (_.isUndefined(states.toRepeatIds)) {
     states.toRepeatIds = []
   }
@@ -181,6 +179,10 @@ function updateStatesToAttr (participant, experiment) {
 
   attr.isDone = (attr.nAnswer >= experimentAttr.nQuestionMax) &&
     (attr.nRepeatAnswer >= experimentAttr.nRepeatQuestionMax)
+
+  console.log('> handlers.updateStatesToAttr experiment.attr', experimentAttr)
+
+  console.log('> handlers.updateStatesToAttr participant.attr', attr)
 
   if (attr.isDone) {
     attr.status = 'done'

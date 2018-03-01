@@ -248,10 +248,11 @@ async function publicGetNextChoice (participateId) {
   let experiment = await models.fetchExperiment(participant.ExperimentId)
   let experimentAttr = experiment.attr
   let urls = _.map(experiment.images, 'url')
+
   await updateParticipant(participant, experiment)
   console.log(`> handlers.publicGetNextChoice`, participant.attr, experiment.attr)
-  let status = participant.attr.status
 
+  let status = participant.attr.status
   if (status === 'done') {
     return {
       status,
@@ -287,11 +288,10 @@ async function publicGetNextChoice (participateId) {
   }
 }
 
-async function publicChoose2afc (participateId, choice) {
-  let comparison = choice.comparison
+async function publicChoose2afc (participateId, answer) {
   let participant = await models.fetchParticipant(participateId)
   let states = participant.states
-  twochoice.makeChoice(states, comparison)
+  twochoice.makeChoice(states, answer.comparison)
   await models.saveParticipant(participateId, {states})
   return publicGetNextChoice(participateId)
 }
