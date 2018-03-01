@@ -447,12 +447,8 @@ async function downloadResults (experimentId) {
 
       for (let id of experiment.attr.imageSetIds) {
         let answer = _.find(participant.states.answers, a => a.imageSetId === id)
-        let value = ''
-        if (answer) {
-          value = `="${answer.value}"`
-        }
-        console.log('downloadResults answer', participant.participateId, id, value)
-        row.push(`${value}`)
+        let value = answer ? `="${answer.value}"` : ''
+        row.push(value)
       }
       rows.push(row)
     }
@@ -461,10 +457,7 @@ async function downloadResults (experimentId) {
 
     for (let participant of experiment.participants) {
       rows.push([])
-      let row = [
-        participant.participateId,
-        participant.states.answers.length]
-      rows.push(row)
+      rows.push([])
       for (let answer of participant.states.answers) {
         let repeat = answer.repeatValue
         repeat = _.isUndefined(repeat) ? '' : repeat
@@ -472,6 +465,8 @@ async function downloadResults (experimentId) {
           participant.participateId,
           answer.imageSetId,
           `="${answer.value}"`,
+          util.getTimeInterval(answer),
+          '',
           `="${repeat}"`]
         rows.push(row)
       }

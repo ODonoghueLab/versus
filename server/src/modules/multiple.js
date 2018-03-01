@@ -180,9 +180,9 @@ function updateStatesToAttr (participant, experiment) {
   attr.isDone = (attr.nAnswer >= experimentAttr.nQuestion) &&
     (attr.nRepeatAnswer >= experimentAttr.nRepeatQuestionMax)
 
-  console.log('> handlers.updateStatesToAttr experiment.attr', experimentAttr)
-
-  console.log('> handlers.updateStatesToAttr participant.attr', attr)
+  if (!attr.isDone && attr.surveyCode) {
+    delete attr.surveyCode
+  }
 
   if (attr.isDone) {
     attr.status = 'done'
