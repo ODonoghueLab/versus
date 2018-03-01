@@ -432,7 +432,7 @@ async function downloadResults (experimentId) {
             return _.includes(image.url, 'question')
           })
           console.log('> downloadResults url', id, image.url)
-          let value = _.last(path.parse(image.url).name.split('_'))
+          let value = util.extractId(image.url, '_', 2)
           row.push(`="${value}"`)
         }
         rows.push(row)
