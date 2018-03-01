@@ -177,7 +177,7 @@ function updateStatesToAttr (participant, experiment) {
   }
   attr.progress = attr.nAnswer / experimentAttr.nQuestion * 100
 
-  attr.isDone = (attr.nAnswer >= experimentAttr.nQuestionMax) &&
+  attr.isDone = (attr.nAnswer >= experimentAttr.nQuestion) &&
     (attr.nRepeatAnswer >= experimentAttr.nRepeatQuestionMax)
 
   console.log('> handlers.updateStatesToAttr experiment.attr', experimentAttr)
