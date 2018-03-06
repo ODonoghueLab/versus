@@ -115,16 +115,9 @@ async function publicForceUpdatePassword (user) {
   }
 }
 
-function getTime (answer) {
-  let startMs = new Date(answer.startTime).getTime()
-  let endMs = new Date(answer.endTime).getTime()
-  return (endMs - startMs) / 1000
-}
-
 async function updateParticipant (participant, experiment) {
-  let experimentAttr = experiment.attr
-  if (experimentAttr.questionType === '2afc') {
-    twochoice.updateStatesToAttr(participant, experimentAttr)
+  if (experiment.attr.questionType === '2afc') {
+    twochoice.updateStatesToAttr(participant, experiment)
   } else {
     multiple.updateStatesToAttr(participant, experiment)
   }
@@ -155,23 +148,33 @@ async function updateExperimentAttr (experiment) {
   if (!('questionType' in experiment.attr)) {
     experiment.attr.questionType = '2afc'
   }
+
+  let urls = _.map(experiment.images, 'url')
+
   if (!('probRepeat' in experiment.attr)) {
     experiment.attr.probRepeat = 0.2
   }
+  let probRepeat = parseFloat(experiment.attr.probRepeat)
+  experiment.attr.probRepeat = probRepeat
 
-  let urls = _.map(experiment.images, 'url')
-  let probRepeat = experiment.attr.probRepeat
+  if ('nQuestion' in experiment.attr) {
+    delete experiment.attr.nQuestion
+  }
+
+  console.log('> handlers.updateExperimentAttr', experiment.attr)
 
   if (experiment.attr.questionType === '2afc') {
     _.assign(experiment.attr, twochoice.getExperimentAttr(urls, probRepeat))
   } else if (experiment.attr.questionType === 'multiple') {
     _.assign(experiment.attr, multiple.getExperimentAttr(urls, probRepeat))
   }
+
   await models.saveExperimentAttr(experiment.id, experiment.attr)
 
   if (experiment.participants) {
     for (let participant of experiment.participants) {
-      await updateParticipant(participant, experiment.attr)
+      console.log('> handlers.updateExperimentAttr participant ', participant.participateId)
+      await updateParticipant(participant, experiment)
     }
   }
 }
@@ -207,8 +210,10 @@ async function getExperiment (experimentId) {
   return {experiment}
 }
 
-function saveExperimentAttr (experimentId, attr) {
-  return models.saveExperimentAttr(experimentId, attr)
+async function saveExperimentAttr (experimentId, attr) {
+  let experiment = await models.fetchExperiment(experimentId)
+  _.assign(experiment.attr, attr)
+  await updateExperimentAttr(experiment)
 }
 
 function deleteExperiment (experimentId) {
@@ -250,7 +255,8 @@ async function publicGetNextChoice (participateId) {
   let urls = _.map(experiment.images, 'url')
 
   await updateParticipant(participant, experiment)
-  console.log(`> handlers.publicGetNextChoice`, participant.attr, experiment.attr)
+  console.log(`> handlers.publicGetNextChoice experiment`, experiment.attr)
+  console.log(`> handlers.publicGetNextChoice participant`, participant.attr)
 
   let status = participant.attr.status
   if (status === 'done') {
@@ -321,10 +327,11 @@ async function uploadImagesAndCreateExperiment (filelist, userId, attr) {
   try {
     let paths = await models.storeFilesInConfigDir(filelist)
     let urls = _.map(paths, f => '/file/' + f)
+    let probRepeat = parseFloat(attr.probRepeat)
     if (attr.questionType === '2afc') {
-      _.assign(attr, twochoice.getExperimentAttr(urls, 0.2))
+      _.assign(attr, twochoice.getExperimentAttr(urls, probRepeat))
     } else if (attr.questionType === 'multiple') {
-      _.assign(attr, multiple.getExperimentAttr(urls, 0.2))
+      _.assign(attr, multiple.getExperimentAttr(urls, probRepeat))
     }
     let experiment = await models.createExperiment(userId, attr, urls)
     console.log(
@@ -400,7 +407,7 @@ async function downloadResults (experimentId) {
         for (let comparison of state.comparisons) {
           let fnameA = path.basename(comparison.itemA.url)
           let fnameB = path.basename(comparison.itemA.url)
-          let time = getTime(comparison)
+          let time = util.getTimeInterval(comparison)
           let choice
           if (comparison.itemA.value === comparison.choice) {
             choice = fnameA

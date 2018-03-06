@@ -67,18 +67,8 @@ function newState (imageUrls, probRepeat) {
 
     // the following are only calculated when done
     fractions: [], // list of number of winning votes for each image-url
-    rankedImageUrls: [], // ranked list of the image-url for user preference
+    rankedImageUrls: [] // ranked list of the image-url for user preference
   }
-}
-
-function getNewStates (experiment) {
-  states = {}
-  const urls = _.map(experiment.images, 'url')
-  for (let imageSetId of experiment.attr.imageSetIds) {
-    let theseUrls = _.filter(urls, u => util.extractId(u) === imageSetId)
-    states[imageSetId] = newState(theseUrls, experiment.attr.probRepeat)
-  }
-  return states
 }
 
 /**
@@ -256,54 +246,6 @@ function checkNodes (nodes) {
   return pass
 }
 
-function makeChoice (states, comparison) {
-  let urlA = comparison.itemA.url
-  let imageSetId = util.extractId(urlA)
-  let state = states[imageSetId]
-  if (comparison.isRepeat) {
-    let i = state.iComparisonRepeat
-    state.comparisons[i].repeat = comparison.repeat
-    state.comparisons[i].repeatEndTime = util.getCurrentTimeStr()
-    setNextRepeatComparison(state)
-  } else {
-    let compareNode = state.nodes[state.iNodeCompare]
-    let chosenImageIndex = comparison.choice
-
-    console.log('> twochoice.makeChoice',
-      'iNodeRoot', state.iNodeRoot,
-      'compareNode.iImage', compareNode.iImage,
-      'iImageTest', state.iImageTest,
-      '- chosenImageIndex', chosenImageIndex)
-
-    // Go right branch if iImageTest is chosen (preferred)
-    if (chosenImageIndex === state.iImageTest) {
-      if (compareNode.right === null) {
-        compareNode.right = insertNewNode(state)
-        getNextImage(state)
-      } else {
-        state.iNodeCompare = compareNode.right
-      }
-    } else {
-      // Else left branch if image at node is chosen (preferred)
-      if (compareNode.left === null) {
-        compareNode.left = insertNewNode(state)
-        getNextImage(state)
-      } else {
-        state.iNodeCompare = compareNode.left
-      }
-    }
-
-    comparison.endTime = util.getCurrentTimeStr()
-    let iComparisonNew = state.comparisons.length
-    state.comparisons.push(comparison)
-    state.comparisonIndices.push(iComparisonNew)
-
-    if (state.iComparisonRepeat === null) {
-      setNextRepeatComparison(state)
-    }
-  }
-}
-
 function isAllImagesTested (state) {
   return (state.testImageIndices.length === 0) &&
     (state.iImageTest === null)
@@ -370,45 +312,6 @@ function isDone (state) {
   return true
 }
 
-function updateStatesToAttr (participant, experimentAttr) {
-  let attr = participant.attr
-  let states = participant.states
-
-  attr.nAnswer = 0
-  attr.nRepeatAnswer = 0
-  attr.nConsistentAnswer = 0
-  attr.time = 0
-  for (let state of _.values(states)) {
-    for (let comparison of state.comparisons) {
-      attr.time += util.getTimeInterval(comparison)
-      attr.nAnswer += 1
-      if (comparison.repeat !== null) {
-        attr.nAnswer += 1
-        attr.nRepeatAnswer += 1
-        if (comparison.choice === comparison.repeat) {
-          attr.nConsistentAnswer += 1
-        }
-      }
-    }
-  }
-  attr.progress = attr.nAnswer / experimentAttr.nQuestion * 100
-
-  attr.isDone = true
-  for (let state of _.values(states)) {
-    if (!isDone(state)) {
-      attr.isDone = false
-    }
-  }
-
-  if (attr.isDone) {
-    attr.status = 'done'
-  } else if (attr.user === null) {
-    attr.status = 'start'
-  } else {
-    attr.status = 'running'
-  }
-}
-
 function getComparison (state, probRepeat) {
   let doRepeatComparison = false
 
@@ -441,12 +344,143 @@ function getComparison (state, probRepeat) {
   }
 }
 
+function getRandomUnfinishedState (states) {
+  let choices = []
+  for (let [id, state] of _.toPairs(states)) {
+    if (!isDone(state)) {
+      _.times(
+        state.imageUrls.length,
+        () => { choices.push(id) })
+    }
+  }
+  let id = choices[_.random(choices.length - 1)]
+  return states[id]
+}
+
+function getChoices (experiment, participant) {
+  let probRepeat = experiment.attr.probRepeat
+  let state = getRandomUnfinishedState(participant.states)
+  let comparison = getComparison(state, probRepeat)
+  let choices = []
+  for (let item of [comparison.itemA, comparison.itemB]) {
+    let chosenComparison = _.cloneDeep(comparison)
+    if (chosenComparison.isRepeat) {
+      chosenComparison.repeat = item.value
+    } else {
+      chosenComparison.choice = item.value
+    }
+    choices.push({
+      url: item.url,
+      comparison: chosenComparison
+    })
+  }
+  return choices
+}
+
+function makeChoice (states, comparison) {
+  let urlA = comparison.itemA.url
+  let imageSetId = util.extractId(urlA)
+  let state = states[imageSetId]
+  if (comparison.isRepeat) {
+    let i = state.iComparisonRepeat
+    state.comparisons[i].repeat = comparison.repeat
+    state.comparisons[i].repeatEndTime = util.getCurrentTimeStr()
+    setNextRepeatComparison(state)
+  } else {
+    let compareNode = state.nodes[state.iNodeCompare]
+    let chosenImageIndex = comparison.choice
+
+    console.log('> twochoice.makeChoice',
+      'iNodeRoot', state.iNodeRoot,
+      'compareNode.iImage', compareNode.iImage,
+      'iImageTest', state.iImageTest,
+      '- chosenImageIndex', chosenImageIndex)
+
+    // Go right branch if iImageTest is chosen (preferred)
+    if (chosenImageIndex === state.iImageTest) {
+      if (compareNode.right === null) {
+        compareNode.right = insertNewNode(state)
+        getNextImage(state)
+      } else {
+        state.iNodeCompare = compareNode.right
+      }
+    } else {
+      // Else left branch if image at node is chosen (preferred)
+      if (compareNode.left === null) {
+        compareNode.left = insertNewNode(state)
+        getNextImage(state)
+      } else {
+        state.iNodeCompare = compareNode.left
+      }
+    }
+
+    comparison.endTime = util.getCurrentTimeStr()
+    let iComparisonNew = state.comparisons.length
+    state.comparisons.push(comparison)
+    state.comparisonIndices.push(iComparisonNew)
+
+    if (state.iComparisonRepeat === null) {
+      setNextRepeatComparison(state)
+    }
+  }
+}
+
+function getNewStates (experiment) {
+  let states = {}
+  const urls = _.map(experiment.images, 'url')
+  for (let imageSetId of experiment.attr.imageSetIds) {
+    let theseUrls = _.filter(urls, u => util.extractId(u) === imageSetId)
+    states[imageSetId] = newState(theseUrls, experiment.attr.probRepeat)
+  }
+  return states
+}
+
+function updateStatesToAttr (participant, experiment) {
+  let experimentAttr = experiment.attr
+  let attr = participant.attr
+  let states = participant.states
+
+  attr.nAnswer = 0
+  attr.nRepeatAnswer = 0
+  attr.nConsistentAnswer = 0
+  attr.time = 0
+  for (let state of _.values(states)) {
+    for (let comparison of state.comparisons) {
+      attr.time += util.getTimeInterval(comparison)
+      attr.nAnswer += 1
+      if (comparison.repeat !== null) {
+        attr.nAnswer += 1
+        attr.nRepeatAnswer += 1
+        if (comparison.choice === comparison.repeat) {
+          attr.nConsistentAnswer += 1
+        }
+      }
+    }
+  }
+  attr.progress = attr.nAnswer / experimentAttr.nAllQuestion * 100
+
+  attr.isDone = true
+  for (let state of _.values(states)) {
+    if (!isDone(state)) {
+      attr.isDone = false
+    }
+  }
+
+  if (attr.isDone) {
+    attr.status = 'done'
+  } else if (attr.user === null) {
+    attr.status = 'start'
+  } else {
+    attr.status = 'running'
+  }
+}
+
 function getExperimentAttr (urls, probRepeat) {
   let attr = {
     probRepeat,
     nImage: 0,
     nQuestionMax: 0,
-    nRepeatQuestionMax: 0,
+    nRepeatQuestionMax: 0
   }
 
   let imageSetIds = []
@@ -470,42 +504,9 @@ function getExperimentAttr (urls, probRepeat) {
     attr.nRepeatQuestionMax += nRepeat
   }
 
-  attr.nQuestion = attr.nQuestionMax + attr.nRepeatQuestionMax
+  attr.nAllQuestion = attr.nQuestionMax + attr.nRepeatQuestionMax
 
   return attr
-}
-
-function getRandomUnfinishedState (states) {
-  let choices = []
-  for (let [id, state] of _.toPairs(states)) {
-    if (!isDone(state)) {
-      _.times(
-        state.imageUrls.length,
-        () => { choices.push(id) })
-    }
-  }
-  let id = choices[_.random(choices.length - 1)]
-  return states[id]
-}
-
-function getChoices (experiment, participant) {
-  let states = participant.states
-  let probRepeat = experiment.attr.probRepeat
-  let comparison = getComparison(getRandomUnfinishedState(states), probRepeat)
-  let choices = []
-  for (let item of [comparison.itemA, comparison.itemB]) {
-    let chosenComparison = _.cloneDeep(comparison)
-    if (chosenComparison.isRepeat) {
-      chosenComparison.repeat = item.value
-    } else {
-      chosenComparison.choice = item.value
-    }
-    choices.push({
-      url: item.url,
-      comparison: chosenComparison
-    })
-  }
-  return choices
 }
 
 module.exports = {

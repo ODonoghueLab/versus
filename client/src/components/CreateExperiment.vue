@@ -8,90 +8,104 @@
       Create Experiment
     </h2>
 
-    <form v-on:submit.prevent="submit">
+    <md-input-container>
+      <label>Name</label>
+      <md-input
+        type="text"
+        name="uploadFiles"
+        v-model="attr.name">
+      </md-input>
+    </md-input-container>
 
-      <md-input-container>
-        <label>Name</label>
-        <md-input
-          type="text"
-          name="uploadFiles"
-          v-model="attr.name">
-        </md-input>
-      </md-input-container>
-
-      <md-input-container>
-        <md-file
-          id="file-input"
-          multiple
-          @selected="selectFiles">
-        </md-file>
-        <label
-          for="file-input"
-          class="button">
-          Upload files
-        </label>
-      </md-input-container>
-      <div style="font-size: 1em; color: #999; margin-top: -1.5em; line-height: 1.2em">
-        Images are .png, .jpg, or .gif.
-        <br>
-        An image set is defined by an underscore, eg `imageset_*.png`.
-        <br>
-        Each image set must have at least 2 images.
-        <br>
-        <br>
-      </div>
-
-      <md-input-container>
-        <label>Question</label>
-        <md-input
-          type="text"
-          v-model="attr.title">
-        </md-input>
-      </md-input-container>
-
-      <md-input-container>
-        <label>Blurb</label>
-        <md-textarea
-          type="text"
-          name="blurb"
-          v-model="attr.blurb">
-        </md-textarea>
-      </md-input-container>
+    <md-input-container>
+      <md-file
+        id="file-input"
+        multiple
+        @selected="selectFiles">
+      </md-file>
+      <label
+        for="file-input"
+        class="button">
+        Upload files
+      </label>
+    </md-input-container>
+    <div
+      style="
+        font-size: 1em;
+        color: #999;
+        margin-top: -1.5em;
+        line-height: 1.2em">
+      Images are .png, .jpg, or .gif.
       <br>
+      An image set is defined by an underscore, eg `imageset_*.png`.
+      <br>
+      Each image set must have at least 2 images.
+      <br>
+      <br>
+    </div>
 
-      <div>
-        <md-radio v-model="attr.questionType" id="my-test1" name="my-test-group1" md-value="2afc">2 alternative forced
-          choice
-        </md-radio>
-        <md-radio v-model="attr.questionType" id="my-test2" name="my-test-group1" md-value="multiple">multiple choice
-        </md-radio>
-      </div>
+    <md-input-container>
+      <label>Question</label>
+      <md-input
+        type="text"
+        v-model="attr.title">
+      </md-input>
+    </md-input-container>
 
-      <md-layout
-        md-row
-        md-vertical-align="center">
-        <md-button
-          type="submit"
-          :disabled="isUploading"
-          class="md-raised md-primary">
-          Submit
-        </md-button>
-        <md-spinner
-          md-indeterminate
-          :md-size="30"
-          v-if="isUploading">
-        </md-spinner>
-      </md-layout>
+    <md-input-container>
+      <label>Blurb</label>
+      <md-textarea
+        type="text"
+        name="blurb"
+        v-model="attr.blurb">
+      </md-textarea>
+    </md-input-container>
 
-      <span
-        v-if="error"
-        style="
-            padding-top: 1em;
-            padding-left: 1em;
-            color: red">
-        {{error}}
-      </span>
-    </form>
+    <div>
+      <md-radio
+        v-model="attr.questionType"
+        md-value="2afc">
+        2 alternative forced choice
+      </md-radio>
+      <md-radio
+        v-model="attr.questionType"
+        md-value="multiple">
+        multiple choice
+      </md-radio>
+    </div>
+
+    <md-input-container style="width: 130px">
+      <label>Probability of Repeat</label>
+      <md-input
+        type="number"
+        v-model="attr.probRepeat"/>
+    </md-input-container>
+
+    <md-layout
+      md-row
+      md-vertical-align="center">
+      <md-button
+        type="submit"
+        :disabled="isUploading"
+        class="md-raised md-primary"
+        @click="submit">
+        Submit
+      </md-button>
+      <md-spinner
+        md-indeterminate
+        :md-size="30"
+        v-if="isUploading">
+      </md-spinner>
+    </md-layout>
+
+    <span
+      v-if="error"
+      style="
+        padding-top: 1em;
+        padding-left: 1em;
+        color: red">
+      {{error}}
+    </span>
   </div>
 </template>
 
@@ -155,7 +169,8 @@ export default {
         title: 'Which image looks better?',
         blurb: 'Click on the image that looks better. Take your time',
         name: '',
-        questionType: '2afc'
+        questionType: '2afc',
+        probRepeat: 0.2
       },
       isUploading: false,
       error: ''
@@ -169,9 +184,10 @@ export default {
     async submit () {
       let error = checkFilelistError(
         this.$data.files, this.$data.attr.questionType)
-      if (!this.$data.attr.name) {
+      if (!this.attr.name) {
         error = 'must have experiment name'
       }
+      this.attr.probRepeat = parseFloat(this.attr.probRepeat)
       if (error) {
         this.$data.error = 'Error: ' + error
         return
@@ -179,14 +195,15 @@ export default {
 
       this.$data.isUploading = true
 
+      console.log('> CreateExperiment.submit attr', _.cloneDeep(this.attr))
+
       let response = await rpc.rpcUpload(
         'uploadImagesAndCreateExperiment',
-        this.$data.files, auth.user.id, this.$data.attr)
+        this.files, auth.user.id, _.cloneDeep(this.attr))
 
       console.log('> CreateExperiment.submit response', response)
 
       if (response.result) {
-        console.log('> CreateExperiment.submit', response)
         let experimentId = response.result.experimentId
         this.$router.push('/experiment/' + experimentId)
       } else {

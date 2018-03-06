@@ -314,7 +314,7 @@ export default {
         }
 
         this.isLoading = false
-        this.choices = result.choices
+        this.choices = _.shuffle(result.choices)
         if (result.question) {
           this.question = result.question
         }

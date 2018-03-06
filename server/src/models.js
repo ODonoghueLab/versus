@@ -261,7 +261,7 @@ async function cleanupImages () {
  */
 
 async function createExperiment (userId, attr, imageUrls) {
-  console.log('> models.createExperiment')
+  console.log('> models.createExperiment input', attr)
   let experiment = await Experiment.create({attr})
   for (let url of imageUrls) {
     let image = await Image.create({url})
@@ -269,7 +269,7 @@ async function createExperiment (userId, attr, imageUrls) {
   }
   await experiment.addUser(userId, {permission: 0})
   let result = unwrapInstance(experiment)
-  console.log('> models.createExperiment', result)
+  console.log('> models.createExperiment result', result)
   return result
 }
 

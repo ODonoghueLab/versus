@@ -125,7 +125,7 @@
               </span>
             </md-table-cell>
             <md-table-cell>
-              <span v-if="participant.attr.nConsistentAnswer">
+              <span v-if="participant.attr.nRepeatAnswer">
                 {{ participant.attr.nConsistentAnswer }}/{{ participant.attr.nRepeatAnswer}}
               </span>
             </md-table-cell>
@@ -273,6 +273,7 @@ export default {
     },
     saveExperimentAttr () {
       let experiment = this.$data.experiment
+      experiment.attr.probRepeat = parseFloat(experiment.attr.probRepeat)
       rpc
         .rpcRun('saveExperimentAttr', experiment.id, experiment.attr)
     },

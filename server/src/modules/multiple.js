@@ -39,7 +39,7 @@ function getExperimentAttr (paths, probRepeat) {
 
   attr.nQuestionMax = imageSetIds.length
   attr.nRepeatQuestionMax = Math.ceil(attr.probRepeat * attr.nQuestionMax)
-  attr.nQuestion = attr.nQuestionMax + attr.nRepeatQuestionMax
+  attr.nAllQuestion = attr.nQuestionMax + attr.nRepeatQuestionMax
 
   return attr
 }
@@ -175,11 +175,14 @@ function updateStatesToAttr (participant, experiment) {
       }
     }
   }
-  attr.progress = attr.nAnswer / experimentAttr.nQuestion * 100
+  attr.progress = attr.nAnswer / experimentAttr.nAllQuestion * 100
 
-  attr.isDone = (attr.nAnswer >= experimentAttr.nQuestion) &&
-    (attr.nRepeatAnswer >= experimentAttr.nRepeatQuestionMax)
+  attr.isDone = (attr.nAnswer >= experimentAttr.nAllQuestion) &&
+    (attr.nRepeatAnswer >= experimentAttr.nRepeatQuestionMax) &&
+    ((attr.nAnswer - attr.nRepeatAnswer) >= experimentAttr.nQuestionMax)
 
+  console.log('> multiple.updateStatesToAttr experimentAttr', experimentAttr)
+  console.log('> multiple.updateStatesToAttr attr', attr)
   if (!attr.isDone && attr.surveyCode) {
     delete attr.surveyCode
   }
