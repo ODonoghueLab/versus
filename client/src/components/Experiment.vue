@@ -271,11 +271,13 @@ export default {
           participants.push(response.result.participant)
         })
     },
-    saveExperimentAttr () {
+    async saveExperimentAttr () {
       let experiment = this.$data.experiment
       experiment.attr.probRepeat = parseFloat(experiment.attr.probRepeat)
-      rpc
-        .rpcRun('saveExperimentAttr', experiment.id, experiment.attr)
+      let response = await rpc.rpcRun('saveExperimentAttr', experiment.id, experiment.attr)
+      if (response.result) {
+        this.experiment = response.result.experiment
+      }
     },
     getMturkLink () {
       return `./#/mechanical-turk/${this.$data.experiment.id}`

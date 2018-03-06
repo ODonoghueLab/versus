@@ -214,6 +214,7 @@ async function saveExperimentAttr (experimentId, attr) {
   let experiment = await models.fetchExperiment(experimentId)
   _.assign(experiment.attr, attr)
   await updateExperimentAttr(experiment)
+  return {experiment}
 }
 
 function deleteExperiment (experimentId) {
