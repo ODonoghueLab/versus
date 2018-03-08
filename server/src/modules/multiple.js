@@ -36,9 +36,11 @@ function getExperimentAttr (paths, probRepeat) {
   }
 
   attr.imageSetIds = imageSetIds
-
   attr.nQuestionMax = imageSetIds.length
-  attr.nRepeatQuestionMax = Math.ceil(attr.probRepeat * attr.nQuestionMax)
+
+  let mainQuestionIds = _.filter(imageSetIds, i => !_.startsWith(i, 'test'))
+  attr.nRepeatQuestionMax = Math.ceil(attr.probRepeat * mainQuestionIds.length)
+
   attr.nAllQuestion = attr.nQuestionMax + attr.nRepeatQuestionMax
 
   return attr
@@ -114,14 +116,18 @@ function getChoices (experiment, participant) {
         value: _.last(path.parse(url).name.split('_'))
       }
     } else {
-      choices.push({
+      let choice = {
         isRepeat,
         startTime: util.getCurrentTimeStr(),
         endTime: null,
         url,
         imageSetId,
         value: _.last(path.parse(url).name.split('_'))
-      })
+      }
+      if (isRepeat) {
+        choice.repeatStartTime = util.getCurrentTimeStr()
+      }
+      choices.push(choice)
     }
   }
   return {question, choices}
@@ -242,6 +248,8 @@ function makeChoice(states, answer) {
     _.remove(states.toRepeatIds, id => id === answer.imageSetId)
     console.log(answer, originalAnswer, states.toRepeatIds)
     originalAnswer.repeatValue = answer.value
+    originalAnswer.repeatEndTime = answer.endTime
+    originalAnswer.repeatStartTime = answer.repeatStartTime
   }
 }
 

@@ -2,24 +2,16 @@
   <div style="padding-left: 1em; padding-right: 1em;">
 
     <h2 class="md-display-2">
-      Welcome Mechanical Turker
+      Creating new participant
     </h2>
 
-    <p>
-      A new survey will be prepared for you.
+    <p v-if="!error">
+      Will redirect when created...
     </p>
 
-    <p>
-      A survey code will be issued for you on completion of the survey.
+    <p v-if="error">
+      {{ error }}
     </p>
-
-    <md-button
-        v-if="participateId"
-        class="md-raised md-primary"
-        @click="startRun">
-      Create survey
-    </md-button>
-
   </div>
 </template>
 
@@ -30,23 +22,21 @@ export default {
   name: 'experiment',
   data () {
     return {
+      error: '',
       participateId: null
     }
   },
-  mounted () {
+  async mounted () {
     this.$data.experimentId = this.$route.params.experimentId
     console.log('> MturkParticipant.mounted', this.$data.experimentId)
-    rpc
-      .rpcRun(
-        'publicInviteParticipant', this.$data.experimentId, 'test@test.com')
-      .then((response) => {
-        console.log('> Experiment.makeInvite', response)
-        this.$data.participateId = response.result.participant.participateId
-      })
-  },
-  methods: {
-    startRun () {
-      this.$router.push('/participant/' + this.$data.participateId)
+    let response = await rpc.rpcRun(
+      'publicInviteParticipant', this.$data.experimentId, 'test@test.com')
+    if (response.result) {
+      console.log('> Experiment.makeInvite', response)
+      this.participateId = response.result.participant.participateId
+      this.$router.push('/participant/' + this.participateId)
+    } else {
+      this.error = response.error.message
     }
   }
 }

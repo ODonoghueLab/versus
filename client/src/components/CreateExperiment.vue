@@ -8,12 +8,32 @@
       Create Experiment
     </h2>
 
+    <div>
+      <md-radio
+        v-model="questionType"
+        md-value="2afc">
+        2 alternative forced choice
+      </md-radio>
+      <md-radio
+        v-model="questionType"
+        md-value="multiple">
+        multiple choice
+      </md-radio>
+    </div>
+
+    <md-input-container style="width: 130px">
+      <label>Probability of Repeat</label>
+      <md-input
+        type="number"
+        v-model="probRepeat"/>
+    </md-input-container>
+
     <md-input-container>
       <label>Name</label>
       <md-input
         type="text"
         name="uploadFiles"
-        v-model="attr.name">
+        v-model="name">
       </md-input>
     </md-input-container>
 
@@ -44,42 +64,28 @@
       <br>
     </div>
 
-    <md-input-container>
-      <label>Question</label>
-      <md-input
-        type="text"
-        v-model="attr.title">
-      </md-input>
-    </md-input-container>
+    <md-layout
+      v-for="key in textByQuestionType[questionType].sectionKeys"
+      :key="key"
+      md-row
+      md-vertical-align="start">
 
-    <md-input-container>
-      <label>Blurb</label>
-      <md-textarea
-        type="text"
-        name="blurb"
-        v-model="attr.blurb">
-      </md-textarea>
-    </md-input-container>
+      <md-layout
+        md-flex="50"
+        style="padding-right: 1.5em">
+        <md-input-container>
+          <label> {{ key }} header</label>
+          <md-textarea v-model="textByQuestionType[questionType].sections[key].header"/>
+        </md-input-container>
+      </md-layout>
 
-    <div>
-      <md-radio
-        v-model="attr.questionType"
-        md-value="2afc">
-        2 alternative forced choice
-      </md-radio>
-      <md-radio
-        v-model="attr.questionType"
-        md-value="multiple">
-        multiple choice
-      </md-radio>
-    </div>
-
-    <md-input-container style="width: 130px">
-      <label>Probability of Repeat</label>
-      <md-input
-        type="number"
-        v-model="attr.probRepeat"/>
-    </md-input-container>
+      <md-layout>
+        <md-input-container>
+          <label> {{ key }} blurb</label>
+          <md-textarea v-model="textByQuestionType[questionType].sections[key].blurb"/>
+        </md-input-container>
+      </md-layout>
+    </md-layout>
 
     <md-layout
       md-row
@@ -163,18 +169,62 @@ export default {
   name: 'createExperiment',
   data () {
     return {
+      name: '',
+      questionType: '2afc',
+      probRepeat: 0.2,
       files: '',
       fileStr: '',
-      attr: {
-        title: 'Which image looks better?',
-        blurb: 'Click on the image that looks better. Take your time',
-        name: '',
-        questionType: '2afc',
-        probRepeat: 0.2
-      },
       isUploading: false,
-      error: ''
+      error: '',
+      textByQuestionType: {
+        'multiple': {
+          sectionKeys: [
+            'qualificationStart', 'qualificationFailed', 'start', 'running', 'done'],
+          sections: {
+            running: {
+              header: 'Which image encode the contact shown in the 3D model?',
+              blurb: 'Remember that your answers will be timed and checked for consistency'
+            },
+            qualificationStart: {
+              header: '',
+              blurb: 'You will now start a short qualification test. Please answer carefully'
+            },
+            done: {
+              header: '',
+              blurb: 'Your tests are done. Thank you. Your survey code is'
+            },
+            start: {
+              header: 'Great Job!',
+              blurb: 'You will now start the survey. Do not forget to copy the survey code provided at the end of the survey, and paste it into the Mechanical Turk page.'
+            },
+            qualificationFailed: {
+              header: '',
+              blurb: 'Sorry, you have not passed the qualification. Thank you for your time'
+            }
+          }
+        },
+        '2afc': {
+          sectionKeys: ['start', 'running', 'done'],
+          sections: {
+            running: {
+              header: 'Which image looks better?',
+              blurb: 'Click on the image that looks better. Take your time'
+            },
+            done: {
+              header: '',
+              blurb: 'Your tests are done. Thank you. Your survey code is'
+            },
+            start: {
+              header: '',
+              blurb: 'You will now start the survey. Do not forget to copy the survey code provided at the end of the survey, and paste it into the Mechanical Turk page.'
+            }
+          }
+        }
+      }
     }
+  },
+  mounted () {
+    console.log('> CreateExperiment.mounted', util.jstr(this.textByQuestionType))
   },
   methods: {
     selectFiles (files) {
@@ -182,12 +232,16 @@ export default {
       this.$data.fileStr = `${files.length} files`
     },
     async submit () {
-      let error = checkFilelistError(
-        this.$data.files, this.$data.attr.questionType)
-      if (!this.attr.name) {
+      this.attr = {}
+      this.attr.questionType = this.questionType
+      this.attr.name = this.name
+      this.attr.probRepeat = parseFloat(this.probRepeat)
+      this.attr.text = this.textByQuestionType[this.questionType]
+
+      let error = checkFilelistError(this.files, this.questionType)
+      if (!this.name) {
         error = 'must have experiment name'
       }
-      this.attr.probRepeat = parseFloat(this.attr.probRepeat)
       if (error) {
         this.$data.error = 'Error: ' + error
         return

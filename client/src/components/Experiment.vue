@@ -4,9 +4,19 @@
       padding-left: 1em;
       padding-right: 1em;">
 
-    <h2 class="md-display-2">
-
+    <h2
+      v-if="experiment.attr"
+      class="md-display-2">
+      <span
+        v-if="experiment.attr.questionType == '2afc'">
+        2 Alternative Forced Choice
+      </span>
+      <span
+        v-if="experiment.attr.questionType == 'multiple'">
+        Multiple Choice
+      </span>
       Experiment:
+
       <span v-if="experiment.attr">
         {{experiment.attr.name}}
       </span>
@@ -18,48 +28,52 @@
         padding: 1em;
         margin-bottom: 1em">
 
-      <h3 class="md-title">
-        Question
-      </h3>
+      <h3 class="md-title">Parameters</h3>
 
-      <md-input-container>
-        <label>Title</label>
-        <md-input v-model="experiment.attr.title"/>
-      </md-input-container>
-
-      <md-input-container>
-        <label>Blurb</label>
-        <md-textarea v-model="experiment.attr.blurb"/>
-      </md-input-container>
-
-      <div>
-        <md-radio
-          v-model="experiment.attr.questionType"
-          id="my-test1"
-          name="my-test-group1"
-          md-value="2afc">
-          2 alternative forced choice
-        </md-radio>
-        <md-radio
-          v-model="experiment.attr.questionType"
-          id="my-test2"
-          name="my-test-group1"
-          md-value="multiple">
-          multiple choice
-        </md-radio>
-      </div>
-
-      <md-input-container style="width: 130px">
-        <label>Probability of Repeat</label>
+      <md-input-container
+        style="width: 200px">
+        <label>
+          Probability of Repeat
+        </label>
         <md-input
           type="number"
-          v-model="experiment.attr.probRepeat"/>
+          v-model="experiment.attr.probRepeat">
+        </md-input>
       </md-input-container>
+
+      Number of questions: {{ experiment.attr.nQuestionMax }}
+      &nbsp;
+      &nbsp;
+      Number of repeats: {{ experiment.attr.nRepeatQuestionMax }}
+
+      <md-layout
+        v-for="key in experiment.attr.text.sectionKeys"
+        :key="key"
+        md-row
+        md-vertical-align="start">
+
+        <md-layout
+          md-flex="50"
+          style="
+            padding-right: 1.5em">
+          <md-input-container>
+            <label> {{ key }} header </label>
+            <md-textarea v-model="experiment.attr.text.sections[key].header"/>
+          </md-input-container>
+        </md-layout>
+
+        <md-layout>
+          <md-input-container>
+            <label> {{ key }} blurb </label>
+            <md-textarea v-model="experiment.attr.text.sections[key].blurb"/>
+          </md-input-container>
+        </md-layout>
+      </md-layout>
 
       <md-button
         class="md-raised"
         @click="saveExperimentAttr">
-        Update Question
+        Update Text
       </md-button>
 
     </md-whiteframe>
@@ -89,6 +103,7 @@
         <md-table-header>
           <md-table-row>
             <md-table-head>Invite</md-table-head>
+            <md-table-head>Status</md-table-head>
             <md-table-head>Code</md-table-head>
             <md-table-head>Answers</md-table-head>
             <md-table-head>Time (s)</md-table-head>
@@ -112,6 +127,9 @@
               @click="copyInviteRoute(participant)">
               copy
             </a>
+            </md-table-cell>
+            <md-table-cell>
+              {{ participant.attr.status }}
             </md-table-cell>
             <md-table-cell>
               {{ participant.attr.surveyCode }}
@@ -144,9 +162,7 @@
             </md-table-cell>
           </md-table-row>
         </md-table-body>
-
       </md-table>
-
     </md-whiteframe>
 
     <md-whiteframe
@@ -212,7 +228,7 @@ export default {
     console.log('> Experiment.mounted', util.jstr(experiment.attr))
 
     let imageSetIds = experiment.attr.imageSetIds
-    this.$data.imageSetIds = imageSetIds
+    this.imageSetIds = imageSetIds
 
     let images = {}
     let urls = _.map(experiment.images, i => i.url)
@@ -221,7 +237,7 @@ export default {
         urls, url => util.extractId(url) === imageSetId)
     }
     console.log('> Experiment.mounted images', _.clone(images))
-    this.$data.images = images
+    this.images = images
   },
 
   methods: {

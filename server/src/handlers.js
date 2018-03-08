@@ -154,20 +154,80 @@ async function updateExperimentAttr (experiment) {
   if (!('probRepeat' in experiment.attr)) {
     experiment.attr.probRepeat = 0.2
   }
-  let probRepeat = parseFloat(experiment.attr.probRepeat)
-  experiment.attr.probRepeat = probRepeat
+  experiment.attr.probRepeat = parseFloat(experiment.attr.probRepeat)
 
   if ('nQuestion' in experiment.attr) {
     delete experiment.attr.nQuestion
   }
 
-  console.log('> handlers.updateExperimentAttr', experiment.attr)
-
   if (experiment.attr.questionType === '2afc') {
-    _.assign(experiment.attr, twochoice.getExperimentAttr(urls, probRepeat))
+    _.assign(
+      experiment.attr,
+      twochoice.getExperimentAttr(urls, experiment.attr.probRepeat))
   } else if (experiment.attr.questionType === 'multiple') {
-    _.assign(experiment.attr, multiple.getExperimentAttr(urls, probRepeat))
+    _.assign(
+      experiment.attr,
+      multiple.getExperimentAttr(urls, experiment.attr.probRepeat))
   }
+
+  if ('title' in experiment.attr) {
+    experiment.attr.text.running.header = experiment.attr.title
+    delete experiment.attr.title
+    experiment.attr.text.running.blurb = experiment.attr.blurb
+    delete experiment.attr.blurb
+  }
+
+  let attr = experiment.attr
+  if (!('text' in attr) || !('sectionKeys' in attr.text)) {
+    if (attr.questionType === 'multiple') {
+      attr.text = {
+        sectionKeys: [
+          'qualificationStart', 'qualificationFailed', 'start', 'running', 'done'],
+        sections: {
+          running: {
+            header: 'Which image encode the contact shown in the 3D model?',
+            blurb: 'Remember that your answers will be timed and checked for consistency'
+          },
+          qualificationStart: {
+            header: '',
+            blurb: 'You will now start a short qualification test. Please answer carefully'
+          },
+          done: {
+            header: '',
+            blurb: 'Your tests are done. Thank you. Your survey code is'
+          },
+          start: {
+            header: 'Great Job!',
+            blurb: 'You will now start the survey. Do not forget to copy the survey code provided at the end of the survey, and paste it into the Mechanical Turk page.'
+          },
+          qualificationFailed: {
+            header: '',
+            blurb: 'Sorry, you have not passed the qualification. Thank you for your time'
+          }
+        }
+      }
+    } else if (attr.questionType === '2afc') {
+      attr.text = {
+        sectionKeys: ['start', 'running', 'done'],
+        sections: {
+          running: {
+            header: 'Which image looks better?',
+            blurb: 'Click on the image that looks better. Take your time'
+          },
+          done: {
+            header: '',
+            blurb: 'Your tests are done. Thank you. Your survey code is'
+          },
+          start: {
+            header: '',
+            blurb: 'You will now start the survey. Do not forget to copy the survey code provided at the end of the survey, and paste it into the Mechanical Turk page.'
+          }
+        }
+      }
+    }
+  }
+
+  console.log('> handlers.updateExperimentAttr', experiment.attr)
 
   await models.saveExperimentAttr(experiment.id, experiment.attr)
 
@@ -263,6 +323,7 @@ async function publicGetNextChoice (participateId) {
   if (status === 'done') {
     return {
       status,
+      experimentAttr,
       surveyCode: participant.attr.surveyCode
     }
   } else if (_.includes(['qualifying', 'running'], status)) {
@@ -393,17 +454,16 @@ async function downloadResults (experimentId) {
         row = _.concat(row, thisRow)
       }
 
-      console.log('> downloadResults row', row)
-
       rows.push(row)
     }
 
     headerRow = _.map(headerRow, h => path.basename(h))
     rows.unshift(headerRow)
 
+    rows.push([])
+    rows.push([])
+    rows.push(['imageA', 'imageB', 'chosenImage', 'time', 'participantId'])
     for (let participant of experiment.participants) {
-      rows.push(['---'])
-      rows.push(['participantId', participant.participateId])
       for (let state of _.values(participant.states)) {
         for (let comparison of state.comparisons) {
           let fnameA = path.basename(comparison.itemA.url)
@@ -415,67 +475,52 @@ async function downloadResults (experimentId) {
           } else {
             choice = fnameB
           }
-          rows.push([fnameA, fnameB, choice, time])
+          rows.push([fnameA, fnameB, choice, time, participant.participateId])
         }
       }
     }
   }
 
   if (experiment.attr.questionType === 'multiple') {
-    let isFoundHeader = false
-    let headerRow = ['participantId', 'surveyCode', 'time']
+    rows.push([
+      'questionId', 'surveyCode', 'participantId', 'Answer',
+      'Chosen', 'Time', 'isRepeat'])
 
     for (let participant of experiment.participants) {
-      if (!isFoundHeader) {
-        headerRow = _.concat(headerRow, experiment.attr.imageSetIds)
-        rows.push(headerRow)
-        let row = ['answer', '', '']
-        isFoundHeader = true
-        for (let id of experiment.attr.imageSetIds) {
-          let image = _.find(experiment.images, image => {
-            let urlId = util.extractId(image.url)
-            if (urlId !== id) {
-              return false
-            }
-            return _.includes(image.url, 'question')
-          })
-          console.log('> downloadResults url', id, image.url)
-          let value = util.extractId(image.url, '_', 2)
-          row.push(`="${value}"`)
-        }
-        rows.push(row)
-        console.log('> downloadResults header', headerRow)
-      }
-
-      let row = [
-        participant.participateId,
-        participant.attr.surveyCode,
-        participant.attr.time
-      ]
-
-      for (let id of experiment.attr.imageSetIds) {
+      let getAnswer = (id) => {
         let answer = _.find(participant.states.answers, a => a.imageSetId === id)
-        let value = answer ? `="${answer.value}"` : ''
-        row.push(value)
+        return answer.value
       }
-      rows.push(row)
-    }
-
-    rows.push([])
-
-    for (let participant of experiment.participants) {
-      rows.push([])
+      let getRepeatTimeInterval = (answer) => {
+        console.log('repeatTime', answer)
+        let startMs = new Date(answer.repeatStartTime).getTime()
+        let endMs = new Date(answer.repeatEndTime).getTime()
+        return (endMs - startMs) / 1000
+      }
       rows.push([])
       for (let answer of participant.states.answers) {
-        let repeat = answer.repeatValue
-        repeat = _.isUndefined(repeat) ? '' : repeat
         let row = [
-          participant.participateId,
           answer.imageSetId,
+          participant.attr.surveyCode,
+          participant.participateId,
+          `="${getAnswer(answer.imageSetId)}"`,
           `="${answer.value}"`,
           util.getTimeInterval(answer),
-          '',
-          `="${repeat}"`]
+          0]
+        rows.push(row)
+
+        let repeat = answer.repeatValue
+        if (_.isUndefined(repeat)) {
+          continue
+        }
+        row = [
+          answer.imageSetId,
+          participant.attr.surveyCode,
+          participant.participateId,
+          `="${getAnswer(answer.imageSetId)}"`,
+          `="${repeat}"`,
+          getRepeatTimeInterval(answer),
+          1]
         rows.push(row)
       }
     }

@@ -5,14 +5,12 @@
       v-if="status === 'qualificationStart'"
       style="padding: 1em">
 
-      <h2
-        class="md-display-2">
-        Welcome to Versus!
+      <h2 class="md-display-2">
+        {{ experimentAttr.text.sections.qualificationStart.header }}
       </h2>
 
       <p>
-        This is a qualification round. You will be asked a few questions
-        to allow access to the main survey.
+        {{ experimentAttr.text.sections.qualificationStart.blurb }}
       </p>
 
       <form
@@ -32,14 +30,11 @@
       style="padding: 1em">
 
       <h2 class="md-display-2">
-        Welcome to Versus!
+        {{ experimentAttr.text.sections.start.header }}
       </h2>
 
       <p>
-        You have been invited to participate in an experiment on Versus.
-        <br>
-        You will be asked at most {{experimentAttr.nQuestionMax}} questions,
-        of which {{experimentAttr.nRepeatQuestionMax}} will be randomly repeated.
+        {{ experimentAttr.text.sections.start.blurb }}
       </p>
 
       <form
@@ -65,12 +60,13 @@
         md-column
         md-vertical-align="center">
 
-        Your tests are done
-        <br>
-        Thank you
-        <br>
-        Your survey code is
-        <br>
+        <h2 class="md-display-2">
+          {{ experimentAttr.text.sections.done.header }}
+        </h2>
+
+        <p>
+          {{ experimentAttr.text.sections.done.blurb }}
+        </p>
 
         <md-whiteframe
           style="padding: 0.5em">
@@ -92,9 +88,13 @@
         md-column
         md-vertical-align="center">
 
-        Sorry, you have not passed the qualification
-        <br>
-        Thank you for your time
+        <h2 class="md-display-2">
+          {{ experimentAttr.text.sections.qualificationFailed.header }}
+        </h2>
+
+        <p>
+          {{ experimentAttr.text.sections.qualificationFailed.blurb }}
+        </p>
 
       </md-layout>
 
@@ -103,27 +103,24 @@
     <div
         v-else-if="(status === 'running') || (status === 'qualifying')">
 
+      <md-progress
+        style="height: 8px"
+        :md-progress="progress"/>
+
       <md-layout
-        md-align="center">
+        md-align="center"
+        style="padding: 1em">
 
-        <md-progress
-          style="height: 8px"
-          :md-progress="progress"/>
+        <h2
+          class="md-display-2"
+          style="text-align: center">
+          {{experimentAttr.text.sections.running.header}}
+        </h2>
 
-        <md-layout
-          md-align="center"
-          md-flex="100">
-          <h2 class="md-display-2">
-            {{experimentAttr.title}}
-          </h2>
-        </md-layout>
-
-        <md-layout
-          md-align="center"
-          md-flex="100">
-          <p> {{experimentAttr.blurb}}</p>
-          <br>
-        </md-layout>
+        <div
+          style="width: 100%; text-align: center">
+          {{experimentAttr.text.sections.running.blurb}}
+        </div>
 
         <div
           v-if="isLoading">
