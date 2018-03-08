@@ -41,7 +41,7 @@
         </md-input>
       </md-input-container>
 
-      Number of questions: {{ experiment.attr.nQuestionMax }}
+      Number of questions (including possible qualification): {{ experiment.attr.nQuestionMax }}
       &nbsp;
       &nbsp;
       Number of repeats: {{ experiment.attr.nRepeatQuestionMax }}
