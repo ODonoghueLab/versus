@@ -170,13 +170,6 @@ async function updateExperimentAttr (experiment) {
       multiple.getExperimentAttr(urls, experiment.attr.probRepeat))
   }
 
-  if ('title' in experiment.attr) {
-    experiment.attr.text.running.header = experiment.attr.title
-    delete experiment.attr.title
-    experiment.attr.text.running.blurb = experiment.attr.blurb
-    delete experiment.attr.blurb
-  }
-
   let attr = experiment.attr
   if (!('text' in attr) || !('sectionKeys' in attr.text)) {
     if (attr.questionType === 'multiple') {
@@ -225,6 +218,13 @@ async function updateExperimentAttr (experiment) {
         }
       }
     }
+  }
+
+  if ('title' in experiment.attr) {
+    experiment.attr.text.sections.running.header = experiment.attr.title
+    delete experiment.attr.title
+    experiment.attr.text.sections.running.blurb = experiment.attr.blurb
+    delete experiment.attr.blurb
   }
 
   console.log('> handlers.updateExperimentAttr', experiment.attr)
