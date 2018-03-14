@@ -46,15 +46,6 @@ function getExperimentAttr (paths, probRepeat) {
   return attr
 }
 
-function lengthOfPropList (o, key) {
-  if (!(key in o)) {
-    return 0
-  } else {
-    console.log('lengthOfProplist')
-    return o[key].length
-  }
-}
-
 function getIntFromStr (s) {
   try {
     return parseInt(s.replace(/^\D+/g, ''))
@@ -66,40 +57,69 @@ function getIntFromStr (s) {
 function getChoices (experiment, participant) {
   let states = participant.states
 
-  let isRepeat = false
   let unansweredIds = _.clone(experiment.attr.imageSetIds)
   for (let answer of states.answers) {
     _.remove(unansweredIds, id => id === answer.imageSetId)
   }
-  if (unansweredIds.length === 0) {
-    if (lengthOfPropList(states, 'toRepeatIds')) {
-      isRepeat = true
-    }
-  } else {
-    if (lengthOfPropList(states, 'toRepeatIds')) {
-      // Here is the random probability to do a repeat
-      if (Math.random() <= experiment.attr.probRepeat) {
-        isRepeat = true
-      }
-    }
-  }
-  console.log('> handlers.publicGetNextChoice repeat',
-    isRepeat, experiment.attr.nRepeatQuestionMax, unansweredIds)
-
   let qualificationIds = _.filter(
     unansweredIds, i => _.startsWith(i.toLowerCase(), 'test'))
   qualificationIds = _.sortBy(qualificationIds, i => getIntFromStr(i))
-  console.log('> getChoices testIds', qualificationIds)
+
+  let last = _.last(states.answers)
+  let lastId = last ? last.imageSetId : null
+
+  let noLastRepeatIds = _.shuffle(_.clone(states.toRepeatIds))
+  _.remove(noLastRepeatIds, id => id === lastId)
+
+  console.log('> multiple.getChoices repeatIds', states.toRepeatIds, lastId, noLastRepeatIds)
+
+  let surveyQuestions = _.filter(
+    _.clone(states.answers),
+    a => !_.startsWith(a.imageSetId.toLowerCase(), 'test'))
+  let nQuestionAnswered = surveyQuestions.length
+
+  console.log('> multiple.getChoices nQuestionAnswered',
+    nQuestionAnswered,
+    states.answers.length,
+    qualificationIds.length)
+
+  let isRepeat = false
+  let repeatId = null
+  if (unansweredIds.length === 0) {
+    if (states.toRepeatIds.length === 1) {
+      isRepeat = true
+      repeatId = states.toRepeatIds[0]
+    } else if (states.toRepeatIds.length > 1) {
+      isRepeat = true
+      repeatId = noLastRepeatIds[0]
+    }
+  } else if (nQuestionAnswered > 3) {
+    // Here is the random probability to do a repeat
+    if (Math.random() <= experiment.attr.probRepeat) {
+      if (states.toRepeatIds.length === 1) {
+        repeatId = states.toRepeatIds[0]
+        if (repeatId !== lastId) {
+          isRepeat = true
+        }
+      } else if (states.toRepeatIds.length > 1) {
+        isRepeat = true
+        repeatId = noLastRepeatIds[0]
+      }
+    }
+  }
+  console.log('> multiple.getChoices repeat',
+    isRepeat, repeatId, experiment.attr.nRepeatQuestionMax, unansweredIds)
 
   let imageSetId
   if (!isRepeat) {
     if (qualificationIds.length > 0) {
       imageSetId = qualificationIds[0]
     } else {
-      imageSetId = unansweredIds[Math.floor(Math.random() * unansweredIds.length)]
+      let iRandom = Math.floor(Math.random() * unansweredIds.length)
+      imageSetId = unansweredIds[iRandom]
     }
   } else {
-    imageSetId = _.shuffle(states.toRepeatIds)[0]
+    imageSetId = repeatId
   }
 
   let question

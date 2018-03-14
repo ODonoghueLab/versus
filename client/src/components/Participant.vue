@@ -5,7 +5,7 @@
       v-if="status === 'qualificationStart'"
       style="padding: 1em">
 
-      <h2 class="md-display-2">
+      <h2 class="md-display-1">
         {{ experimentAttr.text.sections.qualificationStart.header }}
       </h2>
 
@@ -29,7 +29,7 @@
       v-if="status === 'start'"
       style="padding: 1em">
 
-      <h2 class="md-display-2">
+      <h2 class="md-display-1">
         {{ experimentAttr.text.sections.start.header }}
       </h2>
 
@@ -55,7 +55,7 @@
 
       <md-layout
         style="padding: 1em"
-        class="md-display-2 done"
+        class="md-display-1 done"
         md-align="center"
         md-column
         md-vertical-align="center">
@@ -83,7 +83,7 @@
 
       <md-layout
         style="padding: 1em"
-        class="md-display-2 done"
+        class="md-display-1 done"
         md-align="center"
         md-column
         md-vertical-align="center">
@@ -101,7 +101,7 @@
     </div>
 
     <div
-        v-else-if="(status === 'running') || (status === 'qualifying')">
+      v-else-if="(status === 'running') || (status === 'qualifying')">
 
       <md-progress
         style="height: 8px"
@@ -112,13 +112,13 @@
         style="padding: 1em">
 
         <h2
-          class="md-display-2"
+          class="md-display-1"
           style="text-align: center">
           {{experimentAttr.text.sections.running.header}}
         </h2>
 
         <div
-          style="width: 100%; text-align: center">
+          style="width: 100%; text-align: center; margin-bottom: 1em">
           {{experimentAttr.text.sections.running.blurb}}
         </div>
 
@@ -132,6 +132,16 @@
             Loading...
           </div>
         </div>
+
+        <md-layout
+          v-if="question"
+          md-align="center"
+          md-flex="100">
+          {{ question.imageSetId }}
+          <span v-if="question.isRepeat">
+            &nbsp; - repeat
+          </span>
+        </md-layout>
 
         <md-layout
           v-if="!isLoading && question"
@@ -204,6 +214,9 @@
     text-transform: uppercase;
     font-weight: lighter;
     text-align: center;
+  }
+  .done h1, .done h2, .done h3, .done h4, .done h5 {
+    color: white
   }
 </style>
 
