@@ -54,6 +54,10 @@ function getIntFromStr (s) {
   }
 }
 
+function isQualifyId (id) {
+ return _.startsWith(id.toLowerCase(), 'test')
+}
+
 function getChoices (experiment, participant) {
   let states = participant.states
 
@@ -61,8 +65,7 @@ function getChoices (experiment, participant) {
   for (let answer of states.answers) {
     _.remove(unansweredIds, id => id === answer.imageSetId)
   }
-  let qualificationIds = _.filter(
-    unansweredIds, i => _.startsWith(i.toLowerCase(), 'test'))
+  let qualificationIds = _.filter(unansweredIds, isQualifyId)
   qualificationIds = _.sortBy(qualificationIds, i => getIntFromStr(i))
 
   let last = _.last(states.answers)
@@ -74,8 +77,7 @@ function getChoices (experiment, participant) {
   console.log('> multiple.getChoices repeatIds', states.toRepeatIds, lastId, noLastRepeatIds)
 
   let surveyQuestions = _.filter(
-    _.clone(states.answers),
-    a => !_.startsWith(a.imageSetId.toLowerCase(), 'test'))
+    _.clone(states.answers), a => !isQualifyId(a.imageSetId))
   let nQuestionAnswered = surveyQuestions.length
 
   console.log('> multiple.getChoices nQuestionAnswered',
@@ -93,9 +95,11 @@ function getChoices (experiment, participant) {
       isRepeat = true
       repeatId = noLastRepeatIds[0]
     }
-  } else if (nQuestionAnswered > 3) {
-    // Here is the random probability to do a repeat
-    if (Math.random() <= experiment.attr.probRepeat) {
+  } else if (nQuestionAnswered > 2) {
+    // Here probRepeat is the fraction of questions to be repeated
+    let probRepeat = experiment.attr.probRepeat
+    let probShowRepeat = probRepeat / (1 + probRepeat)
+    if (Math.random() <= probShowRepeat) {
       if (states.toRepeatIds.length === 1) {
         repeatId = states.toRepeatIds[0]
         if (repeatId !== lastId) {
