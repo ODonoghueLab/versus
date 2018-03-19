@@ -69,7 +69,9 @@
         </p>
 
         <md-whiteframe
-          style="padding: 0.5em">
+          style="
+            padding: 0.5em;
+            text-transform: none;">
           {{surveyCode}}
         </md-whiteframe>
 
