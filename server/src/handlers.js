@@ -467,7 +467,7 @@ async function downloadResults (experimentId) {
       for (let state of _.values(participant.states)) {
         for (let comparison of state.comparisons) {
           let fnameA = path.basename(comparison.itemA.url)
-          let fnameB = path.basename(comparison.itemA.url)
+          let fnameB = path.basename(comparison.itemB.url)
           let time = util.getTimeInterval(comparison)
           let choice
           if (comparison.itemA.value === comparison.choice) {
