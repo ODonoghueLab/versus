@@ -111,6 +111,11 @@ function getChoices (experiment, participant) {
       }
     }
   }
+
+  if (participant.attr.nRepeatAnswer >= experiment.attr.nRepeatQuestionMax) {
+    isRepeat = false
+  }
+
   console.log('> multiple.getChoices repeat',
     isRepeat, repeatId, experiment.attr.nRepeatQuestionMax, unansweredIds)
 

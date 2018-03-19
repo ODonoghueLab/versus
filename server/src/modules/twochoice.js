@@ -312,7 +312,22 @@ function isDone (state) {
   return true
 }
 
-function getComparison (state, probRepeat) {
+function getRandomUnfinishedState (states) {
+  let choices = []
+  for (let [id, state] of _.toPairs(states)) {
+    if (!isDone(state)) {
+      _.times(
+        state.imageUrls.length,
+        () => { choices.push(id) })
+    }
+  }
+  let id = choices[_.random(choices.length - 1)]
+  return states[id]
+}
+
+function getComparison (experiment, participant) {
+  let probRepeat = experiment.attr.probRepeat
+  let state = getRandomUnfinishedState(participant.states)
   let doRepeatComparison = false
 
   if (isAllImagesTested(state)) {
@@ -326,8 +341,20 @@ function getComparison (state, probRepeat) {
     }
   }
 
+  console.log('> towchoice.getComparison 1')
+
+  if (participant.nRepeatAnswer >= experiment.attr.nRepeatQuestionMax) {
+    doRepeatComparison = false
+  }
+
+  console.log('> towchoice.getComparison 2', doRepeatComparison)
+
   if (doRepeatComparison) {
     let comparison = state.comparisons[state.iComparisonRepeat]
+    console.log('> towchoice.getComparison comparison',
+      state.iComparisonRepeat,
+      state.comparisons[state.iComparisonRepeat],
+      comparison)
     comparison.isRepeat = true
     if (comparison.repeatStartTime === null) {
       comparison.repeatStartTime = util.getCurrentTimeStr()
@@ -344,23 +371,8 @@ function getComparison (state, probRepeat) {
   }
 }
 
-function getRandomUnfinishedState (states) {
-  let choices = []
-  for (let [id, state] of _.toPairs(states)) {
-    if (!isDone(state)) {
-      _.times(
-        state.imageUrls.length,
-        () => { choices.push(id) })
-    }
-  }
-  let id = choices[_.random(choices.length - 1)]
-  return states[id]
-}
-
 function getChoices (experiment, participant) {
-  let probRepeat = experiment.attr.probRepeat
-  let state = getRandomUnfinishedState(participant.states)
-  let comparison = getComparison(state, probRepeat)
+  let comparison = getComparison(experiment, participant)
   let choices = []
   for (let item of [comparison.itemA, comparison.itemB]) {
     let chosenComparison = _.cloneDeep(comparison)
