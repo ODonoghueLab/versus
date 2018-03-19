@@ -343,7 +343,7 @@ function getComparison (experiment, participant) {
 
   console.log('> towchoice.getComparison 1')
 
-  if (participant.nRepeatAnswer >= experiment.attr.nRepeatQuestionMax) {
+  if (state.iComparisonRepeat === null) {
     doRepeatComparison = false
   }
 

@@ -136,16 +136,6 @@
         </div>
 
         <md-layout
-          v-if="question"
-          md-align="center"
-          md-flex="100">
-          {{ question.imageSetId }}
-          <span v-if="question.isRepeat">
-            &nbsp; - repeat
-          </span>
-        </md-layout>
-
-        <md-layout
           v-if="!isLoading && question"
           md-align="center"
           md-flex="100">
