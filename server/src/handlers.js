@@ -499,11 +499,12 @@ async function downloadResults (experimentId) {
       }
       rows.push([])
       for (let answer of participant.states.answers) {
+        let correctValue = multiple.getCorrectValue(experiment, answer.imageSetId)
         let row = [
           answer.imageSetId,
           participant.attr.surveyCode,
           participant.participateId,
-          `="${getAnswer(answer.imageSetId)}"`,
+          `="${correctValue}"`,
           `="${answer.value}"`,
           util.getTimeInterval(answer),
           0]
@@ -517,7 +518,7 @@ async function downloadResults (experimentId) {
           answer.imageSetId,
           participant.attr.surveyCode,
           participant.participateId,
-          `="${getAnswer(answer.imageSetId)}"`,
+          `="${correctValue}"`,
           `="${repeat}"`,
           getRepeatTimeInterval(answer),
           1]

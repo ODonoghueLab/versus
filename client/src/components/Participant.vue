@@ -191,10 +191,6 @@
 
 </template>
 
-<style>
-  @import 'https://fonts.googleapis.com/css?family=Lato:300';
-</style>
-
 <!-- Add 'scoped' attribute to limit CSS to this component only -->
 <style scoped>
   .done {
@@ -310,6 +306,7 @@ export default {
           waitToLoadUrls.push(choice.fullUrl)
         }
 
+        console.log('> Participant.handleResponse choices', util.jstr(result.choices))
         preloadImages(waitToLoadUrls)
         while (!areImagesLoaded(waitToLoadUrls)) {
           await delay(100)
@@ -317,6 +314,7 @@ export default {
 
         this.isLoading = false
         this.choices = _.shuffle(result.choices)
+
         if (result.question) {
           this.question = result.question
         }

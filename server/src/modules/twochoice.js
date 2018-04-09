@@ -189,17 +189,6 @@ function getNextImage (state) {
   console.log('> tree.getNextImage nConsistentAnswer', checkNodes(state.nodes))
 }
 
-function setNextRepeatComparison (state) {
-  state.iComparisonRepeat = null
-  if (state.repeatComparisonIndices.length < state.totalRepeat) {
-    if (state.comparisonIndices.length > 0) {
-      state.comparisonIndices = _.shuffle(state.comparisonIndices)
-      state.iComparisonRepeat = state.comparisonIndices.shift()
-      state.repeatComparisonIndices.push(state.iComparisonRepeat)
-    }
-  }
-}
-
 /**
  * Checks the nConsistentAnswer of the binary tree in terms of
  * 1. one root node;
@@ -246,16 +235,6 @@ function checkNodes (nodes) {
   return pass
 }
 
-function isAllImagesTested (state) {
-  return (state.testImageIndices.length === 0) &&
-    (state.iImageTest === null)
-}
-
-function isAllRepeatComparisonsMade (state) {
-  return (state.repeatComparisonIndices.length === state.totalRepeat) &&
-    (state.iComparisonRepeat === null)
-}
-
 /**
  * Checks that the choices in each individual comparison are
  * consistent with the final sorted list generated from the binary tree
@@ -276,6 +255,21 @@ function checkComparisons (state) {
     }
   }
   return true
+}
+
+function isAllImagesTested (state) {
+  return (state.testImageIndices.length === 0) &&
+    (state.iImageTest === null)
+}
+
+function isAllRepeatComparisonsMade (state) {
+  let nRepeat = 0
+  for (let comparison of state.comparisons) {
+    if (comparison.isRepeat) {
+      nRepeat += 1
+    }
+  }
+  return (nRepeat >= state.totalRepeat)
 }
 
 function isDone (state) {
@@ -328,32 +322,38 @@ function getRandomUnfinishedState (states) {
 function getComparison (experiment, participant) {
   let probRepeat = experiment.attr.probRepeat
   let state = getRandomUnfinishedState(participant.states)
-  let doRepeatComparison = false
 
-  if (isAllImagesTested(state)) {
-    doRepeatComparison = true
-  } else {
-    if (state.iComparisonRepeat !== null) {
-      // Here is the random probability to do a repeat
-      if (Math.random() <= probRepeat) {
-        doRepeatComparison = true
-      }
+  let comparisonIndicesToRepeat = []
+  let comparisonIndicesRepeated = []
+  for (let [i, comparison] of state.comparisons.entries()) {
+    if (!comparison.isRepeat) {
+      comparisonIndicesToRepeat.push(i)
+    } else {
+      comparisonIndicesRepeated.push(i)
     }
   }
+  console.log(`> towchoice.getComparison isAllImagesTested=${isAllImagesTested(state)}`)
+  console.log(`> towchoice.getComparison isAllRepeatComparisonsMade=${isAllRepeatComparisonsMade(state)}`)
+  console.log(`> towchoice.getComparison repeats=${comparisonIndicesRepeated}/${state.totalRepeat}`)
+  console.log(`> towchoice.getComparison comparisons=${state.comparisons.length}`)
+  console.log(`> towchoice.getComparison comparisonIndicesToRepeat=${comparisonIndicesToRepeat}`)
+  console.log(`> towchoice.getComparison comparisonIndicesRepeated=${comparisonIndicesRepeated}`)
 
-  console.log('> towchoice.getComparison 1')
-
-  if (state.iComparisonRepeat === null) {
-    doRepeatComparison = false
+  let doRepeatComparison = false
+  if (isAllRepeatComparisonsMade(state)) {
+    doRepeatComparison = true
+  } else if (comparisonIndicesToRepeat.length > 0) {
+    // Here is the random probability to do a repeat
+    if (Math.random() <= probRepeat) {
+      doRepeatComparison = true
+    }
   }
-
-  console.log('> towchoice.getComparison 2', doRepeatComparison)
+  console.log(`> towchoice.getComparison doRepeatComparison=${doRepeatComparison}`)
 
   if (doRepeatComparison) {
-    let comparison = state.comparisons[state.iComparisonRepeat]
+    let i = _.shuffle(comparisonIndicesToRepeat)[0]
+    let comparison = state.comparisons[i]
     console.log('> towchoice.getComparison comparison',
-      state.iComparisonRepeat,
-      state.comparisons[state.iComparisonRepeat],
       comparison)
     comparison.isRepeat = true
     if (comparison.repeatStartTime === null) {
@@ -363,6 +363,7 @@ function getComparison (experiment, participant) {
   } else {
     // get comparison from tree
     let node = state.nodes[state.iNodeCompare]
+    console.log(`> towchoice.getComparison node=${util.jstr(node)}`)
     let comparison = makeComparison(state, state.iImageTest, node.iImage)
     if (comparison.startTime === null) {
       comparison.startTime = util.getCurrentTimeStr()
@@ -393,11 +394,19 @@ function makeChoice (states, comparison) {
   let urlA = comparison.itemA.url
   let imageSetId = util.extractId(urlA)
   let state = states[imageSetId]
+  console.log('> twochoice.makeChoice', util.jstr(comparison))
   if (comparison.isRepeat) {
-    let i = state.iComparisonRepeat
+    let i = _.findIndex(state.comparisons, c => {
+      return (c.itemA.value === comparison.itemA.value) &&
+        (c.itemB.value === comparison.itemB.value)
+    })
+    state.comparisons[i].isRepeat = true
     state.comparisons[i].repeat = comparison.repeat
+    state.comparisons[i].repeatStartTime = comparison.repeatStartTime
     state.comparisons[i].repeatEndTime = util.getCurrentTimeStr()
-    setNextRepeatComparison(state)
+    // only set null after repeat comparison is recorded
+    console.log('> twochoice.makeChoice save repeat', util.jstr(state.comparisons[i]))
+    state.iComparisonRepeat = null
   } else {
     let compareNode = state.nodes[state.iNodeCompare]
     let chosenImageIndex = comparison.choice
@@ -430,10 +439,6 @@ function makeChoice (states, comparison) {
     let iComparisonNew = state.comparisons.length
     state.comparisons.push(comparison)
     state.comparisonIndices.push(iComparisonNew)
-
-    if (state.iComparisonRepeat === null) {
-      setNextRepeatComparison(state)
-    }
   }
 }
 
@@ -460,7 +465,7 @@ function updateStatesToAttr (participant, experiment) {
     for (let comparison of state.comparisons) {
       attr.time += util.getTimeInterval(comparison)
       attr.nAnswer += 1
-      if (comparison.repeat !== null) {
+      if (comparison.isRepeat) {
         attr.nAnswer += 1
         attr.nRepeatAnswer += 1
         if (comparison.choice === comparison.repeat) {
@@ -470,6 +475,14 @@ function updateStatesToAttr (participant, experiment) {
     }
   }
   attr.progress = attr.nAnswer / experimentAttr.nAllQuestion * 100
+
+  for (let state of _.values(participant.states)) {
+    for (let comparison of state.comparisons) {
+      if (comparison.repeat !== null) {
+        comparison.isRepeat = true
+      }
+    }
+  }
 
   attr.isDone = true
   for (let state of _.values(states)) {

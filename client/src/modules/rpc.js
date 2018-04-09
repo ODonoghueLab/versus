@@ -22,6 +22,7 @@ export default {
       let response = await axios.post(`${config.apiUrl}/api/rpc-run`, payload)
       return response.data
     } catch (e) {
+      console.log(e.stack)
       return {
         error: {
           code: -32000,
@@ -47,6 +48,7 @@ export default {
       let response = await axios.post(`${config.apiUrl}/api/rpc-upload`, formData)
       return response.data
     } catch (e) {
+      console.log(e.stack)
       return {
         error: {
           code: -32000,
@@ -72,6 +74,7 @@ export default {
       }
       return data
     } catch (e) {
+      console.log(e.stack)
       return {
         error: {
           code: -32000,

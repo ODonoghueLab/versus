@@ -105,6 +105,7 @@ router.post('/api/rpc-run', (req, res, next) => {
         })
       })
       .catch(e => {
+        console.log(e.stack)
         console.log(e.toString())
         res.json({
           error: {
@@ -149,6 +150,7 @@ router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
         })
       })
       .catch(e => {
+        console.log(e.stack)
         console.log(e.toString())
         res.json({
           error: {
@@ -201,6 +203,7 @@ router.post('/api/rpc-download', (req, res) => {
           code: -1,
           message: e.toString()
         }
+        console.log(e.stack)
         console.log(e.toString())
         res.set('data', JSON.stringify({
           error,

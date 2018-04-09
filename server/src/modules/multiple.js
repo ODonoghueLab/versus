@@ -38,7 +38,7 @@ function getExperimentAttr (paths, probRepeat) {
   attr.imageSetIds = imageSetIds
   attr.nQuestionMax = imageSetIds.length
 
-  let mainQuestionIds = _.filter(imageSetIds, i => !_.startsWith(i, 'test'))
+  let mainQuestionIds = _.filter(imageSetIds, i => !isQualifyId(i))
   attr.nRepeatQuestionMax = Math.ceil(attr.probRepeat * mainQuestionIds.length)
 
   attr.nAllQuestion = attr.nQuestionMax + attr.nRepeatQuestionMax
@@ -174,7 +174,7 @@ function getCorrectValue (experiment, testId) {
 function checkQualificationFail (experiment, states) {
   let nQualificationFail = 0
   let imageSetIds = experiment.attr.imageSetIds
-  let qualificationIds = _.filter(imageSetIds, i => _.startsWith(i.toLowerCase(), 'test'))
+  let qualificationIds = _.filter(imageSetIds, isQualifyId)
   for (let testId of qualificationIds) {
     let answer = _.find(states.answers, a => a.imageSetId === testId)
     if (!(getCorrectValue(experiment, testId) === answer.value)) {
@@ -231,8 +231,7 @@ function updateStatesToAttr (participant, experiment) {
     for (let answer of states.answers) {
       _.remove(unansweredIds, id => id === answer.imageSetId)
     }
-    let qualificationIds = _.filter(
-      unansweredIds, i => _.startsWith(i.toLowerCase(), 'test'))
+    let qualificationIds = _.filter(unansweredIds, isQualifyId)
     if (qualificationIds.length > 0) {
       attr.status = 'qualifying'
     } else if (attr.user.isQualified) {
@@ -264,12 +263,12 @@ function pushToListProp (o, key, item) {
   o[key].push(item)
 }
 
-function makeChoice(states, answer) {
+function makeChoice (states, answer) {
   answer.endTime = util.getCurrentTimeStr()
   if (!answer.isRepeat) {
     states.answers.push(answer)
     console.log(answer)
-    if (!_.startsWith(answer.imageSetId.toLowerCase(), 'test')) {
+    if (!isQualifyId(answer.imageSetId)) {
       pushToListProp(states, 'toRepeatIds', answer.imageSetId)
     }
   } else {
@@ -287,5 +286,6 @@ module.exports = {
   getChoices,
   getNewStates,
   makeChoice,
-  updateStatesToAttr
+  updateStatesToAttr,
+  getCorrectValue
 }
