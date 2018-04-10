@@ -21,8 +21,13 @@
       </md-radio>
     </div>
 
-    <md-input-container style="width: 130px">
-      <label>Probability of Repeat</label>
+    <md-input-container style="width: 180px">
+      <label v-if="questionType == 'multiple'">
+        Fraction to be Repeated
+      </label>
+      <label v-if="questionType == '2afc'">
+        Probability of Repeat
+      </label>
       <md-input
         type="number"
         v-model="probRepeat"/>

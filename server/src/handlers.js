@@ -413,123 +413,12 @@ async function downloadResults (experimentId) {
 
   let experiment = await models.fetchExperiment(experimentId)
 
-  let rows = []
-
+  let result
   if (experiment.attr.questionType === '2afc') {
-    let isFoundHeader = false
-    let imageSet = {}
-
-    let headerRow = ['participantId', 'surveyCode', 'time']
-
-    for (let participant of experiment.participants) {
-
-      if (!isFoundHeader) {
-        for (let [imageSetId, state] of _.toPairs(participant.states)) {
-          imageSet[imageSetId] = {
-            imageUrls: state.imageUrls,
-            iImage: {}
-          }
-          headerRow = _.concat(headerRow, state.imageUrls)
-          _.each(state.imageUrls, (url, i) => {
-            imageSet[imageSetId].iImage[url] = i
-          })
-        }
-        isFoundHeader = true
-        console.log('> makeResultCsv header', headerRow)
-      }
-
-      let row = [
-        participant.participateId,
-        participant.attr.surveyCode,
-        participant.attr.time
-      ]
-
-      for (let [imageSetId, state] of _.toPairs(participant.states)) {
-        let thisRow = util.makeArray(state.rankedImageUrls.length, '')
-        if (!_.isUndefined(state.rankedImageUrls) && (state.rankedImageUrls.length > 0)) {
-          _.each(state.rankedImageUrls, (url, iRank) => {
-            thisRow[imageSet[imageSetId].iImage[url]] = iRank
-          })
-        }
-        row = _.concat(row, thisRow)
-      }
-
-      rows.push(row)
-    }
-
-    headerRow = _.map(headerRow, h => path.basename(h))
-    rows.unshift(headerRow)
-
-    rows.push([])
-    rows.push([])
-    rows.push(['imageA', 'imageB', 'chosenImage', 'time', 'participantId'])
-    for (let participant of experiment.participants) {
-      for (let state of _.values(participant.states)) {
-        for (let comparison of state.comparisons) {
-          let fnameA = path.basename(comparison.itemA.url)
-          let fnameB = path.basename(comparison.itemB.url)
-          let time = util.getTimeInterval(comparison)
-          let choice
-          if (comparison.itemA.value === comparison.choice) {
-            choice = fnameA
-          } else {
-            choice = fnameB
-          }
-          rows.push([fnameA, fnameB, choice, time, participant.participateId])
-        }
-      }
-    }
+      result = twochoice.makeCsv(experiment)
   }
-
   if (experiment.attr.questionType === 'multiple') {
-    rows.push([
-      'questionId', 'surveyCode', 'participantId', 'Answer',
-      'Chosen', 'Time', 'isRepeat'])
-
-    for (let participant of experiment.participants) {
-      let getAnswer = (id) => {
-        let answer = _.find(participant.states.answers, a => a.imageSetId === id)
-        return answer.value
-      }
-      let getRepeatTimeInterval = (answer) => {
-        console.log('repeatTime', answer)
-        let startMs = new Date(answer.repeatStartTime).getTime()
-        let endMs = new Date(answer.repeatEndTime).getTime()
-        return (endMs - startMs) / 1000
-      }
-      rows.push([])
-      for (let answer of participant.states.answers) {
-        let correctValue = multiple.getCorrectValue(experiment, answer.imageSetId)
-        let row = [
-          answer.imageSetId,
-          participant.attr.surveyCode,
-          participant.participateId,
-          `="${correctValue}"`,
-          `="${answer.value}"`,
-          util.getTimeInterval(answer),
-          0]
-        rows.push(row)
-
-        let repeat = answer.repeatValue
-        if (_.isUndefined(repeat)) {
-          continue
-        }
-        row = [
-          answer.imageSetId,
-          participant.attr.surveyCode,
-          participant.participateId,
-          `="${correctValue}"`,
-          `="${repeat}"`,
-          getRepeatTimeInterval(answer),
-          1]
-        rows.push(row)
-      }
-    }
-  }
-
-  let result = ''
-  for (let row of rows) {
-    result += row.join(',') + '\n'
+    result = multiple.makeCsv(experiment)
   }
 
   const timestampDir = String(new Date().getTime())

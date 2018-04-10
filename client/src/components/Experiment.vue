@@ -33,7 +33,12 @@
       <md-input-container
         style="width: 200px">
         <label>
-          Probability of Repeat
+          <template v-if="experiment.attr.questionType == 'multiple'">
+            Fraction to be Repeated
+          </template>
+          <template v-if="experiment.attr.questionType == '2afc'">
+            Probability of Repeat
+          </template>
         </label>
         <md-input
           type="number"
