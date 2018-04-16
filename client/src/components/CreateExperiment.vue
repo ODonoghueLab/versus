@@ -22,15 +22,12 @@
     </div>
 
     <md-input-container style="width: 180px">
-      <label v-if="questionType == 'multiple'">
+      <label>
         Fraction to be Repeated
-      </label>
-      <label v-if="questionType == '2afc'">
-        Probability of Repeat
       </label>
       <md-input
         type="number"
-        v-model="probRepeat"/>
+        v-model="fractionRepeat"/>
     </md-input-container>
 
     <md-input-container>
@@ -176,7 +173,7 @@ export default {
     return {
       name: '',
       questionType: '2afc',
-      probRepeat: 0.2,
+      fractionRepeat: 0.2,
       files: '',
       fileStr: '',
       isUploading: false,
@@ -240,7 +237,7 @@ export default {
       this.attr = {}
       this.attr.questionType = this.questionType
       this.attr.name = this.name
-      this.attr.probRepeat = parseFloat(this.probRepeat)
+      this.attr.fractionRepeat = parseFloat(this.fractionRepeat)
       this.attr.text = this.textByQuestionType[this.questionType]
 
       let error = checkFilelistError(this.files, this.questionType)

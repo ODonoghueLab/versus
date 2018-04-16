@@ -33,23 +33,22 @@
       <md-input-container
         style="width: 200px">
         <label>
-          <template v-if="experiment.attr.questionType == 'multiple'">
-            Fraction to be Repeated
-          </template>
-          <template v-if="experiment.attr.questionType == '2afc'">
-            Probability of Repeat
-          </template>
+          Fraction to be Repeated
         </label>
         <md-input
           type="number"
-          v-model="experiment.attr.probRepeat">
+          v-model="experiment.attr.fractionRepeat">
         </md-input>
       </md-input-container>
 
-      Number of questions (including possible qualification): {{ experiment.attr.nQuestionMax }}
-      &nbsp;
-      &nbsp;
-      Number of repeats: {{ experiment.attr.nRepeatQuestionMax }}
+      <div
+        style="padding-bottom: 1em"
+        v-if="experiment.attr.questionType == 'multiple'">
+        Number of questions (including possible qualification): {{ experiment.attr.nQuestionMax }}
+        &nbsp;
+        &nbsp;
+        Number of repeats: {{ experiment.attr.nRepeatQuestionMax }}
+      </div>
 
       <md-layout
         v-for="key in experiment.attr.text.sectionKeys"
@@ -230,7 +229,7 @@ export default {
     let experiment = response.result.experiment
     this.experiment = experiment
 
-    console.log('> Experiment.mounted', util.jstr(experiment.attr))
+    console.log('> Experiment.mounted', _.clone(experiment.attr))
 
     let imageSetIds = experiment.attr.imageSetIds
     this.imageSetIds = imageSetIds
@@ -241,7 +240,6 @@ export default {
       images[imageSetId] = _.filter(
         urls, url => util.extractId(url) === imageSetId)
     }
-    console.log('> Experiment.mounted images', _.clone(images))
     this.images = images
   },
 
@@ -294,7 +292,7 @@ export default {
     },
     async saveExperimentAttr () {
       let experiment = this.$data.experiment
-      experiment.attr.probRepeat = parseFloat(experiment.attr.probRepeat)
+      experiment.attr.fractionRepeat = parseFloat(experiment.attr.fractionRepeat)
       let response = await rpc.rpcRun('saveExperimentAttr', experiment.id, experiment.attr)
       if (response.result) {
         this.experiment = response.result.experiment

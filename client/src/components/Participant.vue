@@ -306,7 +306,6 @@ export default {
           waitToLoadUrls.push(choice.fullUrl)
         }
 
-        console.log('> Participant.handleResponse choices', util.jstr(result.choices))
         preloadImages(waitToLoadUrls)
         while (!areImagesLoaded(waitToLoadUrls)) {
           await delay(100)
@@ -332,7 +331,7 @@ export default {
 
         let setId = util.extractId(waitToLoadUrls[0])
         console.log(
-          `> Invite.handleResponse running setid=${setId}, repeat=${repeat} `)
+          `> Invite.handleResponse question setid=${setId}, repeat=${repeat}`, _.cloneDeep(result.choices))
       }
     },
 

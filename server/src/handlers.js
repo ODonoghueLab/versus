@@ -151,10 +151,10 @@ async function updateExperimentAttr (experiment) {
 
   let urls = _.map(experiment.images, 'url')
 
-  if (!('probRepeat' in experiment.attr)) {
-    experiment.attr.probRepeat = 0.2
+  if (!('fractionRepeat' in experiment.attr)) {
+    experiment.attr.fractionRepeat = 0.2
   }
-  experiment.attr.probRepeat = parseFloat(experiment.attr.probRepeat)
+  experiment.attr.fractionRepeat = parseFloat(experiment.attr.fractionRepeat)
 
   if ('nQuestion' in experiment.attr) {
     delete experiment.attr.nQuestion
@@ -163,11 +163,11 @@ async function updateExperimentAttr (experiment) {
   if (experiment.attr.questionType === '2afc') {
     _.assign(
       experiment.attr,
-      twochoice.getExperimentAttr(urls, experiment.attr.probRepeat))
+      twochoice.getExperimentAttr(urls, experiment.attr.fractionRepeat))
   } else if (experiment.attr.questionType === 'multiple') {
     _.assign(
       experiment.attr,
-      multiple.getExperimentAttr(urls, experiment.attr.probRepeat))
+      multiple.getExperimentAttr(urls, experiment.attr.fractionRepeat))
   }
 
   let attr = experiment.attr
@@ -316,7 +316,6 @@ async function publicGetNextChoice (participateId) {
   let urls = _.map(experiment.images, 'url')
 
   await updateParticipant(participant, experiment)
-  console.log(`> handlers.publicGetNextChoice experiment`, experiment.attr)
   console.log(`> handlers.publicGetNextChoice participant`, participant.attr)
 
   let status = participant.attr.status
@@ -389,11 +388,11 @@ async function uploadImagesAndCreateExperiment (filelist, userId, attr) {
   try {
     let paths = await models.storeFilesInConfigDir(filelist)
     let urls = _.map(paths, f => '/file/' + f)
-    let probRepeat = parseFloat(attr.probRepeat)
+    let fractionRepeat = parseFloat(attr.fractionRepeat)
     if (attr.questionType === '2afc') {
-      _.assign(attr, twochoice.getExperimentAttr(urls, probRepeat))
+      _.assign(attr, twochoice.getExperimentAttr(urls, fractionRepeat))
     } else if (attr.questionType === 'multiple') {
-      _.assign(attr, multiple.getExperimentAttr(urls, probRepeat))
+      _.assign(attr, multiple.getExperimentAttr(urls, fractionRepeat))
     }
     let experiment = await models.createExperiment(userId, attr, urls)
     console.log(
@@ -415,7 +414,7 @@ async function downloadResults (experimentId) {
 
   let result
   if (experiment.attr.questionType === '2afc') {
-      result = twochoice.makeCsv(experiment)
+    result = twochoice.makeCsv(experiment)
   }
   if (experiment.attr.questionType === 'multiple') {
     result = multiple.makeCsv(experiment)
