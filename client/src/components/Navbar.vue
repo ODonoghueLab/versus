@@ -3,7 +3,7 @@
     v-if="isShowNavbar"
     class="md-dense">
 
-    <md-icon md-src="./static/logo.png"/>
+    <img style="height: 30px" src="../../static/logo.png">
 
     <h2
       class="md-title"

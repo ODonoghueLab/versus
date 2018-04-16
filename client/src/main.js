@@ -21,6 +21,10 @@ Vue.use(VueMaterial)
 Vue.use(Vuex)
 document.title = config.title
 
+Vue.material.registerTheme('default', {
+  primary: 'blue-grey'
+})
+
 async function init () {
   if (config.isUser) {
     await auth.restoreLastUser()
