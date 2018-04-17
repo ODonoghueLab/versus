@@ -3,17 +3,17 @@
     v-if="isShowNavbar"
     class="md-dense">
 
-    <img style="height: 30px" src="../../static/logo.png">
-
-    <h2
-      class="md-title"
+    <div
       style="
-        padding-left: 1em;
-        flex: 1;
-        cursor: pointer;"
+      height: 30px;
+      flex: 1;
+      cursor: pointer">
+      <img
+        style="
+          height: 30px;"
+        src="../../static/logo.png"
       @click="home()">
-      {{title}}
-    </h2>
+    </div>
 
     <div v-if="isUser">
 

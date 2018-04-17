@@ -8,11 +8,19 @@
         md-flex="30"
         md-flex-medium="50"
         md-flex-small="80"
-        style="width: 500px; text-align: center">
+        style="
+          width: 400px;
+          text-align: left">
 
-      <h2 class="md-display-2">
-        Welcome to Versus
-      </h2>
+      <div
+        style="
+          padding-top: 4em;
+          padding-bottom: 2em;">
+        <img
+          style="
+            width: 100%"
+          src="../../static/logo.png">
+      </div>
 
       <p>
         Versus is a tool to facilitate the complete
@@ -24,9 +32,15 @@
 
       <p>
         Currently, we
-        provide a two-alternative forced-choice (2FCA)
-        option, whereby images a ranked via a series of comparisons
-        between two images.
+        provide:
+        <ol>
+          <li> two-alternative forced-choice (2FCA)
+            option, whereby images a ranked via a series of comparisons
+            between two images.
+          </li>
+          <li> multiple choice option with a qualification round
+          </li>
+        </ol>
       </p>
 
       <p>
@@ -41,7 +55,7 @@
       </p>
 
       <md-layout
-          md-align="center"
+          md-align="left"
           md-vertical-align="center">
         Please
         <router-link

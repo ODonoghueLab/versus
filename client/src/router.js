@@ -87,14 +87,12 @@ let publicPathTokens = [
 router.beforeEach((to, from, next) => {
   if (util.isStringInStringList(to.path, publicPathTokens) ||
       to.path === '/') {
-    console.log('> router.beforeEach public', to.path)
     next()
   } else {
     if (!auth.user.authenticated) {
       console.log('> router.beforeEach blocked', to.path, 'to /')
       next('/login')
     } else {
-      console.log('> router.beforeEach authenticated', to.path)
       next()
     }
   }

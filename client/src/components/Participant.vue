@@ -240,7 +240,7 @@ function areImagesLoaded (urls) {
         return false
       }
     } else {
-      console.log(`> isImagesLoaded warning: ${url} not found in ${_.keys(loadedImages)}`)
+      console.log(`> Participant.areImagesLoaded warning: ${url} not found in ${_.keys(loadedImages)}`)
       return false
     }
   }
@@ -275,7 +275,7 @@ export default {
 
     async handleResponse (response) {
       let result = response.result
-      console.log(`> Participant.handleResponse status=${result.status}`, result)
+      console.log(`> Participant.handleResponse status=${result.status}`, _.clone(result))
       this.status = result.status
       this.experimentAttr = result.experimentAttr
 
@@ -331,7 +331,7 @@ export default {
 
         let setId = util.extractId(waitToLoadUrls[0])
         console.log(
-          `> Invite.handleResponse question setid=${setId}, repeat=${repeat}`, _.cloneDeep(result.choices))
+          `> Participant.handleResponse setid=${setId}, repeat=${repeat}`, util.jstr(result.choices))
       }
     },
 

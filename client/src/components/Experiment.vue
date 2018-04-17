@@ -41,15 +41,6 @@
         </md-input>
       </md-input-container>
 
-      <div
-        style="padding-bottom: 1em"
-        v-if="experiment.attr.questionType == 'multiple'">
-        Number of questions (including possible qualification): {{ experiment.attr.nQuestionMax }}
-        &nbsp;
-        &nbsp;
-        Number of repeats: {{ experiment.attr.nRepeatQuestionMax }}
-      </div>
-
       <md-layout
         v-for="key in experiment.attr.text.sectionKeys"
         :key="key"
@@ -109,9 +100,10 @@
             <md-table-head>Invite</md-table-head>
             <md-table-head>Status</md-table-head>
             <md-table-head>Code</md-table-head>
-            <md-table-head>Answers</md-table-head>
             <md-table-head>Time (s)</md-table-head>
-            <md-table-head>Consistency</md-table-head>
+            <md-table-head>Answers</md-table-head>
+            <md-table-head>Repeats</md-table-head>
+            <md-table-head>Consistent</md-table-head>
             <md-table-head>Created</md-table-head>
             <md-table-head>Updated</md-table-head>
           </md-table-row>
@@ -139,17 +131,18 @@
               {{ participant.attr.surveyCode }}
             </md-table-cell>
             <md-table-cell>
-              {{ participant.attr.nAnswer }}
-            </md-table-cell>
-            <md-table-cell>
               <span v-if="participant.attr.time">
                 {{ participant.attr.time.toFixed(1) }}
               </span>
             </md-table-cell>
             <md-table-cell>
-              <span v-if="participant.attr.nRepeatAnswer">
-                {{ participant.attr.nConsistentAnswer }}/{{ participant.attr.nRepeatAnswer}}
-              </span>
+              {{ participant.attr.nAnswer }}
+            </md-table-cell>
+            <md-table-cell>
+              {{ participant.attr.nRepeatAnswer}}
+            </md-table-cell>
+            <md-table-cell>
+              {{ participant.attr.nConsistentAnswer }}
             </md-table-cell>
             <md-table-cell>
               {{reformatDate(participant, 'createdAt')}}
@@ -229,7 +222,7 @@ export default {
     let experiment = response.result.experiment
     this.experiment = experiment
 
-    console.log('> Experiment.mounted', _.clone(experiment.attr))
+    console.log('> Experiment.mounted', _.cloneDeep(experiment))
 
     let imageSetIds = experiment.attr.imageSetIds
     this.imageSetIds = imageSetIds
@@ -256,7 +249,7 @@ export default {
     reformatDate (participant, key) {
       if (key in participant) {
         let date = participant[key]
-        return new Date(date).toDateString()
+        return new Date(date).toString()
       }
       return ''
     },

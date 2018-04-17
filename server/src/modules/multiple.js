@@ -152,6 +152,7 @@ function getChoices (experiment, participant) {
       choices.push(choice)
     }
   }
+  choices = _.shuffle(choices)
   return {question, choices}
 }
 
@@ -195,7 +196,6 @@ function updateStatesToAttr (participant, experiment) {
       attr.time += util.getTimeInterval(answer)
       attr.nAnswer += 1
       if ('repeatValue' in answer) {
-        attr.nAnswer += 1
         attr.nRepeatAnswer += 1
         if (answer.repeatValue === answer.value) {
           attr.nConsistentAnswer += 1
@@ -203,7 +203,7 @@ function updateStatesToAttr (participant, experiment) {
       }
     }
   }
-  attr.progress = attr.nAnswer / experimentAttr.nAllQuestion * 100
+  attr.progress = (attr.nAnswer + attr.nRepeatAnswer) / experimentAttr.nAllQuestion * 100
 
   attr.isDone = (attr.nAnswer >= experimentAttr.nAllQuestion) &&
     (attr.nRepeatAnswer >= experimentAttr.nRepeatQuestionMax) &&
