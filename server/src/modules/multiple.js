@@ -109,8 +109,8 @@ function getChoices (experiment, participant) {
     isRepeat = false
   }
 
-  console.log('> multiple.getChoices repeat',
-    isRepeat, repeatId, experiment.attr.nRepeatQuestionMax, unansweredIds)
+  console.log(`> multiple.getChoices repeat=${isRepeat}`,
+    _.cloneDeep(experiment.attr), _.cloneDeep(participant.attr))
 
   let imageSetId
   if (!isRepeat) {
@@ -205,9 +205,9 @@ function updateStatesToAttr (participant, experiment) {
   }
   attr.progress = (attr.nAnswer + attr.nRepeatAnswer) / experimentAttr.nAllQuestion * 100
 
-  attr.isDone = (attr.nAnswer >= experimentAttr.nAllQuestion) &&
+  attr.isDone =
     (attr.nRepeatAnswer >= experimentAttr.nRepeatQuestionMax) &&
-    ((attr.nAnswer - attr.nRepeatAnswer) >= experimentAttr.nQuestionMax)
+    (attr.nAnswer >= experimentAttr.nQuestionMax)
 
   console.log('> multiple.updateStatesToAttr experimentAttr', experimentAttr)
   console.log('> multiple.updateStatesToAttr attr', attr)
