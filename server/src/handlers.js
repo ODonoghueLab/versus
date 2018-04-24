@@ -6,7 +6,6 @@ const fs = require('fs-extra')
 const config = require('./config')
 const models = require('./models')
 const twochoice = require('./modules/twochoice')
-const util = require('./modules/util')
 const multiple = require('./modules/multiple')
 
 /**
@@ -263,10 +262,12 @@ async function getExperimentSummaries (userId) {
 }
 
 async function getExperiment (experimentId) {
+  console.log(`> getExperiment init`)
   let experiment = await models.fetchExperiment(experimentId)
   for (let participant of experiment.participants) {
     await updateParticipant(participant, experiment)
   }
+  experiment.participants = _.sortBy(experiment.participants, p => -p.createdAt)
   return {experiment}
 }
 
