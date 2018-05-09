@@ -329,9 +329,12 @@ export default {
           preloadImages(_.map(result.urls, u => config.apiUrl + u))
         }
 
-        let setId = util.extractId(waitToLoadUrls[0])
         console.log(
-          `> Participant.handleResponse setid=${setId}, repeat=${repeat}`, util.jstr(result.choices))
+          `> Participant.handleResponse ` +
+          `setid=${util.extractId(waitToLoadUrls[0])} ` +
+          `repeat=${repeat} ` +
+          `urls=${util.jstr(_.map(this.choices, 'url'))}`,
+          result.choices)
       }
     },
 
