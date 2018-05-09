@@ -599,20 +599,36 @@ function makeCsv (experiment) {
 
   rows.push([])
   rows.push([])
-  rows.push(['imageA', 'imageB', 'chosenImage', 'time', 'participantId'])
+  rows.push(['imageA', 'imageB', 'chosenImage', 'time', 'participantId', 'isRepeat'])
   for (let participant of experiment.participants) {
     for (let state of _.values(participant.states)) {
       for (let comparison of state.comparisons) {
         let fnameA = path.basename(comparison.itemA.url)
         let fnameB = path.basename(comparison.itemB.url)
-        let time = util.getTimeInterval(comparison)
         let choice
+        let time
+
         if (comparison.itemA.value === comparison.choice) {
           choice = fnameA
         } else {
           choice = fnameB
         }
-        rows.push([fnameA, fnameB, choice, time, participant.participateId])
+        time = util.getTimeInterval(comparison)
+        rows.push([fnameA, fnameB, choice, time, participant.participateId, 0])
+
+        if (!comparison.isRepeat) {
+          continue
+        }
+
+        if (comparison.itemA.value === comparison.repeatValue) {
+          choice = fnameA
+        } else {
+          choice = fnameB
+        }
+        let startMs = new Date(comparison.repeatStartTime).getTime()
+        let endMs = new Date(comparison.repeatEndTime).getTime()
+        time = (endMs - startMs) / 1000
+        rows.push([fnameB, fnameA, choice, time, participant.participateId, 1])
       }
     }
   }
