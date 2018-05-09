@@ -40,9 +40,9 @@ function getExperimentAttr (paths, fractionRepeat) {
   attr.nQuestionMax = imageSetIds.length
 
   let mainQuestionIds = _.filter(imageSetIds, i => !isQualifyId(i))
-  attr.nRepeatQuestionMax = Math.ceil(attr.fractionRepeat * mainQuestionIds.length)
+  attr.nMainQuestionMax = mainQuestionIds.length
 
-  attr.nAllQuestion = attr.nQuestionMax + attr.nRepeatQuestionMax
+  attr.nRepeatQuestionMax = Math.ceil(attr.fractionRepeat * attr.nMainQuestionMax)
 
   return attr
 }
@@ -105,7 +105,10 @@ function getChoices (experiment, participant) {
     }
   }
 
-  if (participant.attr.nRepeatAnswer >= experiment.attr.nRepeatQuestionMax) {
+  let fractionRepeat = participant.attr.fractionRepeat
+  let nMainQuestionMax = experiment.attr.nMainQuestionMax
+  let nRepeatQuestionMax = Math.ceil(fractionRepeat * nMainQuestionMax)
+  if (participant.attr.nRepeatAnswer >= nRepeatQuestionMax) {
     isRepeat = false
   }
 
@@ -178,7 +181,7 @@ function checkQualificationFail (experiment, states) {
   return (nQualificationFail > 0)
 }
 
-function updateStatesToAttr (participant, experiment) {
+function updateParticipantStates (participant, experiment) {
   let experimentAttr = experiment.attr
   let attr = participant.attr
   let states = participant.states
@@ -186,6 +189,11 @@ function updateStatesToAttr (participant, experiment) {
   if (_.isUndefined(states.toRepeatIds)) {
     states.toRepeatIds = []
   }
+
+  if (!('fractionRepeat' in attr)) {
+    attr.fractionRepeat = experimentAttr.fractionRepeat
+  }
+  let nRepeatQuestionMax = Math.ceil(attr.fractionRepeat * experimentAttr.nMainQuestionMax)
 
   attr.nAnswer = 0
   attr.nRepeatAnswer = 0
@@ -203,14 +211,17 @@ function updateStatesToAttr (participant, experiment) {
       }
     }
   }
-  attr.progress = (attr.nAnswer + attr.nRepeatAnswer) / experimentAttr.nAllQuestion * 100
+
+  let nAllQuestion = experiment.attr.nQuestionMax + nRepeatQuestionMax
+
+  attr.progress = (attr.nAnswer + attr.nRepeatAnswer) / nAllQuestion * 100
 
   attr.isDone =
-    (attr.nRepeatAnswer >= experimentAttr.nRepeatQuestionMax) &&
+    (attr.nRepeatAnswer >= nRepeatQuestionMax) &&
     (attr.nAnswer >= experimentAttr.nQuestionMax)
 
-  console.log('> multiple.updateStatesToAttr experimentAttr', experimentAttr)
-  console.log('> multiple.updateStatesToAttr attr', attr)
+  console.log('> multiple.updateParticipantStates experiment.attr', experimentAttr)
+  console.log('> multiple.updateParticipantStates participant.attr', attr)
   if (!attr.isDone && attr.surveyCode) {
     delete attr.surveyCode
   }
@@ -329,6 +340,6 @@ module.exports = {
   getChoices,
   getNewStates,
   makeChoice,
-  updateStatesToAttr,
+  updateParticipantStates,
   makeCsv
 }

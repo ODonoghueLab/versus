@@ -337,13 +337,14 @@ async function fetchExperiments (userId) {
 
 async function createParticipant (experimentId, email) {
   let experiment = await findExperiment(experimentId)
+  let fractionRepeat = experiment.attr.fractionRepeat
   let states
   if (experiment.attr.questionType === '2afc') {
     states = twochoice.getNewStates(experiment)
   } else if (experiment.attr.questionType === 'multiple') {
     states = multiple.getNewStates(experiment)
   }
-  let attr = {email, user: null}
+  let attr = {email, fractionRepeat, user: null}
   let participant = await Participant.create({attr, states})
   await experiment.addParticipant(participant)
   return unwrapInstance(participant)

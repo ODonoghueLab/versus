@@ -102,6 +102,7 @@
             <md-table-head>Code</md-table-head>
             <md-table-head>Time (s)</md-table-head>
             <md-table-head>Answers</md-table-head>
+            <md-table-head>Fraction of Repeats</md-table-head>
             <md-table-head>Repeats</md-table-head>
             <md-table-head>Consistent</md-table-head>
             <md-table-head>Created</md-table-head>
@@ -137,6 +138,9 @@
             </md-table-cell>
             <md-table-cell>
               {{ participant.attr.nAnswer }}
+            </md-table-cell>
+            <md-table-cell>
+              {{ participant.attr.fractionRepeat}}
             </md-table-cell>
             <md-table-cell>
               {{ participant.attr.nRepeatAnswer}}

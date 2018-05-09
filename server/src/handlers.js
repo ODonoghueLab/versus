@@ -116,9 +116,9 @@ async function publicForceUpdatePassword (user) {
 
 async function updateParticipant (participant, experiment) {
   if (experiment.attr.questionType === '2afc') {
-    twochoice.updateStatesToAttr(participant, experiment)
+    twochoice.updateParticipantStates(participant, experiment)
   } else {
-    multiple.updateStatesToAttr(participant, experiment)
+    multiple.updateParticipantStates(participant, experiment)
   }
   if (participant.attr.status === 'done') {
     if (!participant.attr.surveyCode) {
@@ -264,9 +264,6 @@ async function getExperimentSummaries (userId) {
 async function getExperiment (experimentId) {
   console.log(`> getExperiment init`)
   let experiment = await models.fetchExperiment(experimentId)
-  for (let participant of experiment.participants) {
-    await updateParticipant(participant, experiment)
-  }
   experiment.participants = _.sortBy(experiment.participants, p => -p.createdAt)
   return {experiment}
 }
@@ -317,7 +314,7 @@ async function publicGetNextChoice (participateId) {
   let urls = _.map(experiment.images, 'url')
 
   await updateParticipant(participant, experiment)
-  console.log(`> handlers.publicGetNextChoice participant`, participant.attr)
+  console.log(`> handlers.publicGetNextChoice participant`, participateId)
 
   let status = participant.attr.status
   if (status === 'done') {

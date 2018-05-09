@@ -82,7 +82,7 @@ export default {
   name: 'home',
   data () {
     return {
-      user: auth.user,
+      user: auth.user
     }
   }
 }

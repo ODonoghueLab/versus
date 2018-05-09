@@ -358,22 +358,20 @@ function getComparison (experiment, participant) {
     }
   }
 
-  console.log(`> towchoice.getComparison isAllImagesTested=${isAllImagesTested(state)}`)
-  console.log(`> towchoice.getComparison isAllRepeatComparisonsMade=${isAllRepeatComparisonsMade(state)}`)
-  console.log(`> towchoice.getComparison comparisonIndicesToRepeat=${comparisonIndicesToRepeat}`)
-  console.log(`> towchoice.getComparison comparisonIndicesRepeated=${comparisonIndicesRepeated}`)
-  console.log(`> towchoice.getComparison doRepeatComparison=${doRepeatComparison}`)
-
   if (doRepeatComparison) {
     let i = _.shuffle(comparisonIndicesToRepeat)[0]
     let comparison = _.cloneDeep(state.comparisons[i])
     swapItemsInComparison(comparison)
-    // swap items around
     comparison.isRepeat = true
     if (comparison.repeatStartTime === null) {
       comparison.repeatStartTime = util.getCurrentTimeStr()
     }
-    console.log('> towchoice.getComparison repeat comparison', _.cloneDeep(comparison))
+    console.log(
+      '> towchoice.getComparison original =',
+      util.jstr(state.comparisons[i]))
+    console.log(
+      '> towchoice.getComparison repeat =',
+      util.jstr(comparison))
     return comparison
   } else {
     // get comparison from tree
@@ -385,7 +383,8 @@ function getComparison (experiment, participant) {
     if (Math.random() < 0.5) {
       swapItemsInComparison(comparison)
     }
-    console.log(`> towchoice.getComparison`, _.cloneDeep(node), _.cloneDeep(comparison))
+    console.log(`> towchoice.getComparison node =`, util.jstr(node))
+    console.log(`> towchoice.getComparison comparison =`, util.jstr(comparison))
     return comparison
   }
 }
@@ -419,8 +418,8 @@ function makeChoice (states, comparison) {
     state.comparisons[i].repeat = comparison.repeat
     state.comparisons[i].repeatStartTime = comparison.repeatStartTime
     state.comparisons[i].repeatEndTime = util.getCurrentTimeStr()
+    console.log('> twochoice.makeChoice repeat', util.jstr(state.comparisons[i]))
     // only set null after repeat comparison is recorded
-    console.log('> twochoice.makeChoice save repeat', util.jstr(state.comparisons[i]))
     state.iComparisonRepeat = null
   } else {
     let compareNode = state.nodes[state.iNodeCompare]
@@ -467,17 +466,30 @@ function getNewStates (experiment) {
   return states
 }
 
-function updateStatesToAttr (participant, experiment) {
+function updateParticipantStates (participant, experiment) {
   let experimentAttr = experiment.attr
   let attr = participant.attr
   let states = participant.states
+
+  if (!('fractionRepeat' in attr)) {
+    let fractionRepeat = null
+    for (let state of _.values(states)) {
+      if (fractionRepeat === null) {
+        fractionRepeat = state.fractionRepeat
+        break
+      }
+    }
+    if (fractionRepeat === null) {
+      fractionRepeat = experimentAttr.fractionRepeat
+    }
+    attr.fractionRepeat = fractionRepeat
+  }
 
   attr.nAnswer = 0
   attr.nRepeatAnswer = 0
   attr.nConsistentAnswer = 0
   attr.time = 0
   for (let state of _.values(states)) {
-    state.fractionRepeat = experiment.attr.fractionRepeat
     for (let comparison of state.comparisons) {
       attr.time += util.getTimeInterval(comparison)
       attr.nAnswer += 1
@@ -645,7 +657,7 @@ module.exports = {
   getNewStates,
   makeChoice,
   getExperimentAttr,
-  updateStatesToAttr,
+  updateParticipantStates,
   getChoices,
   makeCsv
 }
