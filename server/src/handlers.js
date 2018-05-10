@@ -44,7 +44,7 @@ async function publicRegisterUser (user) {
   }
 
   if (errors.length > 0) {
-    throw errors.join(', ').join(errors)
+    throw errors.join(', ')
   }
 
   let values = {
