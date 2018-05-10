@@ -19,6 +19,12 @@ const db = new Sequelize(
   dbConfig)
 
 // Wipes database if `force: true`
-db.sync({force: false})
-
-module.exports = {app, db}
+db.sync({
+  force: false
+})
+console.log(
+  `> sequelize: using ${dbConfig.dialect} for ${env} environment`)
+module.exports = {
+  app,
+  db
+}
