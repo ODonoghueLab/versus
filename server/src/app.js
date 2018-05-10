@@ -61,6 +61,7 @@ if (env === DEVELOPMENT_ENV) {
     saveUninitialized: true,
     resave: true
   }))
+  console.log("express-session: Using MemStore SessionStore")
 } else if (dbConfig.dialect === "mysql") {
   const MySQLStore = require('express-mysql-session')(session);
   const options = {
@@ -68,9 +69,8 @@ if (env === DEVELOPMENT_ENV) {
     port: 3306,
     user: dbConfig.username,
     password: dbConfig.password,
-    database: dbConfig.database
+    database: "versus_session"
   };
-
   const sessionStore = new MySQLStore(options);
 
   app.use(session({
@@ -79,7 +79,7 @@ if (env === DEVELOPMENT_ENV) {
     resave: true,
     saveUninitialized: true
   }));
-
+  console.log("express-session: Using express-mysql-session SessionStore")
 }
 
 // User authentication and session management
