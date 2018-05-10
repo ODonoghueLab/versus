@@ -24,11 +24,12 @@ module.exports = app
 // Middleware Configuration
 
 // Cross-origin-resource-sharing for hot-reloading client
-app.use(function (req, res, next) {
+app.use(function(req, res, next) {
   res.header('Access-Control-Allow-Credentials', true)
   res.header('Access-Control-Allow-Origin', req.headers.origin)
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
-  res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept')
+  res.header('Access-Control-Allow-Headers',
+    'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept')
   if (req.method === 'OPTIONS') {
     res.sendStatus(200)
   } else {
@@ -43,15 +44,43 @@ app.use(logger('dev'))
 // Parse Json in body
 const bodyParser = require('body-parser')
 app.use(bodyParser.json())
-app.use(bodyParser.urlencoded({extended: false}))
-
-// Session management for validated users
-const session = require('express-session')
-app.use(session({
-  secret: config.secretKey,
-  saveUninitialized: true,
-  resave: true
+app.use(bodyParser.urlencoded({
+  extended: false
 }))
+
+// Session management for validated users for development
+
+const session = require('express-session')
+const DEVELOPMENT_ENV = 'development'
+const env = process.env.NODE_ENV || DEVELOPMENT_ENV
+const dbConfig = require('./config')[env]
+
+if (env === DEVELOPMENT_ENV) {
+  app.use(session({
+    secret: config.secretKey,
+    saveUninitialized: true,
+    resave: true
+  }))
+} else if (dbConfig.dialect === "mysql") {
+  const MySQLStore = require('express-mysql-session')(session);
+  const options = {
+    host: dbConfig.host,
+    port: 3306,
+    user: dbConfig.username,
+    password: dbConfig.password,
+    database: dbConfig.database
+  };
+
+  const sessionStore = new MySQLStore(options);
+
+  app.use(session({
+    secret: config.secretKey,
+    store: sessionStore,
+    resave: true,
+    saveUninitialized: true
+  }));
+
+}
 
 // User authentication and session management
 const passport = require('passport')
@@ -66,23 +95,27 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser((id, done) => {
   models
-    .fetchUser({id})
+    .fetchUser({
+      id
+    })
     .then(user => done(null, user))
     .catch(error => done(error, null))
 })
 
 // Define the method to authenticate user for sessions
 const LocalStrategy = require('passport-local').Strategy
-passport.use(new LocalStrategy(
-  {
+passport.use(new LocalStrategy({
     usernameField: 'email',
     passwordField: 'password'
   },
-  function (email, password, done) {
+  function(email, password, done) {
     models
-      .fetchUser({email: email})
+      .fetchUser({
+        email: email
+      })
       .then(user => {
-        console.log('>> passport.LocalStrategy has email', email, password)
+        console.log('>> passport.LocalStrategy has email', email,
+          password)
         if (user) {
           models
             .checkUserWithPassword(user, password)
@@ -90,15 +123,16 @@ passport.use(new LocalStrategy(
               if (user === null) {
                 done(null, false)
               } else {
-                done(null, user, {name: user.name})
+                done(null, user, {
+                  name: user.name
+                })
               }
             })
         } else {
           done(null, false)
         }
       })
-  })
-)
+  }))
 
 // Load compiled production client
 const clientDir = path.join(__dirname, '..', '..', 'client', 'dist')
@@ -121,7 +155,9 @@ app.get('*', (req, res) => {
 
 // Catch 404 and forward to Error Handler
 app.use((req, res, next) => {
-  res.status(404).render('404', {url: req.originalUrl})
+  res.status(404).render('404', {
+    url: req.originalUrl
+  })
   const err = new Error('Not Found')
   err.status = 404
   next(err)
@@ -131,12 +167,18 @@ app.use((req, res, next) => {
 if (app.get('env') === 'development') {
   app.use((err, req, res) => {
     res.status(err.status || 500)
-      .render('error', {message: err.message, error: err})
+      .render('error', {
+        message: err.message,
+        error: err
+      })
   })
 }
 
 // Production Error Handler (no stack-traces printed)
 app.use((err, req, res) => {
   res.status(err.status || 500)
-    .render('error', {message: err.message, error: {}})
+    .render('error', {
+      message: err.message,
+      error: {}
+    })
 })
