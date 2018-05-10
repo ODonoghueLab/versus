@@ -10,11 +10,13 @@
     "type": "git",
     "url": "git+https://github.com/ODonoghueLab/versus.git"
   },
-  "contributors": [{
-    "name": "Bosco Ho",
-    "email": "boscoh@gmail.com",
-    "url": "http://boscoh.com"
-  }],
+  "contributors": [
+    {
+      "name": "Bosco Ho",
+      "email": "boscoh@gmail.com",
+      "url": "http://boscoh.com"
+    }
+  ],
   "license": "MIT",
   "dependencies": {
     "babel-eslint": "^8.2.1",
@@ -38,6 +40,7 @@
     "fs-extra": "*",
     "morgan": "*",
     "multer": "*",
+    "mysql2": "^1.5.3",
     "passport": "*",
     "passport-local": "*",
     "pretty-ms": "*",
