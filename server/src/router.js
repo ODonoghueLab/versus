@@ -7,7 +7,9 @@ const config = require('./config')
 
 const mime = require('mime')
 const multer = require('multer')
-const upload = multer({dest: config.filesDir})
+const upload = multer({
+  dest: config.filesDir
+})
 
 const passport = require('passport')
 const express = require('express')
@@ -49,7 +51,8 @@ router.post('/api/rpc-run', (req, res, next) => {
 
     passport.authenticate('local', (err, user) => {
       if (err) {
-        console.log('>> router.rpc-run.publicLoginUser authenticate error')
+        console.log(
+          '>> router.rpc-run.publicLoginUser authenticate error')
         return next(err)
       }
       if (!user) {
@@ -64,10 +67,13 @@ router.post('/api/rpc-run', (req, res, next) => {
       }
       req.logIn(user, (error) => {
         if (error) {
-          console.log('>> router.rpc-run.publicLoginUser session publicLoginUser error', err)
+          console.log(
+            '>> router.rpc-run.publicLoginUser session publicLoginUser error',
+            err)
           return next(error)
         }
-        console.log('>> router.rpc-run.publicLoginUser success', user)
+        console.log('>> router.rpc-run.publicLoginUser success',
+          user)
         let returnUser = _.cloneDeep(user)
         delete returnUser.password
         return res.json({
@@ -138,7 +144,8 @@ router.post('/api/rpc-upload', upload.array('uploadFiles'), (req, res) => {
 
   if (method in remoteRunFns) {
     if (!_.startsWith(method, 'upload')) {
-      throw new Error(`Remote uploadFn ${method} should start with 'upload'`)
+      throw new Error(
+        `Remote uploadFn ${method} should start with 'upload'`)
     }
     const uploadFn = remoteRunFns[method]
     params = _.concat([req.files], params)
@@ -183,7 +190,8 @@ router.post('/api/rpc-download', (req, res) => {
 
   if (method in remoteRunFns) {
     if (!_.startsWith(method, 'download')) {
-      throw new Error(`Remote download ${method} should start with 'download'`)
+      throw new Error(
+        `Remote download ${method} should start with 'download'`)
     }
 
     const downloadFn = remoteRunFns[method]
@@ -233,14 +241,16 @@ router.get('/file/:subDir/:basename', (req, res) => {
   console.log('>> router.file', subDir, basename)
 
   let filename = path.join(config.filesDir, subDir, basename)
-  if (!fs.existsSync(filename)) {
-    throw `File not found ${filename}`
-  }
-
   let mimeType = mime.lookup(filename)
 
   res.setHeader('Content-disposition', `attachment; filename=${basename}`)
   res.setHeader('Content-type', mimeType)
-  fs.createReadStream(filename).pipe(res)
+  try {
+    const readStream = fs.createReadStream(filename)
+    readStream.on('open', function () {
+      readStream.pipe(res)
+    })
+  } catch (err) {
+    throw new Error(`Problem with file ${filename}: ${err}`)
+  }
 })
-
