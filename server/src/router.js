@@ -235,6 +235,8 @@ router.post('/api/rpc-download', (req, res) => {
 /**
  * Returns a file stored on the server
  */
+
+/*
 router.get('/file/:subDir/:basename', (req, res) => {
   let basename = req.params.basename
   let subDir = req.params.subDir
@@ -254,3 +256,4 @@ router.get('/file/:subDir/:basename', (req, res) => {
     throw new Error(`Problem with file ${filename}: ${err}`)
   }
 })
+*/
