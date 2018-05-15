@@ -143,13 +143,13 @@ app.use(express.static(clientDir))
 
 // const filesDir = path.join(__dirname, 'files')
 const filesDir = config.filesDir
-app.use('/file', express.static('files'))
+app.use('/file', express.static(filesDir))
 
 // Load routes for api
 app.use(require('./router'))
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(filesDir, 'index.html'))
+  res.sendFile(path.join(clientDir, 'index.html'))
 })
 
 // Redirect dangling calls to here
