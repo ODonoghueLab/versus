@@ -24,7 +24,7 @@ module.exports = app
 // Middleware Configuration
 
 // Cross-origin-resource-sharing for hot-reloading client
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Credentials', true)
   res.header('Access-Control-Allow-Origin', req.headers.origin)
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
@@ -63,23 +63,23 @@ if (env === DEVELOPMENT_ENV) {
   }))
   console.log(
     `> express-session: Using MemStore SessionStore for ${env} environment`)
-} else if (dbConfig.dialect === "mysql") {
-  const MySQLStore = require('express-mysql-session')(session);
+} else if (dbConfig.dialect === 'mysql') {
+  const MySQLStore = require('express-mysql-session')(session)
   const options = {
     host: dbConfig.host,
     port: 3306,
     user: dbConfig.username,
     password: dbConfig.password,
-    database: "versus_session"
-  };
-  const sessionStore = new MySQLStore(options);
+    database: 'versus_session'
+  }
+  const sessionStore = new MySQLStore(options)
 
   app.use(session({
     secret: config.secretKey,
     store: sessionStore,
     resave: true,
     saveUninitialized: true
-  }));
+  }))
   console.log(
     `> express-session: Using express-mysql-session SessionStore for ${env} environment`
   )
@@ -108,40 +108,41 @@ passport.deserializeUser((id, done) => {
 // Define the method to authenticate user for sessions
 const LocalStrategy = require('passport-local').Strategy
 passport.use(new LocalStrategy({
-    usernameField: 'email',
-    passwordField: 'password'
-  },
-  function(email, password, done) {
-    models
-      .fetchUser({
-        email: email
-      })
-      .then(user => {
-        console.log('>> passport.LocalStrategy has email', email,
-          password)
-        if (user) {
-          models
-            .checkUserWithPassword(user, password)
-            .then((user) => {
-              if (user === null) {
-                done(null, false)
-              } else {
-                done(null, user, {
-                  name: user.name
-                })
-              }
-            })
-        } else {
-          done(null, false)
-        }
-      })
-  }))
+  usernameField: 'email',
+  passwordField: 'password'
+},
+function (email, password, done) {
+  models
+    .fetchUser({
+      email: email
+    })
+    .then(user => {
+      console.log('>> passport.LocalStrategy has email', email,
+        password)
+      if (user) {
+        models
+          .checkUserWithPassword(user, password)
+          .then((user) => {
+            if (user === null) {
+              done(null, false)
+            } else {
+              done(null, user, {
+                name: user.name
+              })
+            }
+          })
+      } else {
+        done(null, false)
+      }
+    })
+}))
 
 // Load compiled production client
 const clientDir = path.join(__dirname, '..', '..', 'client', 'dist')
 app.use(express.static(clientDir))
 
-const filesDir = path.join(__dirname, 'files')
+// const filesDir = path.join(__dirname, 'files')
+const filesDir = config.filesDir
 app.use('/file', express.static('files'))
 
 // Load routes for api
