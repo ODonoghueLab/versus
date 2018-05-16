@@ -42,7 +42,7 @@ function getExperimentAttr (paths, fractionRepeat) {
   let mainQuestionIds = _.filter(imageSetIds, i => !isQualifyId(i))
   attr.nMainQuestionMax = mainQuestionIds.length
 
-  attr.nRepeatQuestionMax = Math.ceil(attr.fractionRepeat * attr.nMainQuestionMax)
+  attr.nRepeatQuestionMax = Math.round(attr.fractionRepeat * attr.nMainQuestionMax)
 
   return attr
 }
@@ -107,7 +107,7 @@ function getChoices (experiment, participant) {
 
   let fractionRepeat = participant.attr.fractionRepeat
   let nMainQuestionMax = experiment.attr.nMainQuestionMax
-  let nRepeatQuestionMax = Math.ceil(fractionRepeat * nMainQuestionMax)
+  let nRepeatQuestionMax = Math.round(fractionRepeat * nMainQuestionMax)
   if (participant.attr.nRepeatAnswer >= nRepeatQuestionMax) {
     isRepeat = false
   }
@@ -193,7 +193,7 @@ function updateParticipantStates (participant, experiment) {
   if (!('fractionRepeat' in attr)) {
     attr.fractionRepeat = experimentAttr.fractionRepeat
   }
-  let nRepeatQuestionMax = Math.ceil(attr.fractionRepeat * experimentAttr.nMainQuestionMax)
+  let nRepeatQuestionMax = Math.round(attr.fractionRepeat * experimentAttr.nMainQuestionMax)
 
   attr.nAnswer = 0
   attr.nRepeatAnswer = 0
