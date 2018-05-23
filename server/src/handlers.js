@@ -243,6 +243,7 @@ async function updateExperimentAttr (experiment) {
 }
 
 async function updateDatabaseOnInit () {
+  console.log('> handlers.updateDatabaseOnInit')
   let experiments = await models.fetchAllExperiments()
   for (let experiment of experiments) {
     await updateExperimentAttr(experiment)
