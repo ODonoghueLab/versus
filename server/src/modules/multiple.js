@@ -195,6 +195,12 @@ function updateParticipantStates (participant, experiment) {
   }
   let nRepeatQuestionMax = Math.round(attr.fractionRepeat * experimentAttr.nMainQuestionMax)
 
+  console.log(
+    '> multiple.updateParticipantStates', 
+    attr.fractionRepeat, 
+    experimentAttr.nMainQuestionMax, 
+    nRepeatQuestionMax)
+    
   attr.nAnswer = 0
   attr.nRepeatAnswer = 0
   attr.nConsistentAnswer = 0
