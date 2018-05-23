@@ -259,8 +259,10 @@ function checkComparisons (state) {
 }
 
 function isAllImagesTested (state) {
-  return (state.testImageIndices.length === 0) &&
+  let result = (state.testImageIndices.length === 0) &&
     (state.iImageTest === null)
+  console.log('> twochoice.isAllImagesTested', result)
+  return result
 }
 
 function isAllRepeatComparisonsMade (state) {
@@ -280,11 +282,11 @@ function isAllRepeatComparisonsMade (state) {
 }
 
 function isDone (state) {
-  if (!isAllImagesTested(state)) {
+  if (!isAllRepeatComparisonsMade(state)) {
     return false
   }
 
-  if (!isAllRepeatComparisonsMade(state)) {
+  if (!isAllImagesTested(state)) {
     return false
   }
 
