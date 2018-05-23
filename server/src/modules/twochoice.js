@@ -465,6 +465,8 @@ function updateParticipantStates (participant, experiment) {
   let participantAttr = participant.attr
   let states = participant.states
 
+  console.log(`> towchoice.updateParticipantStates nState=${_.values(states).length}`)
+
   if (!('fractionRepeat' in participantAttr)) {
     let fractionRepeat = null
     for (let state of _.values(states)) {

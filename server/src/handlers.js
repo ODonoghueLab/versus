@@ -115,7 +115,10 @@ async function publicForceUpdatePassword (user) {
 }
 
 async function updateParticipant (participant, experiment) {
-  console.log('> handlers.updateParticipant', participant.participateId)
+  console.log(
+    '> handlers.updateParticipant',
+    participant.participateId,
+    new Date(participant.updatedAt).toString())
   if (experiment.attr.questionType === '2afc') {
     twochoice.updateParticipantStates(participant, experiment)
   } else {
