@@ -220,8 +220,6 @@ function updateParticipantStates (participant, experiment) {
     (attr.nRepeatAnswer >= nRepeatQuestionMax) &&
     (attr.nAnswer >= experimentAttr.nQuestionMax)
 
-  console.log('> multiple.updateParticipantStates experiment.attr', experimentAttr)
-  console.log('> multiple.updateParticipantStates participant.attr', attr)
   if (!attr.isDone && attr.surveyCode) {
     delete attr.surveyCode
   }
@@ -271,14 +269,14 @@ function makeChoice (states, answer) {
   answer.endTime = util.getCurrentTimeStr()
   if (!answer.isRepeat) {
     states.answers.push(answer)
-    console.log(answer)
+    console.log('> multiple.makeChoice', answer)
     if (!isQualifyId(answer.imageSetId)) {
       pushToListProp(states, 'toRepeatIds', answer.imageSetId)
     }
   } else {
     let originalAnswer = _.find(states.answers, a => a.imageSetId === answer.imageSetId)
     _.remove(states.toRepeatIds, id => id === answer.imageSetId)
-    console.log(answer, originalAnswer, states.toRepeatIds)
+    console.log('> multiple.makeChoice', answer, originalAnswer, states.toRepeatIds)
     originalAnswer.repeatValue = answer.value
     originalAnswer.repeatEndTime = answer.endTime
     originalAnswer.repeatStartTime = answer.repeatStartTime
@@ -293,7 +291,6 @@ function makeCsv (experiment) {
 
   for (let participant of experiment.participants) {
     let getRepeatTimeInterval = (answer) => {
-      console.log('repeatTime', answer)
       let startMs = new Date(answer.repeatStartTime).getTime()
       let endMs = new Date(answer.repeatEndTime).getTime()
       return (endMs - startMs) / 1000

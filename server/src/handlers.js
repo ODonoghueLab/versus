@@ -115,6 +115,7 @@ async function publicForceUpdatePassword (user) {
 }
 
 async function updateParticipant (participant, experiment) {
+  console.log('> handlers.updateParticipant', participant.participateId)
   if (experiment.attr.questionType === '2afc') {
     twochoice.updateParticipantStates(participant, experiment)
   } else {
@@ -139,7 +140,6 @@ async function updateParticipant (participant, experiment) {
  * @returns {Object} experiment
  */
 async function updateExperimentAttr (experiment) {
-  console.log('> handlers.updateExperimentStructure experiment', experiment.attr.name)
   if (experiment.attr.params) {
     _.assign(experiment.attr, experiment.attr.params)
     delete experiment.attr.params
@@ -226,13 +226,17 @@ async function updateExperimentAttr (experiment) {
     delete experiment.attr.blurb
   }
 
-  console.log('> handlers.updateExperimentAttr', experiment.attr)
+  console.log('> handlers.updateExperimentAttr',
+    experiment.id,
+    experiment.attr.name,
+    experiment.attr.fractionRepeat,
+    experiment.attr.probShowRepeat,
+    experiment.attr.nAllQuestion)
 
   await models.saveExperimentAttr(experiment.id, experiment.attr)
 
   if (experiment.participants) {
     for (let participant of experiment.participants) {
-      console.log('> handlers.updateExperimentAttr participant ', participant.participateId)
       await updateParticipant(participant, experiment)
     }
   }
