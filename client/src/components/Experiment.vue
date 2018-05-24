@@ -37,6 +37,7 @@
         </label>
         <md-input
           type="number"
+          step="0.01"
           v-model="experiment.attr.fractionRepeat">
         </md-input>
       </md-input-container>
