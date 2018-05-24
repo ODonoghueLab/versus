@@ -259,8 +259,10 @@ function checkComparisons (state) {
 }
 
 function isAllImagesTested (state) {
-  return (state.testImageIndices.length === 0) &&
+  let result = (state.testImageIndices.length === 0) &&
     (state.iImageTest === null)
+  console.log('> twochoice.isAllImagesTested', result)
+  return result
 }
 
 function isAllRepeatComparisonsMade (state) {
@@ -270,16 +272,21 @@ function isAllRepeatComparisonsMade (state) {
       nRepeat += 1
     }
   }
-  let totalRepeat = Math.round(state.comparisons.length * state.fractionRepeat)
-  return (nRepeat >= totalRepeat)
+  let maxNRepeat = Math.round(state.comparisons.length * state.fractionRepeat)
+  console.log('> twochoice.isAllRepeatComparisonsMade',
+    `nComparison=${state.comparisons.length}`,
+    `fractionRepeat=${state.fractionRepeat}`,
+    `maxNRepeat=${maxNRepeat}`,
+    `nRepeat=${nRepeat}`)
+  return (nRepeat >= maxNRepeat)
 }
 
 function isDone (state) {
-  if (!isAllImagesTested(state)) {
+  if (!isAllRepeatComparisonsMade(state)) {
     return false
   }
 
-  if (!isAllRepeatComparisonsMade(state)) {
+  if (!isAllImagesTested(state)) {
     return false
   }
 
@@ -290,7 +297,9 @@ function isDone (state) {
   }
 
   let result = checkComparisons(state)
-  console.log('> twochoice.isDone checkComparisons', result)
+  if (!result) {
+    console.log('> twochoice.isDone error: checkComparisons fail')
+  }
 
   return true
 }
@@ -455,6 +464,8 @@ function updateParticipantStates (participant, experiment) {
   let experimentAttr = experiment.attr
   let participantAttr = participant.attr
   let states = participant.states
+
+  console.log(`> towchoice.updateParticipantStates nState=${_.values(states).length}`)
 
   if (!('fractionRepeat' in participantAttr)) {
     let fractionRepeat = null

@@ -27,6 +27,7 @@
       </label>
       <md-input
         type="number"
+        :step="0.01"
         v-model="fractionRepeat"/>
     </md-input-container>
 
