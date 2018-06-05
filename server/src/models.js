@@ -45,15 +45,17 @@ let db = conn.db
 /**
  * @returns {Object|null} JSON-literal of a Sequelize instance
  */
-function unwrapInstance (instance) {
+function unwrapInstance(instance) {
   if (instance === null) {
     return null
   } else {
-    return instance.get({plain: true})
+    return instance.get({
+      plain: true
+    })
   }
 }
 
-async function deleteFileList (fileList) {
+async function deleteFileList(fileList) {
   for (let f of fileList) {
     if (fs.existsSync(f.path)) {
       console.log('>> router.deleteFileList', f.path)
@@ -69,7 +71,7 @@ async function deleteFileList (fileList) {
  * @param checkFilesForError
  * @promise - list of new paths
  */
-async function storeFilesInConfigDir (fileList, checkFilesForError) {
+async function storeFilesInConfigDir(fileList, checkFilesForError) {
   try {
     const timestampDir = String(new Date().getTime())
     const fullDir = path.join(config.filesDir, timestampDir)
@@ -123,16 +125,20 @@ const User = db.define('User', {
   },
   password: {
     type: Sequelize.STRING,
-    set (val) {
+    set(val) {
       let saltedPassword = bcrypt.hashSync(val, bcrypt.genSaltSync(10))
       this.setDataValue('password', saltedPassword)
     }
   }
 })
 
-function createUser (values) {
+function createUser(values) {
   return User
-    .findOne({where: {id: values.id}})
+    .findOne({
+      where: {
+        id: values.id
+      }
+    })
     .then(user => {
       if (user === null) {
         return User
@@ -142,9 +148,13 @@ function createUser (values) {
     })
 }
 
-function updateUser (values) {
+function updateUser(values) {
   return User
-    .findOne({where: {id: values.id}})
+    .findOne({
+      where: {
+        id: values.id
+      }
+    })
     .then(user => {
       if (user) {
         return user
@@ -156,9 +166,11 @@ function updateUser (values) {
     })
 }
 
-function fetchUser (values) {
+function fetchUser(values) {
   return User
-    .findOne({where: values})
+    .findOne({
+      where: values
+    })
     .then(user => {
       if (user) {
         return unwrapInstance(user)
@@ -168,7 +180,7 @@ function fetchUser (values) {
     })
 }
 
-function checkUserWithPassword (user, password) {
+function checkUserWithPassword(user, password) {
   return new Promise((resolve) => {
     bcrypt.compare(
       password,
@@ -212,20 +224,34 @@ const UserExperiment = db.define('UserExperiment', {
   permission: Sequelize.INTEGER
 })
 
-Experiment.hasMany(Image, {as: 'images'})
-Experiment.belongsToMany(User, {through: UserExperiment})
-Experiment.hasMany(Participant, {as: 'participants'})
-Image.belongsTo(Experiment, {onDelete: 'cascade'})
+Experiment.hasMany(Image, {
+  as: 'images'
+})
+Experiment.belongsToMany(User, {
+  through: UserExperiment
+})
+Experiment.hasMany(Participant, {
+  as: 'participants'
+})
+Image.belongsTo(Experiment, {
+  onDelete: 'cascade'
+})
 Participant.belongsTo(Experiment)
-User.belongsToMany(Experiment, {through: UserExperiment})
+User.belongsToMany(Experiment, {
+  through: UserExperiment
+})
 
 /**
  * Checks files stored on server against the database
  * and deletes any files that are not matched with database entries
  */
-async function cleanupImages () {
-  let experiments = await Experiment.findAll(
-    {include: [{model: Image, as: 'images'}]})
+async function cleanupImages() {
+  let experiments = await Experiment.findAll({
+    include: [{
+      model: Image,
+      as: 'images'
+    }]
+  })
 
   let filenames = []
   for (let experiment of experiments) {
@@ -260,64 +286,122 @@ async function cleanupImages () {
  * }
  */
 
-async function createExperiment (userId, attr, imageUrls) {
+async function createExperiment(userId, attr, imageUrls) {
   console.log('> models.createExperiment input', attr)
-  let experiment = await Experiment.create({attr})
+  let experiment = await Experiment.create({
+    attr
+  })
   for (let url of imageUrls) {
-    let image = await Image.create({url})
+    let image = await Image.create({
+      url
+    })
     await experiment.addImage(image)
   }
-  await experiment.addUser(userId, {permission: 0})
+  await experiment.addUser(userId, {
+    permission: 0
+  })
   let result = unwrapInstance(experiment)
   console.log('> models.createExperiment result', result)
   return result
 }
 
-function findExperiment (experimentId) {
+function findFullExperiment(experimentId) {
   return Experiment.findOne({
-    where: {id: experimentId},
-    include: [
-      {model: Image, as: 'images'},
-      {model: User, as: 'Users'},
-      {model: Participant, as: 'participants'}
+    where: {
+      id: experimentId
+    },
+    include: [{
+        model: Image,
+        as: 'images'
+      },
+      {
+        model: User,
+        as: 'Users'
+      },
+      {
+        model: Participant,
+        as: 'participants'
+      }
     ]
   })
 }
 
-function fetchAllExperiments () {
+function findExperiment(experimentId) {
+  return Experiment.findOne({
+    where: {
+      id: experimentId
+    },
+    include: [{
+        model: Image,
+        as: 'images'
+      },
+      {
+        model: User,
+        as: 'Users'
+      }
+    ]
+  })
+}
+
+function fetchAllExperiments() {
   return Experiment.findAll({
-    include: [
-      {model: Image, as: 'images'},
-      {model: User, as: 'Users'},
-      {model: Participant, as: 'participants'}
+    include: [{
+        model: Image,
+        as: 'images'
+      },
+      {
+        model: User,
+        as: 'Users'
+      },
+      {
+        model: Participant,
+        as: 'participants'
+      }
     ]
   }).then(experiments => {
     return _.map(experiments, unwrapInstance)
   })
 }
 
-function fetchExperiment (experimentId) {
+function fetchExperiment(experimentId) {
   return findExperiment(experimentId)
     .then(unwrapInstance)
 }
 
-async function saveExperimentAttr (experimentId, attr) {
+function fetchFullExperiment(experimentId) {
+  return findFullExperiment(experimentId)
+    .then(unwrapInstance)
+}
+
+async function saveExperimentAttr(experimentId, attr) {
   let experiment = await findExperiment(experimentId)
-  let result = await experiment.updateAttributes({attr})
+  let result = await experiment.updateAttributes({
+    attr
+  })
   return unwrapInstance(result)
 }
 
-function deleteExperiment (experimentId) {
+function deleteExperiment(experimentId) {
   return Experiment
-    .destroy({where: {id: experimentId}})
+    .destroy({
+      where: {
+        id: experimentId
+      }
+    })
     .then(() => {
       return cleanupImages()
     })
 }
 
-async function fetchExperiments (userId) {
-  let experiments = await Experiment.findAll(
-    {include: [{model: User, where: {id: userId}}]})
+async function fetchExperiments(userId) {
+  let experiments = await Experiment.findAll({
+    include: [{
+      model: User,
+      where: {
+        id: userId
+      }
+    }]
+  })
   return _.map(experiments, unwrapInstance)
 }
 
@@ -335,7 +419,7 @@ async function fetchExperiments (userId) {
  * }
  */
 
-async function createParticipant (experimentId, email) {
+async function createParticipant(experimentId, email) {
   let experiment = await findExperiment(experimentId)
   let fractionRepeat = experiment.attr.fractionRepeat
   let states
@@ -344,25 +428,40 @@ async function createParticipant (experimentId, email) {
   } else if (experiment.attr.questionType === 'multiple') {
     states = multiple.getNewStates(experiment)
   }
-  let attr = {email, fractionRepeat, user: null}
-  let participant = await Participant.create({attr, states})
+  let attr = {
+    email,
+    fractionRepeat,
+    user: null
+  }
+  let participant = await Participant.create({
+    attr,
+    states
+  })
   await experiment.addParticipant(participant)
   return unwrapInstance(participant)
 }
 
-function findParticipant (participateId) {
-  return Participant.findOne({where: {participateId}})
+function findParticipant(participateId) {
+  return Participant.findOne({
+    where: {
+      participateId
+    }
+  })
 }
 
-function fetchParticipant (participateId) {
+function fetchParticipant(participateId) {
   return findParticipant(participateId).then(unwrapInstance)
 }
 
-function deleteParticipant (participateId) {
-  return Participant.destroy({where: {participateId}})
+function deleteParticipant(participateId) {
+  return Participant.destroy({
+    where: {
+      participateId
+    }
+  })
 }
 
-function saveParticipant (participateId, values) {
+function saveParticipant(participateId, values) {
   return findParticipant(participateId)
     .then(participant => {
       return participant
@@ -374,7 +473,7 @@ function saveParticipant (participateId, values) {
 /**
  * Module Initialization on startup
  */
-async function init () {
+async function init() {
   await db.sync()
   await cleanupImages()
   console.log('> Models.init done')
@@ -390,6 +489,7 @@ module.exports = {
   updateUser,
   createExperiment,
   fetchExperiment,
+  fetchFullExperiment,
   fetchExperiments,
   fetchAllExperiments,
   saveExperimentAttr,

@@ -31,7 +31,7 @@ const multiple = require('./modules/multiple')
  *
  */
 
-async function publicRegisterUser (user) {
+async function publicRegisterUser(user) {
   let errors = []
   if (!user.name) {
     errors.push('no user name')
@@ -55,7 +55,9 @@ async function publicRegisterUser (user) {
 
   try {
     await models.createUser(values)
-    return {success: true}
+    return {
+      success: true
+    }
   } catch (e) {
     throw 'Couldn\'t register, is your email already in use?'
   }
@@ -66,7 +68,7 @@ async function publicRegisterUser (user) {
  * @param {Object} user
  * @promise {User}
  */
-async function updateUser (user) {
+async function updateUser(user) {
   const keys = ['id', 'name', 'email', 'password']
   let values = {}
   for (let key of keys) {
@@ -84,13 +86,15 @@ async function updateUser (user) {
   try {
     console.log('>> handlers.updateUser', values)
     await models.updateUser(values)
-    return {success: true}
+    return {
+      success: true
+    }
   } catch (err) {
     throw 'Couldn\'t update user - ' + err.toString()
   }
 }
 
-async function publicForceUpdatePassword (user) {
+async function publicForceUpdatePassword(user) {
   const keys = ['id', 'password']
   let values = {}
   for (let key of keys) {
@@ -108,13 +112,15 @@ async function publicForceUpdatePassword (user) {
   try {
     console.log('>> handlers.publicForceUpdatePassword', values)
     await models.updateUser(values)
-    return {success: true}
+    return {
+      success: true
+    }
   } catch (err) {
     throw `Update failure ${err}`
   }
 }
 
-async function updateParticipant (participant, experiment) {
+async function updateParticipant(participant, experiment) {
   console.log(
     '> handlers.updateParticipant',
     participant.participateId,
@@ -130,8 +136,7 @@ async function updateParticipant (participant, experiment) {
     }
   }
   await models.saveParticipant(
-    participant.participateId,
-    {
+    participant.participateId, {
       attr: participant.attr,
       states: participant.states
     })
@@ -142,7 +147,7 @@ async function updateParticipant (participant, experiment) {
  * @param experiment
  * @returns {Object} experiment
  */
-async function updateExperimentAttr (experiment) {
+async function updateExperimentAttr(experiment) {
   if (experiment.attr.params) {
     _.assign(experiment.attr, experiment.attr.params)
     delete experiment.attr.params
@@ -177,7 +182,9 @@ async function updateExperimentAttr (experiment) {
     if (attr.questionType === 'multiple') {
       attr.text = {
         sectionKeys: [
-          'qualificationStart', 'qualificationFailed', 'start', 'running', 'done'],
+          'qualificationStart', 'qualificationFailed', 'start', 'running',
+          'done'
+        ],
         sections: {
           running: {
             header: 'Which image encode the contact shown in the 3D model?',
@@ -245,7 +252,7 @@ async function updateExperimentAttr (experiment) {
   }
 }
 
-async function updateDatabaseOnInit () {
+async function updateDatabaseOnInit() {
   console.log('> handlers.updateDatabaseOnInit')
   let experiments = await models.fetchAllExperiments()
   for (let experiment of experiments) {
@@ -259,54 +266,75 @@ updateDatabaseOnInit()
  * Specific handlers - promises that return a JSON literal
  */
 
-async function getExperimentSummaries (userId) {
+async function getExperimentSummaries(userId) {
   let experiments = await models.fetchExperiments(userId)
-  let payload = {experiments: []}
+  let payload = {
+    experiments: []
+  }
   for (let experiment of experiments) {
     console.log('> handlers.getExperimentSummaries', experiment)
-    payload.experiments.push({id: experiment.id, attr: experiment.attr})
+    payload.experiments.push({
+      id: experiment.id,
+      attr: experiment.attr
+    })
   }
   return payload
 }
 
-async function getExperiment (experimentId) {
+async function getExperiment(experimentId) {
   console.log(`> getExperiment init`)
-  let experiment = await models.fetchExperiment(experimentId)
+  let experiment = await models.fetchFullExperiment(experimentId)
   experiment.participants = _.sortBy(experiment.participants, p => -p.createdAt)
-  return {experiment}
+  return {
+    experiment
+  }
 }
 
-async function saveExperimentAttr (experimentId, attr) {
+async function saveExperimentAttr(experimentId, attr) {
   let experiment = await models.fetchExperiment(experimentId)
   _.assign(experiment.attr, attr)
   await updateExperimentAttr(experiment)
-  return {experiment}
+  return {
+    experiment
+  }
 }
 
-function deleteExperiment (experimentId) {
+function deleteExperiment(experimentId) {
   return models
     .deleteExperiment(experimentId)
     .then(() => {
-      return {success: true}
+      return {
+        success: true
+      }
     })
     .catch(err => {
-      return {success: false, error: err}
+      return {
+        success: false,
+        error: err
+      }
     })
 }
 
-async function publicInviteParticipant (experimentId, email) {
+async function publicInviteParticipant(experimentId, email) {
   let participant = await models.createParticipant(experimentId, email)
-  return {participant}
+  return {
+    participant
+  }
 }
 
-function deleteParticipant (participantId) {
+function deleteParticipant(participantId) {
   return models
     .deleteParticipant(participantId)
     .then(() => {
-      return {success: true}
+      return {
+        success: true
+      }
     })
     .catch(err => {
-      return {success: false, error: err}
+      return {
+        success: false,
+        error: err
+      }
     })
 }
 
@@ -315,12 +343,11 @@ function deleteParticipant (participantId) {
  * @returns {Promise<*>}
  */
 
-async function publicGetNextChoice (participateId) {
+async function publicGetNextChoice(participateId) {
   let participant = await models.fetchParticipant(participateId)
-  let experiment = await models.fetchExperiment(participant.ExperimentId)
+  let experiment = await models.fetchExperiment(participant.ExperimentId, false)
   let experimentAttr = experiment.attr
   let urls = _.map(experiment.images, 'url')
-
   await updateParticipant(participant, experiment)
   console.log(`> handlers.publicGetNextChoice participant`, participateId)
 
@@ -361,26 +388,33 @@ async function publicGetNextChoice (participateId) {
   }
 }
 
-async function publicChoose2afc (participateId, answer) {
+async function publicChoose2afc(participateId, answer) {
   let participant = await models.fetchParticipant(participateId)
   let states = participant.states
   twochoice.makeChoice(states, answer.comparison)
-  await models.saveParticipant(participateId, {states})
+  await models.saveParticipant(participateId, {
+    states
+  })
   return publicGetNextChoice(participateId)
 }
 
-async function publicChooseMultiple (participateId, answer) {
+async function publicChooseMultiple(participateId, answer) {
   let participant = await models.fetchParticipant(participateId)
   let states = participant.states
   multiple.makeChoice(states, answer)
-  await models.saveParticipant(participateId, {states})
-  return publicGetNextChoice(participateId)
+  await models.saveParticipant(participateId, {
+    states
+  })
+  let result = await publicGetNextChoice(participateId)
+  return result
 }
 
-async function publicSaveParticipantUserDetails (participateId, user) {
+async function publicSaveParticipantUserDetails(participateId, user) {
   let participant = await models.fetchParticipant(participateId)
   participant.attr.user = user
-  await models.saveParticipant(participateId, {attr: participant.attr})
+  await models.saveParticipant(participateId, {
+    attr: participant.attr
+  })
   return publicGetNextChoice(participateId)
 }
 
@@ -390,7 +424,7 @@ async function publicSaveParticipantUserDetails (participateId, user) {
  * @param {String} userId
  * @param {Object} attr
  */
-async function uploadImagesAndCreateExperiment (filelist, userId, attr) {
+async function uploadImagesAndCreateExperiment(filelist, userId, attr) {
   try {
     let paths = await models.storeFilesInConfigDir(filelist)
     let urls = _.map(paths, f => '/file/' + f)
@@ -408,15 +442,18 @@ async function uploadImagesAndCreateExperiment (filelist, userId, attr) {
       experimentId: experiment.id
     }
   } catch (error) {
-    return {success: false, error: error.toString()}
+    return {
+      success: false,
+      error: error.toString()
+    }
   }
 }
 
-async function downloadResults (experimentId) {
+async function downloadResults(experimentId) {
 
   console.log('> handlers.downloadResults experiment', experimentId)
 
-  let experiment = await models.fetchExperiment(experimentId)
+  let experiment = await models.fetchFullExperiment(experimentId)
 
   let result
   if (experiment.attr.questionType === '2afc') {
@@ -435,7 +472,9 @@ async function downloadResults (experimentId) {
 
   return {
     filename,
-    result: {success: true}
+    result: {
+      success: true
+    }
   }
 }
 
